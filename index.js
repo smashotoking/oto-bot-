@@ -43,12 +43,12 @@ const CONFIG = {
   
   // Staff and roles
   STAFF_ROLE: '1438475461977047112',
-  OWNER_ROLE: 'OWNER_ROLE_ID', // Set your owner role
+  OWNER_ROLE: '1438443937588183110', // Set your owner role
   
   // Settings
   MAX_SLOTS: 48,
   MIN_INVITES: 2,
-  QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
+  QR_IMAGE: 'https://ibb.co/jkBSmkM3',
   
   // Rules
   RULES: `📜 **OTO TOURNAMENT RULES**
