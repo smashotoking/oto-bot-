@@ -18,18 +18,18 @@ const PORT = process.env.PORT || 3000;
 let activeTournament = null;
 let slots = 0;
 const MAX_SLOTS = 48;
-let pendingTickets = new Map(); // userId -> ticket data
-let userInvites = new Map(); // userId -> invite count
-let tournamentMessages = { updates: null, general: null }; // Message IDs for auto-update
-let tournamentParticipants = []; // Store all registered players
+let pendingTickets = new Map();
+let userInvites = new Map();
+let tournamentMessages = { updates: null, general: null };
+let tournamentParticipants = [];
 
 // ===== CONFIG =====
 const CONFIG = {
-  STAFF_TOOL_CHANNEL: '1438486059255336970', // #staff-tool
-  TOURNAMENT_UPDATES: '1438484997177606145', // #tournament-updates
-  GENERAL_CHANNEL: '1438482904018849835', // #general-chat
-  WINNERS_CHANNEL: '1438485128698658919', // #winners
-  STAFF_ROLE: '1438475461977047112', // @Staff
+  STAFF_TOOL_CHANNEL: '1438486059255336970',
+  TOURNAMENT_UPDATES: '1438484997177606145',
+  GENERAL_CHANNEL: '1438482904018849835',
+  WINNERS_CHANNEL: '1438485128698658919',
+  STAFF_ROLE: '1438475461977047112',
   QR_IMAGE: 'https://ibb.co/rGWqc0xm',
   RULES: `📜 **TOURNAMENT RULES:**
   
@@ -51,23 +51,33 @@ app.listen(PORT, () => {
   console.log(`✅ Server on port ${PORT}`);
 });
 
-// ===== BOT READY =====
-client.once('ready', async () => {
+// ===== BOT READY (FIXED DEPRECATION) =====
+client.once('clientReady', async () => {
   console.log(`🚀 ${client.user.tag} ONLINE!`);
   client.user.setActivity('OTO Tournaments', { type: Discord.ActivityType.Competing });
   
-  await registerCommands();
-  
-  // Track invites
-  client.guilds.cache.forEach(async (guild) => {
-    const invites = await guild.invites.fetch();
-    invites.forEach(invite => {
-      userInvites.set(invite.inviter.id, invite.uses);
-    });
-  });
-  
-  // Auto announcements every 1 min
-  setInterval(autoSlotAnnouncements, 60000);
+  try {
+    await registerCommands();
+    
+    // Track invites
+    for (const guild of client.guilds.cache.values()) {
+      try {
+        const invites = await guild.invites.fetch();
+        invites.forEach(invite => {
+          if (invite.inviter) {
+            userInvites.set(invite.inviter.id, invite.uses);
+          }
+        });
+      } catch (err) {
+        console.error(`Failed to fetch invites for guild ${guild.id}:`, err);
+      }
+    }
+    
+    // Auto announcements every 1 min
+    setInterval(autoSlotAnnouncements, 60000);
+  } catch (error) {
+    console.error('Error in ready event:', error);
+  }
 });
 
 // ===== REGISTER COMMANDS =====
@@ -107,108 +117,138 @@ async function registerCommands() {
 
 // ===== TRACK INVITES =====
 client.on('guildMemberAdd', async (member) => {
-  const guild = member.guild;
-  const invites = await guild.invites.fetch();
-  
-  invites.forEach(invite => {
-    const oldUses = userInvites.get(invite.inviter.id) || 0;
-    if (invite.uses > oldUses) {
-      userInvites.set(invite.inviter.id, invite.uses);
+  try {
+    const guild = member.guild;
+    const invites = await guild.invites.fetch();
+    
+    invites.forEach(invite => {
+      if (!invite.inviter) return;
       
-      // Check if user gets free entry (2+ invites)
-      if (invite.uses >= 2) {
-        const channel = guild.channels.cache.get(CONFIG.GENERAL_CHANNEL);
-        channel.send(`🎉 <@${invite.inviter.id}> invited ${invite.uses} people! **FREE ENTRY UNLOCKED!** 🎟️`);
+      const oldUses = userInvites.get(invite.inviter.id) || 0;
+      if (invite.uses > oldUses) {
+        userInvites.set(invite.inviter.id, invite.uses);
+        
+        if (invite.uses >= 2) {
+          const channel = guild.channels.cache.get(CONFIG.GENERAL_CHANNEL);
+          if (channel) {
+            channel.send(`🎉 <@${invite.inviter.id}> invited ${invite.uses} people! **FREE ENTRY UNLOCKED!** 🎟️`);
+          }
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('Error tracking invite:', error);
+  }
 });
 
 // ===== SLASH COMMANDS =====
 client.on('interactionCreate', async (interaction) => {
-  if (interaction.isChatInputCommand()) {
-    const { commandName } = interaction;
+  try {
+    if (interaction.isChatInputCommand()) {
+      const { commandName } = interaction;
 
-    if (commandName === 'create-tournament') {
-      if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-        return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      if (commandName === 'create-tournament') {
+        if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+          return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+        }
+        await createTournament(interaction);
       }
-      await createTournament(interaction);
-    }
 
-    if (commandName === 'leaderboard') {
-      if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-        return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      if (commandName === 'leaderboard') {
+        if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+          return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+        }
+        await uploadLeaderboard(interaction);
       }
-      await uploadLeaderboard(interaction);
-    }
 
-    if (commandName === 'check-invites') {
-      const inviteCount = userInvites.get(interaction.user.id) || 0;
-      const freeEntry = inviteCount >= 2 ? '✅ FREE ENTRY UNLOCKED!' : '❌ Need 2 invites';
-      await interaction.reply({ 
-        content: `🎟️ You have **${inviteCount} invites**\n${freeEntry}`, 
-        ephemeral: true 
-      });
-    }
-
-    if (commandName === 'reset-tournament') {
-      if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-        return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      if (commandName === 'check-invites') {
+        const inviteCount = userInvites.get(interaction.user.id) || 0;
+        const freeEntry = inviteCount >= 2 ? '✅ FREE ENTRY UNLOCKED!' : '❌ Need 2 invites';
+        await interaction.reply({ 
+          content: `🎟️ You have **${inviteCount} invites**\n${freeEntry}`, 
+          ephemeral: true 
+        });
       }
-      await resetTournament(interaction);
+
+      if (commandName === 'reset-tournament') {
+        if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+          return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+        }
+        await resetTournament(interaction);
+      }
     }
-  }
 
-  // ===== BUTTON HANDLER =====
-  if (interaction.isButton()) {
-    const { customId } = interaction;
+    // ===== BUTTON HANDLER =====
+    if (interaction.isButton()) {
+      const { customId } = interaction;
 
-    if (customId === 'join_tournament') {
-      await handleJoinButton(interaction);
-    } else if (customId.startsWith('approve_')) {
-      await handleApprove(interaction);
-    } else if (customId.startsWith('reject_')) {
-      await handleReject(interaction);
-    } else if (customId === 'confirm_details') {
-      await handleConfirmation(interaction);
+      if (customId === 'join_tournament') {
+        await handleJoinButton(interaction);
+      } else if (customId.startsWith('approve_')) {
+        await handleApprove(interaction);
+      } else if (customId.startsWith('reject_')) {
+        await handleReject(interaction);
+      } else if (customId === 'confirm_details') {
+        await handleConfirmation(interaction);
+      }
+    }
+  } catch (error) {
+    console.error('Interaction error:', error);
+    
+    // Try to respond to user
+    try {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+      } else {
+        await interaction.followUp({ content: '❌ An error occurred. Please try again.', ephemeral: true });
+      }
+    } catch (replyError) {
+      console.error('Failed to send error message:', replyError);
     }
   }
 });
 
-// ===== CREATE TOURNAMENT (STAFF TOOL) =====
+// ===== CREATE TOURNAMENT (FIXED WITH DEFER) =====
 async function createTournament(interaction) {
-  const title = interaction.options.getString('title');
-  const prize = interaction.options.getString('prize');
-  const entry = interaction.options.getString('entry');
-  const mode = interaction.options.getString('mode');
-  const time = interaction.options.getString('time');
+  // DEFER IMMEDIATELY TO PREVENT TIMEOUT
+  await interaction.deferReply({ ephemeral: true });
 
-  activeTournament = { title, prize, entry, mode, time };
-  slots = 0;
-  tournamentParticipants = [];
+  try {
+    const title = interaction.options.getString('title');
+    const prize = interaction.options.getString('prize');
+    const entry = interaction.options.getString('entry');
+    const mode = interaction.options.getString('mode');
+    const time = interaction.options.getString('time');
 
-  // STAFF TOOL CONFIRMATION
-  const staffEmbed = new Discord.EmbedBuilder()
-    .setTitle('✅ Tournament Created!')
-    .setColor('#00FF00')
-    .addFields(
-      { name: '🎮 Title', value: title },
-      { name: '💰 Prize', value: prize },
-      { name: '🎟️ Entry', value: entry },
-      { name: '🎯 Mode', value: mode },
-      { name: '⏰ Time', value: time },
-      { name: '📊 Status', value: 'Posted to channels!' }
-    )
-    .setTimestamp();
+    activeTournament = { title, prize, entry, mode, time };
+    slots = 0;
+    tournamentParticipants = [];
 
-  await interaction.reply({ embeds: [staffEmbed], ephemeral: true });
+    // POST TO TOURNAMENT UPDATES
+    await postToTournamentUpdates();
 
-  // POST TO TOURNAMENT UPDATES
-  await postToTournamentUpdates();
+    // POST TO GENERAL CHAT
+    await postToGeneralChat();
 
-  // POST TO GENERAL CHAT
-  await postToGeneralChat();
+    // STAFF TOOL CONFIRMATION
+    const staffEmbed = new Discord.EmbedBuilder()
+      .setTitle('✅ Tournament Created!')
+      .setColor('#00FF00')
+      .addFields(
+        { name: '🎮 Title', value: title },
+        { name: '💰 Prize', value: prize },
+        { name: '🎟️ Entry', value: entry },
+        { name: '🎯 Mode', value: mode },
+        { name: '⏰ Time', value: time },
+        { name: '📊 Status', value: 'Posted to channels!' }
+      )
+      .setTimestamp();
+
+    await interaction.editReply({ embeds: [staffEmbed] });
+  } catch (error) {
+    console.error('Error creating tournament:', error);
+    await interaction.editReply({ content: '❌ Failed to create tournament. Check logs.' });
+  }
 }
 
 // ===== POST TO TOURNAMENT UPDATES =====
@@ -272,224 +312,257 @@ function generateSlotUI() {
   return `${bar}\n**${slots}/${MAX_SLOTS}** players registered`;
 }
 
-// ===== JOIN BUTTON HANDLER =====
+// ===== JOIN BUTTON HANDLER (FIXED WITH DEFER) =====
 async function handleJoinButton(interaction) {
-  if (slots >= MAX_SLOTS) {
-    return interaction.reply({ content: '❌ Tournament is FULL!', ephemeral: true });
-  }
+  // DEFER TO PREVENT TIMEOUT
+  await interaction.deferReply({ ephemeral: true });
 
-  // Check if user already registered
-  if (tournamentParticipants.some(p => p.userId === interaction.user.id)) {
-    return interaction.reply({ content: '⚠️ You already registered!', ephemeral: true });
-  }
-
-  // Create private ticket thread
-  const channel = interaction.channel;
-  const thread = await channel.threads.create({
-    name: `🎟️ ${interaction.user.username}-ticket`,
-    autoArchiveDuration: 60,
-    type: Discord.ChannelType.PrivateThread
-  });
-
-  await thread.members.add(interaction.user.id);
-
-  // Check free entry
-  const inviteCount = userInvites.get(interaction.user.id) || 0;
-  const freeEntry = inviteCount >= 2;
-
-  const embed = new Discord.EmbedBuilder()
-    .setTitle('🎟️ Tournament Registration')
-    .setDescription(`Welcome <@${interaction.user.id}>!\n\n**Please provide:**`)
-    .addFields(
-      { name: '1️⃣ UID', value: 'Your game UID', inline: false },
-      { name: '2️⃣ IGN', value: 'In-game name', inline: false },
-      { name: '3️⃣ Payment', value: freeEntry ? '✅ FREE ENTRY (2+ invites)' : 'Screenshot of payment', inline: false }
-    )
-    .setColor(freeEntry ? '#00FF00' : '#FFD700')
-    .setImage(freeEntry ? null : CONFIG.QR_IMAGE)
-    .setFooter({ text: `Slots: ${slots}/${MAX_SLOTS}` });
-
-  const rulesEmbed = new Discord.EmbedBuilder()
-    .setTitle('📜 RULES')
-    .setDescription(CONFIG.RULES)
-    .setColor('#FF0000');
-
-  await thread.send({ 
-    content: `<@${interaction.user.id}> <@&${CONFIG.STAFF_ROLE}>`, 
-    embeds: [embed, rulesEmbed] 
-  });
-
-  pendingTickets.set(interaction.user.id, { 
-    threadId: thread.id, 
-    freeEntry,
-    uid: null,
-    ign: null,
-    payment: null
-  });
-
-  await interaction.reply({ content: `✅ Ticket created: <#${thread.id}>`, ephemeral: true });
-
-  // Auto-collect messages
-  const collector = thread.createMessageCollector({ time: 600000 });
-
-  collector.on('collect', async (msg) => {
-    if (msg.author.bot) return;
-    
-    const ticket = pendingTickets.get(interaction.user.id);
-    if (!ticket) return;
-
-    // Parse UID (9-12 digits)
-    if (!ticket.uid && /^\d{9,12}$/.test(msg.content)) {
-      ticket.uid = msg.content;
-      await msg.react('✅');
+  try {
+    if (slots >= MAX_SLOTS) {
+      return interaction.editReply({ content: '❌ Tournament is FULL!' });
     }
-    // Parse IGN
-    else if (!ticket.ign && msg.content.length > 2 && msg.content.length < 20) {
-      ticket.ign = msg.content;
-      await msg.react('✅');
+
+    if (tournamentParticipants.some(p => p.userId === interaction.user.id)) {
+      return interaction.editReply({ content: '⚠️ You already registered!' });
     }
-    // Parse payment screenshot
-    else if (!ticket.payment && (msg.attachments.size > 0 || ticket.freeEntry)) {
-      if (ticket.freeEntry) {
-        ticket.payment = 'FREE_ENTRY';
-      } else {
-        ticket.payment = msg.attachments.first()?.url || 'PENDING';
-      }
-      await msg.react('✅');
+
+    // Create private ticket thread
+    const channel = interaction.channel;
+    const thread = await channel.threads.create({
+      name: `🎟️ ${interaction.user.username}-ticket`,
+      autoArchiveDuration: 60,
+      type: Discord.ChannelType.PrivateThread,
+      reason: 'Tournament registration'
+    });
+
+    await thread.members.add(interaction.user.id);
+
+    const inviteCount = userInvites.get(interaction.user.id) || 0;
+    const freeEntry = inviteCount >= 2;
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🎟️ Tournament Registration')
+      .setDescription(`Welcome <@${interaction.user.id}>!\n\n**Please provide:**`)
+      .addFields(
+        { name: '1️⃣ UID', value: 'Your game UID', inline: false },
+        { name: '2️⃣ IGN', value: 'In-game name', inline: false },
+        { name: '3️⃣ Payment', value: freeEntry ? '✅ FREE ENTRY (2+ invites)' : 'Screenshot of payment', inline: false }
+      )
+      .setColor(freeEntry ? '#00FF00' : '#FFD700')
+      .setImage(freeEntry ? null : CONFIG.QR_IMAGE)
+      .setFooter({ text: `Slots: ${slots}/${MAX_SLOTS}` });
+
+    const rulesEmbed = new Discord.EmbedBuilder()
+      .setTitle('📜 RULES')
+      .setDescription(CONFIG.RULES)
+      .setColor('#FF0000');
+
+    await thread.send({ 
+      content: `<@${interaction.user.id}> <@&${CONFIG.STAFF_ROLE}>`, 
+      embeds: [embed, rulesEmbed] 
+    });
+
+    pendingTickets.set(interaction.user.id, { 
+      threadId: thread.id, 
+      freeEntry,
+      uid: null,
+      ign: null,
+      payment: null
+    });
+
+    await interaction.editReply({ content: `✅ Ticket created: <#${thread.id}>` });
+
+    // Auto-collect messages
+    const collector = thread.createMessageCollector({ time: 600000 });
+
+    collector.on('collect', async (msg) => {
+      if (msg.author.bot) return;
       
-      // Show confirmation
-      if (ticket.uid && ticket.ign && ticket.payment) {
-        const confirmEmbed = new Discord.EmbedBuilder()
-          .setTitle('✅ Confirm Your Details')
-          .addFields(
-            { name: 'UID', value: ticket.uid, inline: true },
-            { name: 'IGN', value: ticket.ign, inline: true },
-            { name: 'Payment', value: ticket.freeEntry ? '🎁 FREE ENTRY' : '✅ Verified', inline: true }
-          )
-          .setColor('#00FF00');
+      const ticket = pendingTickets.get(interaction.user.id);
+      if (!ticket) return;
 
-        const confirmBtn = new Discord.ActionRowBuilder().addComponents(
-          new Discord.ButtonBuilder()
-            .setCustomId('confirm_details')
-            .setLabel('✅ CONFIRM')
-            .setStyle(Discord.ButtonStyle.Success)
-        );
+      try {
+        if (!ticket.uid && /^\d{9,12}$/.test(msg.content)) {
+          ticket.uid = msg.content;
+          await msg.react('✅');
+        }
+        else if (!ticket.ign && msg.content.length > 2 && msg.content.length < 20) {
+          ticket.ign = msg.content;
+          await msg.react('✅');
+        }
+        else if (!ticket.payment && (msg.attachments.size > 0 || ticket.freeEntry)) {
+          if (ticket.freeEntry) {
+            ticket.payment = 'FREE_ENTRY';
+          } else {
+            ticket.payment = msg.attachments.first()?.url || 'PENDING';
+          }
+          await msg.react('✅');
+          
+          if (ticket.uid && ticket.ign && ticket.payment) {
+            const confirmEmbed = new Discord.EmbedBuilder()
+              .setTitle('✅ Confirm Your Details')
+              .addFields(
+                { name: 'UID', value: ticket.uid, inline: true },
+                { name: 'IGN', value: ticket.ign, inline: true },
+                { name: 'Payment', value: ticket.freeEntry ? '🎁 FREE ENTRY' : '✅ Verified', inline: true }
+              )
+              .setColor('#00FF00');
 
-        await thread.send({ embeds: [confirmEmbed], components: [confirmBtn] });
+            const confirmBtn = new Discord.ActionRowBuilder().addComponents(
+              new Discord.ButtonBuilder()
+                .setCustomId('confirm_details')
+                .setLabel('✅ CONFIRM')
+                .setStyle(Discord.ButtonStyle.Success)
+            );
+
+            await thread.send({ embeds: [confirmEmbed], components: [confirmBtn] });
+          }
+        }
+      } catch (err) {
+        console.error('Error in message collector:', err);
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('Error in handleJoinButton:', error);
+    await interaction.editReply({ content: '❌ Failed to create ticket. Please try again or contact staff.' });
+  }
 }
 
 // ===== USER CONFIRMS DETAILS =====
 async function handleConfirmation(interaction) {
-  const ticket = pendingTickets.get(interaction.user.id);
-  if (!ticket) return;
+  await interaction.deferReply({ ephemeral: true });
 
-  const thread = interaction.channel;
+  try {
+    const ticket = pendingTickets.get(interaction.user.id);
+    if (!ticket) {
+      return interaction.editReply({ content: '❌ Ticket not found!' });
+    }
 
-  // Send to staff for approval
-  const staffButtons = new Discord.ActionRowBuilder().addComponents(
-    new Discord.ButtonBuilder()
-      .setCustomId(`approve_${interaction.user.id}`)
-      .setLabel('✅ APPROVE')
-      .setStyle(Discord.ButtonStyle.Success),
-    new Discord.ButtonBuilder()
-      .setCustomId(`reject_${interaction.user.id}`)
-      .setLabel('❌ REJECT')
-      .setStyle(Discord.ButtonStyle.Danger)
-  );
+    const thread = interaction.channel;
 
-  await thread.send({ 
-    content: `<@&${CONFIG.STAFF_ROLE}> **Review Registration:**\n\nUID: ${ticket.uid}\nIGN: ${ticket.ign}\nPayment: ${ticket.freeEntry ? '🎁 FREE ENTRY' : ticket.payment}`, 
-    components: [staffButtons] 
-  });
+    const staffButtons = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId(`approve_${interaction.user.id}`)
+        .setLabel('✅ APPROVE')
+        .setStyle(Discord.ButtonStyle.Success),
+      new Discord.ButtonBuilder()
+        .setCustomId(`reject_${interaction.user.id}`)
+        .setLabel('❌ REJECT')
+        .setStyle(Discord.ButtonStyle.Danger)
+    );
 
-  await interaction.reply({ content: '✅ Sent to staff for verification!', ephemeral: true });
+    await thread.send({ 
+      content: `<@&${CONFIG.STAFF_ROLE}> **Review Registration:**\n\nUID: ${ticket.uid}\nIGN: ${ticket.ign}\nPayment: ${ticket.freeEntry ? '🎁 FREE ENTRY' : ticket.payment}`, 
+      components: [staffButtons] 
+    });
+
+    await interaction.editReply({ content: '✅ Sent to staff for verification!' });
+  } catch (error) {
+    console.error('Error in handleConfirmation:', error);
+    await interaction.editReply({ content: '❌ Error sending for verification.' });
+  }
 }
 
 // ===== STAFF APPROVE =====
 async function handleApprove(interaction) {
-  const userId = interaction.customId.split('_')[1];
-  const ticket = pendingTickets.get(userId);
-  
-  if (!ticket) return interaction.reply({ content: '❌ Ticket not found', ephemeral: true });
+  await interaction.deferReply();
 
-  slots++;
-  tournamentParticipants.push({
-    userId,
-    uid: ticket.uid,
-    ign: ticket.ign,
-    freeEntry: ticket.freeEntry
-  });
+  try {
+    const userId = interaction.customId.split('_')[1];
+    const ticket = pendingTickets.get(userId);
+    
+    if (!ticket) {
+      return interaction.editReply({ content: '❌ Ticket not found' });
+    }
 
-  pendingTickets.delete(userId);
+    slots++;
+    tournamentParticipants.push({
+      userId,
+      uid: ticket.uid,
+      ign: ticket.ign,
+      freeEntry: ticket.freeEntry
+    });
 
-  await interaction.reply({ content: `✅ <@${userId}> APPROVED! Slot: ${slots}/${MAX_SLOTS}` });
+    pendingTickets.delete(userId);
 
-  // Update embeds
-  await updateAllEmbeds();
+    await interaction.editReply({ content: `✅ <@${userId}> APPROVED! Slot: ${slots}/${MAX_SLOTS}` });
 
-  // Close thread
-  const thread = await client.channels.fetch(ticket.threadId);
-  await thread.send(`🎉 **REGISTRATION CONFIRMED!**\n\n✅ You're in slot #${slots}\n🎮 Get ready for ${activeTournament.title}!\n⏰ Time: ${activeTournament.time}`);
-  setTimeout(() => thread.setArchived(true), 5000);
+    await updateAllEmbeds();
+
+    const thread = await client.channels.fetch(ticket.threadId);
+    await thread.send(`🎉 **REGISTRATION CONFIRMED!**\n\n✅ You're in slot #${slots}\n🎮 Get ready for ${activeTournament.title}!\n⏰ Time: ${activeTournament.time}`);
+    setTimeout(() => thread.setArchived(true), 5000);
+  } catch (error) {
+    console.error('Error in handleApprove:', error);
+    await interaction.editReply({ content: '❌ Error approving registration.' });
+  }
 }
 
 // ===== STAFF REJECT =====
 async function handleReject(interaction) {
-  const userId = interaction.customId.split('_')[1];
-  const ticket = pendingTickets.get(userId);
-  
-  if (!ticket) return interaction.reply({ content: '❌ Ticket not found', ephemeral: true });
+  await interaction.deferReply();
 
-  pendingTickets.delete(userId);
+  try {
+    const userId = interaction.customId.split('_')[1];
+    const ticket = pendingTickets.get(userId);
+    
+    if (!ticket) {
+      return interaction.editReply({ content: '❌ Ticket not found' });
+    }
 
-  await interaction.reply({ content: `❌ <@${userId}> REJECTED.` });
+    pendingTickets.delete(userId);
 
-  const thread = await client.channels.fetch(ticket.threadId);
-  await thread.send('❌ **Registration rejected.** Contact staff for details.');
-  setTimeout(() => thread.setArchived(true), 5000);
+    await interaction.editReply({ content: `❌ <@${userId}> REJECTED.` });
+
+    const thread = await client.channels.fetch(ticket.threadId);
+    await thread.send('❌ **Registration rejected.** Contact staff for details.');
+    setTimeout(() => thread.setArchived(true), 5000);
+  } catch (error) {
+    console.error('Error in handleReject:', error);
+    await interaction.editReply({ content: '❌ Error rejecting registration.' });
+  }
 }
 
 // ===== UPDATE ALL EMBEDS =====
 async function updateAllEmbeds() {
-  // Update Tournament Updates
-  if (tournamentMessages.updates) {
-    const channel = await client.channels.fetch(CONFIG.TOURNAMENT_UPDATES);
-    const msg = await channel.messages.fetch(tournamentMessages.updates);
-    
-    const embed = Discord.EmbedBuilder.from(msg.embeds[0])
-      .setFields(
-        { name: '💰 Prize Pool', value: activeTournament.prize, inline: true },
-        { name: '🎟️ Entry Fee', value: activeTournament.entry, inline: true },
-        { name: '🎯 Mode', value: activeTournament.mode, inline: true },
-        { name: '⏰ Start Time', value: activeTournament.time, inline: true },
-        { name: '📊 Slots', value: generateSlotUI(), inline: false }
+  try {
+    if (tournamentMessages.updates) {
+      const channel = await client.channels.fetch(CONFIG.TOURNAMENT_UPDATES);
+      const msg = await channel.messages.fetch(tournamentMessages.updates);
+      
+      const embed = Discord.EmbedBuilder.from(msg.embeds[0])
+        .setFields(
+          { name: '💰 Prize Pool', value: activeTournament.prize, inline: true },
+          { name: '🎟️ Entry Fee', value: activeTournament.entry, inline: true },
+          { name: '🎯 Mode', value: activeTournament.mode, inline: true },
+          { name: '⏰ Start Time', value: activeTournament.time, inline: true },
+          { name: '📊 Slots', value: generateSlotUI(), inline: false }
+        );
+
+      const button = new Discord.ActionRowBuilder().addComponents(
+        new Discord.ButtonBuilder()
+          .setCustomId('join_tournament')
+          .setLabel(slots >= MAX_SLOTS ? '🔴 FULL' : '🎮 JOIN TOURNAMENT')
+          .setStyle(slots >= MAX_SLOTS ? Discord.ButtonStyle.Danger : Discord.ButtonStyle.Success)
+          .setDisabled(slots >= MAX_SLOTS)
       );
 
-    const button = new Discord.ActionRowBuilder().addComponents(
-      new Discord.ButtonBuilder()
-        .setCustomId('join_tournament')
-        .setLabel(slots >= MAX_SLOTS ? '🔴 FULL' : '🎮 JOIN TOURNAMENT')
-        .setStyle(slots >= MAX_SLOTS ? Discord.ButtonStyle.Danger : Discord.ButtonStyle.Success)
-        .setDisabled(slots >= MAX_SLOTS)
-    );
+      await msg.edit({ embeds: [embed], components: [button] });
+    }
 
-    await msg.edit({ embeds: [embed], components: [button] });
-  }
+    if (tournamentMessages.general) {
+      const channel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
+      const msg = await channel.messages.fetch(tournamentMessages.general);
+      
+      const embed = Discord.EmbedBuilder.from(msg.embeds[0])
+        .setFields(
+          { name: '📊 Slots Available', value: generateSlotUI(), inline: false }
+        );
 
-  // Update General Chat
-  if (tournamentMessages.general) {
-    const channel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
-    const msg = await channel.messages.fetch(tournamentMessages.general);
-    
-    const embed = Discord.EmbedBuilder.from(msg.embeds[0])
-      .setFields(
-        { name: '📊 Slots Available', value: generateSlotUI(), inline: false }
-      );
-
-    await msg.edit({ embeds: [embed] });
+      await msg.edit({ embeds: [embed] });
+    }
+  } catch (error) {
+    console.error('Error updating embeds:', error);
   }
 }
 
@@ -497,57 +570,68 @@ async function updateAllEmbeds() {
 async function autoSlotAnnouncements() {
   if (!activeTournament || slots >= MAX_SLOTS) return;
 
-  const channel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
-  
-  const remaining = MAX_SLOTS - slots;
-  
-  if (slots === 0) {
-    await channel.send(`🔥 **${activeTournament.title} IS LIVE!**\n\n💰 Prize: ${activeTournament.prize}\n⏰ Time: ${activeTournament.time}\n\n${generateSlotUI()}\n\n👉 Click JOIN button above!`);
-  } else if (remaining <= 10) {
-    await channel.send(`🚨 **HURRY! Only ${remaining} slots left!**\n\n${generateSlotUI()}`);
-  } else if (slots % 10 === 0) {
-    await channel.send(`📢 **${remaining} slots remaining!**\n\n${generateSlotUI()}`);
+  try {
+    const channel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
+    const remaining = MAX_SLOTS - slots;
+    
+    if (slots === 0) {
+      await channel.send(`🔥 **${activeTournament.title} IS LIVE!**\n\n💰 Prize: ${activeTournament.prize}\n⏰ Time: ${activeTournament.time}\n\n${generateSlotUI()}\n\n👉 Click JOIN button above!`);
+    } else if (remaining <= 10) {
+      await channel.send(`🚨 **HURRY! Only ${remaining} slots left!**\n\n${generateSlotUI()}`);
+    } else if (slots % 10 === 0) {
+      await channel.send(`📢 **${remaining} slots remaining!**\n\n${generateSlotUI()}`);
+    }
+  } catch (error) {
+    console.error('Error in auto announcements:', error);
   }
 }
 
-// ===== UPLOAD LEADERBOARD =====
+// ===== UPLOAD LEADERBOARD (FIXED WITH DEFER) =====
 async function uploadLeaderboard(interaction) {
-  const attachment = interaction.options.getAttachment('image');
-  
-  if (!attachment || !attachment.contentType?.startsWith('image/')) {
-    return interaction.reply({ content: '❌ Please upload an image!', ephemeral: true });
-  }
-
   await interaction.deferReply({ ephemeral: true });
 
-  // Post leaderboard in winners channel
-  const winnersChannel = await client.channels.fetch(CONFIG.WINNERS_CHANNEL);
-  
-  const embed = new Discord.EmbedBuilder()
-    .setTitle(`🏆 ${activeTournament.title} - RESULTS`)
-    .setDescription('**Congratulations to all winners!**')
-    .setImage(attachment.url)
-    .setColor('#FFD700')
-    .setTimestamp();
+  try {
+    const attachment = interaction.options.getAttachment('image');
+    
+    if (!attachment || !attachment.contentType?.startsWith('image/')) {
+      return interaction.editReply({ content: '❌ Please upload an image!' });
+    }
 
-  await winnersChannel.send({ embeds: [embed] });
+    const winnersChannel = await client.channels.fetch(CONFIG.WINNERS_CHANNEL);
+    
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`🏆 ${activeTournament.title} - RESULTS`)
+      .setDescription('**Congratulations to all winners!**')
+      .setImage(attachment.url)
+      .setColor('#FFD700')
+      .setTimestamp();
 
-  // Announce in general
-  const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
-  await generalChannel.send(`🏆 **${activeTournament.title} WINNERS ANNOUNCED!**\n\nCheck <#${CONFIG.WINNERS_CHANNEL}> for full leaderboard! 🎉`);
+    await winnersChannel.send({ embeds: [embed] });
 
-  await interaction.editReply({ content: '✅ Leaderboard posted!' });
+    const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHANNEL);
+    await generalChannel.send(`🏆 **${activeTournament.title} WINNERS ANNOUNCED!**\n\nCheck <#${CONFIG.WINNERS_CHANNEL}> for full leaderboard! 🎉`);
+
+    await interaction.editReply({ content: '✅ Leaderboard posted!' });
+  } catch (error) {
+    console.error('Error uploading leaderboard:', error);
+    await interaction.editReply({ content: '❌ Failed to upload leaderboard.' });
+  }
 }
 
 // ===== RESET TOURNAMENT =====
 async function resetTournament(interaction) {
-  activeTournament = null;
-  slots = 0;
-  tournamentParticipants = [];
-  tournamentMessages = { updates: null, general: null };
-  pendingTickets.clear();
-  
-  await interaction.reply({ content: '🔄 Tournament reset!', ephemeral: true });
+  try {
+    activeTournament = null;
+    slots = 0;
+    tournamentParticipants = [];
+    tournamentMessages = { updates: null, general: null };
+    pendingTickets.clear();
+    
+    await interaction.reply({ content: '🔄 Tournament reset!', ephemeral: true });
+  } catch (error) {
+    console.error('Error resetting tournament:', error);
+    await interaction.reply({ content: '❌ Error resetting tournament.', ephemeral: true });
+  }
 }
 
 // ===== LOGIN =====
