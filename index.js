@@ -50,7 +50,7 @@ const CONFIG = {
   ADMIN_ROLE: process.env.ADMIN_ROLE || '1438475461977047112', // Set admin role ID
   
   MIN_INVITES: 2,
-  QR_IMAGE: 'https://i.imghippo.com/files/BlpB6420nTE.jpg',
+  QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
   
   // Funny welcome messages
   WELCOME_MESSAGES: [
