@@ -1,5 +1,13 @@
 // ==================== OTO TOURNAMENT BOT - PROFESSIONAL EDITION ====================
-require('dotenv').config();
+// Load dotenv only if not in production
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    require('dotenv').config();
+  } catch (err) {
+    console.log('⚠️ dotenv not found, using environment variables');
+  }
+}
+
 const Discord = require('discord.js');
 const express = require('express');
 
@@ -43,12 +51,12 @@ const CONFIG = {
   
   // Staff and roles
   STAFF_ROLE: '1438475461977047112',
-  OWNER_ROLE: '1438443937588183110', // Set your owner role
+  OWNER_ROLE: 'OWNER_ROLE_ID', // Set your owner role
   
   // Settings
   MAX_SLOTS: 48,
   MIN_INVITES: 2,
-  QR_IMAGE: 'https://ibb.co/jkBSmkM3',
+  QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
   
   // Rules
   RULES: `📜 **OTO TOURNAMENT RULES**
