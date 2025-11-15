@@ -1,4 +1,26 @@
-// ==================== OTO ULTRA PROFESSIONAL TOURNAMENT BOT ====================
+let closedTickets = new Map();
+let tournamentSpamInterval = null;
+let tournamentCountdown = null;
+
+// Tournament spam settings
+const SPAM_SETTINGS = {
+  enabled: false,
+  interval: 300000, // 5 minutes default
+  countdownEnabled: false,
+  tournamentTime: null
+};
+let tournamentSpamInterval = null;
+let tournamentCountdown = null;
+
+// Tournament spam settings
+const SPAM_SETTINGS = {
+  enabled: false,
+  interval: 300000, // 5 minutes
+  countdownEnabled: false,
+  tournamentTime: null
+};
+
+// ==================== READY EVENT ====================// ==================== OTO ULTRA PROFESSIONAL TOURNAMENT BOT ====================
 if (process.env.NODE_ENV !== 'production') {
   try { require('dotenv').config(); } catch (err) { console.log('⚠️ Using environment variables'); }
 }
@@ -21,7 +43,7 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.GuildMembers,
     Discord.GatewayIntentBits.GuildInvites,
     Discord.GatewayIntentBits.DirectMessages,
-    Discord.GatewayIntentBits.GuildPresences,
+    // Removed GuildPresences - requires privileged intent
   ],
   partials: [Discord.Partials.Channel],
 });
@@ -507,6 +529,25 @@ async function registerCommands() {
       .setName('stafflist')
       .setDescription('📋 View all staff members')
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+
+    // ===== TOURNAMENT SPAM CONTROL =====
+    new SlashCommandBuilder()
+      .setName('autospam')
+      .setDescription('🔄 Enable/disable auto tournament announcements (Staff)')
+      .addBooleanOption(opt => opt.setName('enable').setDescription('Enable or disable').setRequired(true))
+      .addIntegerOption(opt => opt.setName('minutes').setDescription('Interval in minutes (default 5)'))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+
+    new SlashCommandBuilder()
+      .setName('spamnow')
+      .setDescription('📢 Spam tournament announcement now (Staff)')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+
+    new SlashCommandBuilder()
+      .setName('settimer')
+      .setDescription('⏰ Set tournament countdown timer (Staff)')
+      .addStringOption(opt => opt.setName('time').setDescription('Time (e.g., 7pm, 8:30pm)').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
   ];
 
   const body = commands.map(c => c.toJSON());
@@ -580,6 +621,9 @@ async function handleCommand(interaction) {
     'makestaff': handleMakeStaff,
     'removestaff': handleRemoveStaff,
     'stafflist': handleStaffList,
+    'autospam': handleAutoSpam,
+    'spamnow': handleSpamNow,
+    'settimer': handleSetTimer,
   };
 
   const handler = handlers[commandName];
@@ -1431,16 +1475,7 @@ async function handleStaffList(interaction) {
 
     const staffList = role.members
       .sort((a, b) => a.joinedTimestamp - b.joinedTimestamp)
-      .map((member, i) => {
-        const status = member.presence?.status || 'offline';
-        const statusEmoji = {
-          'online': '🟢',
-          'idle': '🟡',
-          'dnd': '🔴',
-          'offline': '⚫'
-        }[status];
-        return `${i + 1}. ${statusEmoji} ${member.user.tag} - <@${member.id}>`;
-      })
+      .map((member, i) => `${i + 1}. ${member.user.tag} - <@${member.id}>`)
       .join('\n');
 
     const embed = new Discord.EmbedBuilder()
@@ -1449,8 +1484,7 @@ async function handleStaffList(interaction) {
       .setColor('#3498db')
       .addFields(
         { name: '📊 Total Staff', value: `${role.members.size}`, inline: true },
-        { name: '🟢 Online', value: `${role.members.filter(m => m.presence?.status === 'online').size}`, inline: true },
-        { name: '⚫ Offline', value: `${role.members.filter(m => !m.presence || m.presence?.status === 'offline').size}`, inline: true }
+        { name: '🎮 Active', value: `${role.members.size}`, inline: true }
       )
       .setFooter({ text: 'OTO Staff Team' })
       .setTimestamp();
@@ -1463,6 +1497,126 @@ async function handleStaffList(interaction) {
   }
 }
 
+// ===== TOURNAMENT SPAM CONTROL =====
+async function handleAutoSpam(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const enable = interaction.options.getBoolean('enable');
+  const minutes = interaction.options.getInteger('minutes') || 5;
+
+  SPAM_SETTINGS.enabled = enable;
+  SPAM_SETTINGS.interval = minutes * 60000;
+
+  if (enable) {
+    if (!activeTournament || activeTournament.status !== 'registration') {
+      return interaction.editReply('❌ No active tournament to spam! Create one first.');
+    }
+
+    // Clear existing interval
+    if (tournamentSpamInterval) {
+      clearInterval(tournamentSpamInterval);
+    }
+
+    // Start spamming
+    tournamentSpamInterval = setInterval(async () => {
+      await spamTournamentAnnouncement();
+    }, SPAM_SETTINGS.interval);
+
+    await interaction.editReply(
+      `✅ **Auto-spam ENABLED!** 🔥\n\n` +
+      `Tournament will be announced every **${minutes} minutes** in general chat!\n\n` +
+      `Current slots: ${registeredPlayers.size}/${activeTournament.maxSlots}\n\n` +
+      `Use \`/autospam enable:false\` to stop.`
+    );
+
+    // Send first spam immediately
+    await spamTournamentAnnouncement();
+
+  } else {
+    if (tournamentSpamInterval) {
+      clearInterval(tournamentSpamInterval);
+      tournamentSpamInterval = null;
+    }
+
+    await interaction.editReply('✅ Auto-spam **DISABLED**! 🛑');
+  }
+}
+
+async function handleSpamNow(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  if (!activeTournament || activeTournament.status !== 'registration') {
+    return interaction.editReply('❌ No active tournament!');
+  }
+
+  await spamTournamentAnnouncement();
+  await interaction.editReply('✅ Tournament announcement sent! 📢');
+}
+
+async function spamTournamentAnnouncement() {
+  if (!activeTournament || activeTournament.status !== 'registration') return;
+
+  try {
+    const remaining = activeTournament.maxSlots - registeredPlayers.size;
+    const percentage = ((registeredPlayers.size / activeTournament.maxSlots) * 100).toFixed(0);
+
+    const messages = [
+      `🔥 **${activeTournament.title} - JOIN NOW!** 🔥\n\n💰 Prize: **${activeTournament.prizePool}**\n⏰ Time: **${activeTournament.scheduledTime}**\n📊 Slots: **${registeredPlayers.size}/${activeTournament.maxSlots}** (${percentage}% full)\n🎁 FREE ENTRY: Invite 2 friends!\n\n👉 Register: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 👈`,
+      
+      `⚡ **HURRY UP!** ⚡\n\n${activeTournament.title}\n💰 **${activeTournament.prizePool}** Prize Pool!\n📊 **${remaining} slots left!**\n⏰ Starts: **${activeTournament.scheduledTime}**\n\n🎮 Join karo: <#${CONFIG.ANNOUNCEMENT_CHANNEL}>`,
+      
+      `🎮 **OTO TOURNAMENT LIVE!** 🎮\n\n📢 ${activeTournament.title}\n💎 Win: **${activeTournament.prizePool}**\n⏰ ${activeTournament.scheduledTime}\n👥 ${registeredPlayers.size}/${activeTournament.maxSlots} registered\n\n✅ 2 invites = FREE entry!\nType -i to check invites!\n\nJoin: <#${CONFIG.ANNOUNCEMENT_CHANNEL}>`,
+      
+      `🚨 **TOURNAMENT ALERT!** 🚨\n\n${activeTournament.title} - ${activeTournament.scheduledTime}\n💰 Prize: ${activeTournament.prizePool}\n\n📊 Progress: ${generateProgressBar(registeredPlayers.size, activeTournament.maxSlots)}\n\nDon't miss out! <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 🔥`
+    ];
+
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+    const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+    await channel.send(randomMessage);
+
+    // Also update tournament schedule
+    const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+    const embed = createTournamentEmbed(activeTournament);
+    await scheduleChannel.send({ embeds: [embed] });
+
+  } catch (err) {
+    console.error('Spam error:', err);
+  }
+}
+
+async function handleSetTimer(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const time = interaction.options.getString('time');
+
+  if (!activeTournament) {
+    return interaction.editReply('❌ No active tournament!');
+  }
+
+  activeTournament.scheduledTime = time;
+  SPAM_SETTINGS.countdownEnabled = true;
+  SPAM_SETTINGS.tournamentTime = time;
+
+  await interaction.editReply(
+    `✅ **Timer set!** ⏰\n\n` +
+    `Tournament: ${activeTournament.title}\n` +
+    `Time: **${time}**\n\n` +
+    `Countdown will show in announcements!`
+  );
+
+  // Update announcement
+  const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+  await channel.send(
+    `⏰ **TOURNAMENT REMINDER!** ⏰\n\n` +
+    `${activeTournament.title}\n` +
+    `Starts at: **${time}**\n` +
+    `Prize: ${activeTournament.prizePool}\n\n` +
+    `📊 Current: ${registeredPlayers.size}/${activeTournament.maxSlots}\n\n` +
+    `Join now: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 🎮`
+  );
+}
+
 // ==================== BUTTON HANDLERS ====================
 async function handleButton(interaction) {
   const { customId } = interaction;
@@ -1473,7 +1627,166 @@ async function handleButton(interaction) {
     await handleCreateTicket(interaction);
   } else if (customId === 'select_winners') {
     await handleSelectWinners(interaction);
+  } else if (customId === 'close_ticket_confirm') {
+    await handleCloseTicketButton(interaction);
+  } else if (customId === 'ticket_add_to_tournament') {
+    await handleTicketAddToTournament(interaction);
   }
+}
+
+async function handleTicketAddToTournament(interaction) {
+  if (!isStaff(interaction.member)) {
+    return interaction.reply({ 
+      content: '❌ Only staff can add players to tournament!', 
+      ephemeral: true 
+    });
+  }
+
+  await interaction.deferReply();
+
+  const ticketData = tickets.get(interaction.channel.id);
+  if (!ticketData) {
+    return interaction.editReply('❌ Ticket data not found!');
+  }
+
+  const user = await client.users.fetch(ticketData.userId);
+
+  if (!activeTournament || activeTournament.status !== 'registration') {
+    return interaction.editReply('❌ No tournament in registration phase!');
+  }
+
+  if (registeredPlayers.has(user.id)) {
+    return interaction.editReply('⚠️ User already registered!');
+  }
+
+  if (registeredPlayers.size >= activeTournament.maxSlots) {
+    return interaction.editReply('❌ Tournament is full!');
+  }
+
+  // Add player
+  registeredPlayers.set(user.id, {
+    user,
+    joinedAt: new Date(),
+    approved: true,
+    addedByStaff: true,
+    viaTicket: true
+  });
+
+  updatePlayerStats(user.id, { tournaments: 1 });
+
+  // Success message in ticket
+  const successEmbed = new Discord.EmbedBuilder()
+    .setTitle('✅ Added to Tournament!')
+    .setDescription(
+      `${user} has been **added** to **${activeTournament.title}**!\n\n` +
+      `**Tournament Details:**\n` +
+      `💰 Prize: ${activeTournament.prizePool}\n` +
+      `⏰ Time: ${activeTournament.scheduledTime}\n` +
+      `📊 Your Position: ${registeredPlayers.size}/${activeTournament.maxSlots}\n\n` +
+      `**Room details will be sent via DM when tournament starts!**\n\n` +
+      `Added by: ${interaction.user}`
+    )
+    .setColor('#00ff00')
+    .setTimestamp();
+
+  await interaction.editReply({ embeds: [successEmbed] });
+
+  // DM user
+  try {
+    await user.send({
+      content: `✅ **You're IN!** 🎉\n\nYou've been added to **${activeTournament.title}** by staff!\n\n💰 Prize: ${activeTournament.prizePool}\n⏰ Time: ${activeTournament.scheduledTime}\n\nRoom details will be DMed when tournament starts! Good luck! 🍀`,
+      embeds: [successEmbed]
+    });
+  } catch (err) {}
+
+  // Announce in general
+  const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+  await generalChannel.send(
+    `🎮 **NEW PLAYER JOINED!**\n\n` +
+    `${user} registered for **${activeTournament.title}**!\n\n` +
+    `📊 Slots: **${registeredPlayers.size}/${activeTournament.maxSlots}**\n` +
+    `⏰ Starts: ${activeTournament.scheduledTime}\n` +
+    `💰 Prize: ${activeTournament.prizePool}\n\n` +
+    `${activeTournament.maxSlots - registeredPlayers.size} slots left! Join now: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 🔥`
+  );
+
+  // Update in tournament schedule
+  const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+  const tournamentEmbed = createTournamentEmbed(activeTournament);
+  await scheduleChannel.send({ embeds: [tournamentEmbed] });
+
+  // Disable button
+  const disabledButton = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('ticket_add_to_tournament')
+      .setLabel('✅ Already Added')
+      .setStyle(Discord.ButtonStyle.Success)
+      .setEmoji('🎮')
+      .setDisabled(true)
+  );
+
+  const messages = await interaction.channel.messages.fetch({ limit: 10 });
+  const firstMessage = messages.last();
+  if (firstMessage && firstMessage.components.length > 0) {
+    await firstMessage.edit({ components: [disabledButton] });
+  }
+}
+
+async function handleCloseTicketButton(interaction) {
+  if (!isStaff(interaction.member)) {
+    return interaction.reply({ content: '❌ Only staff can close tickets!', ephemeral: true });
+  }
+
+  await interaction.deferUpdate();
+
+  const channel = interaction.channel;
+  const ticketData = tickets.get(channel.id);
+
+  if (!ticketData) {
+    return interaction.followUp({ content: '❌ Ticket data not found!', ephemeral: true });
+  }
+
+  // Store for reopening
+  closedTickets.set(channel.id, {
+    ...ticketData,
+    closedBy: interaction.user.id,
+    closedAt: new Date(),
+    reason: 'Closed via button',
+    channelName: channel.name
+  });
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🔒 Ticket Closed')
+    .setDescription(
+      `**Closed by:** ${interaction.user}\n` +
+      `**Time:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
+      `This channel will be deleted in 10 seconds.\n\n` +
+      `Staff can reopen with:\n\`/reopenticket ticketid:${channel.name}\``
+    )
+    .setColor('#ff0000')
+    .setTimestamp();
+
+  await channel.send({ embeds: [embed] });
+
+  // DM user
+  try {
+    const user = await client.users.fetch(ticketData.userId);
+    await user.send(
+      `🔒 **Your ticket has been closed!**\n\n` +
+      `Closed by: ${interaction.user.tag}\n\n` +
+      `If you need more help, open a new ticket in <#${CONFIG.OPEN_TICKET}>!\n\n` +
+      `Thank you for contacting OTO support! 💙`
+    );
+  } catch (err) {}
+
+  setTimeout(async () => {
+    try {
+      await channel.delete();
+      tickets.delete(channel.id);
+    } catch (err) {
+      console.error('Error deleting ticket:', err);
+    }
+  }, 10000);
 }
 
 async function handleJoinButton(interaction) {
@@ -1550,7 +1863,7 @@ async function handleCreateTicket(interaction) {
   // Check existing ticket
   for (const [channelId, data] of tickets.entries()) {
     if (data.userId === interaction.user.id) {
-      return interaction.editReply(`⚠️ You already have a ticket: <#${channelId}>`);
+      return interaction.editReply(`⚠️ You already have a ticket: <#${channelId}>\nPlease use that one or wait for it to be closed!`);
     }
   }
 
@@ -1560,9 +1873,38 @@ async function handleCreateTicket(interaction) {
       type: Discord.ChannelType.GuildText,
       parent: interaction.channel.parent,
       permissionOverwrites: [
-        { id: interaction.guild.id, deny: [Discord.PermissionFlagsBits.ViewChannel] },
-        { id: interaction.user.id, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages] },
-        { id: CONFIG.STAFF_ROLE, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages, Discord.PermissionFlagsBits.ManageChannels] },
+        { 
+          id: interaction.guild.id, 
+          deny: [Discord.PermissionFlagsBits.ViewChannel] 
+        },
+        { 
+          id: interaction.user.id, 
+          allow: [
+            Discord.PermissionFlagsBits.ViewChannel, 
+            Discord.PermissionFlagsBits.SendMessages,
+            Discord.PermissionFlagsBits.ReadMessageHistory,
+            Discord.PermissionFlagsBits.AttachFiles
+          ] 
+        },
+        { 
+          id: CONFIG.STAFF_ROLE, 
+          allow: [
+            Discord.PermissionFlagsBits.ViewChannel, 
+            Discord.PermissionFlagsBits.SendMessages, 
+            Discord.PermissionFlagsBits.ManageChannels,
+            Discord.PermissionFlagsBits.ReadMessageHistory,
+            Discord.PermissionFlagsBits.AttachFiles,
+            Discord.PermissionFlagsBits.ManageMessages
+          ] 
+        },
+        {
+          id: client.user.id,
+          allow: [
+            Discord.PermissionFlagsBits.ViewChannel,
+            Discord.PermissionFlagsBits.SendMessages,
+            Discord.PermissionFlagsBits.ManageChannels
+          ]
+        }
       ],
     });
 
@@ -1571,21 +1913,74 @@ async function handleCreateTicket(interaction) {
     const embed = new Discord.EmbedBuilder()
       .setTitle('🎫 Support Ticket Created')
       .setDescription(
-        `Hello ${interaction.user}!\n\n` +
-        `Staff will help you shortly. Please explain your issue clearly!\n\n` +
-        `**Common Issues:**\n` +
-        `• Tournament registration problems\n` +
-        `• Invite count issues\n` +
-        `• Report players\n` +
-        `• General queries`
+        `Hello ${interaction.user}! 👋\n\n` +
+        `Thank you for opening a support ticket. Our staff team will assist you shortly!\n\n` +
+        `**📝 Please provide:**\n` +
+        `• Detailed description of your issue\n` +
+        `• Screenshots (if applicable)\n` +
+        `• Any error messages\n\n` +
+        `**⏰ Response Time:** Usually within 5-30 minutes\n` +
+        `**✅ Guidelines:**\n` +
+        `• Be patient and respectful\n` +
+        `• Provide all details clearly\n` +
+        `• Wait for staff response\n` +
+        `• Do not spam or tag staff\n\n` +
+        `**Staff will be with you soon!** 💪`
       )
       .setColor('#3498db')
-      .setFooter({ text: 'Be patient! Staff will respond soon.' });
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
+      .setFooter({ text: 'OTO Support System' })
+      .setTimestamp();
 
-    await ticketChannel.send({ content: `${interaction.user} <@&${CONFIG.STAFF_ROLE}>`, embeds: [embed] });
-    await interaction.editReply(`✅ Ticket created! <#${ticketChannel.id}>`);
+    const buttonRow = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId('close_ticket_confirm')
+        .setLabel('🔒 Close Ticket')
+        .setStyle(Discord.ButtonStyle.Danger)
+    );
+
+    // Check if user wants to join tournament
+    const tournamentButton = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId('ticket_add_to_tournament')
+        .setLabel('➕ Add Me to Tournament')
+        .setStyle(Discord.ButtonStyle.Success)
+        .setEmoji('🎮')
+        .setDisabled(!activeTournament || activeTournament.status !== 'registration')
+    );
+
+    await ticketChannel.send({ 
+      content: `${interaction.user} <@&${CONFIG.STAFF_ROLE}>`, 
+      embeds: [embed],
+      components: activeTournament && activeTournament.status === 'registration' 
+        ? [tournamentButton, buttonRow] 
+        : [buttonRow]
+    });
+
+    // Notify staff chat
+    try {
+      const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+      if (staffChannel) {
+        const staffNotif = new Discord.EmbedBuilder()
+          .setTitle('🎫 New Support Ticket')
+          .setDescription(
+            `**User:** ${interaction.user} (${interaction.user.tag})\n` +
+            `**Channel:** <#${ticketChannel.id}>\n` +
+            `**User Invites:** ${userInvites.get(interaction.user.id) || 0}\n` +
+            `**Registered:** ${registeredPlayers.has(interaction.user.id) ? '✅ Yes' : '❌ No'}`
+          )
+          .setColor('#ff9900')
+          .setTimestamp();
+        
+        await staffChannel.send({ content: `<@&${CONFIG.STAFF_ROLE}>`, embeds: [staffNotif] });
+      }
+    } catch (err) {}
+    
+    await interaction.editReply(`✅ Ticket created! Please go to <#${ticketChannel.id}> 🎫`);
+
   } catch (err) {
-    await interaction.editReply('❌ Could not create ticket! Contact staff directly.');
+    console.error('Ticket creation error:', err);
+    await interaction.editReply('❌ Failed to create ticket! Contact staff directly or try again later.');
   }
 }
 
