@@ -21,6 +21,7 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.GuildMembers,
     Discord.GatewayIntentBits.GuildInvites,
     Discord.GatewayIntentBits.DirectMessages,
+    Discord.GatewayIntentBits.GuildPresences,
   ],
   partials: [Discord.Partials.Channel],
 });
@@ -43,11 +44,13 @@ const CONFIG = {
   MATCH_REPORTS: '1438486113047150714',
   LEADERBOARD_CHANNEL: '1438947356690223347',
   STAFF_TOOLS: '1438486059255336970',
+  STAFF_CHAT: '1438486059255336970', // Staff only chat
   
   STAFF_ROLE: '1438475461977047112',
+  ADMIN_ROLE: process.env.ADMIN_ROLE || '1438475461977047112', // Set admin role ID
   
   MIN_INVITES: 2,
-  QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
+  QR_IMAGE: 'https://i.imghippo.com/files/BlpB6420nTE.jpg',
   
   // Funny welcome messages
   WELCOME_MESSAGES: [
@@ -256,22 +259,78 @@ let warnings = new Map();
 let tickets = new Map();
 let inviteCache = new Map();
 let firstTimeUsers = new Set();
+let staffMembers = new Set();
+let closedTickets = new Map();
 
 // ==================== READY EVENT ====================
 client.once('ready', async () => {
   console.log(`🚀 ${client.user.tag} is ONLINE!`);
+  console.log(`📊 Serving ${client.guilds.cache.size} server(s)`);
   
   try {
     await client.user.setActivity('🏆 /help | OTO Tournaments', { type: Discord.ActivityType.Competing });
     await registerCommands();
     await initializeInviteTracking();
+    await loadStaffMembers();
     startAutomatedTasks();
     await setupPersistentMessages();
+    await sendStaffWelcome();
     console.log('✅ Bot fully initialized!');
   } catch (err) {
     console.error('❌ Init error:', err);
   }
 });
+
+// Load staff members on startup
+async function loadStaffMembers() {
+  try {
+    for (const guild of client.guilds.cache.values()) {
+      const role = await guild.roles.fetch(CONFIG.STAFF_ROLE);
+      if (role) {
+        role.members.forEach(member => staffMembers.add(member.id));
+        console.log(`✅ Loaded ${role.members.size} staff members`);
+      }
+    }
+  } catch (err) {
+    console.error('Error loading staff:', err);
+  }
+}
+
+// Send welcome message to staff chat
+async function sendStaffWelcome() {
+  try {
+    const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+    if (!staffChannel) return;
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('👮 OTO Staff Panel - Welcome!')
+      .setDescription(
+        `**Bot is now ONLINE and ready!** 🎉\n\n` +
+        `**Quick Staff Commands:**\n` +
+        `• \`/create\` - Create new tournament\n` +
+        `• \`/start <roomid>\` - Start tournament\n` +
+        `• \`/end\` - End tournament\n` +
+        `• \`/add <user>\` - Add player\n` +
+        `• \`/remove <user>\` - Remove player\n` +
+        `• \`/participants\` - View all players\n` +
+        `• \`/makestaff <user>\` - Promote to staff\n` +
+        `• \`/removestaff <user>\` - Demote staff\n\n` +
+        `**Moderation:**\n` +
+        `• \`/warn <user>\` - Warn player\n` +
+        `• \`/timeout <user>\` - Timeout player\n` +
+        `• \`/block <user>\` - Block from tournaments\n\n` +
+        `**All permissions are set up! Ready to manage tournaments!** 💪`
+      )
+      .setColor('#00ff00')
+      .setThumbnail(CONFIG.QR_IMAGE)
+      .setFooter({ text: 'OTO Tournament Management System' })
+      .setTimestamp();
+
+    await staffChannel.send({ embeds: [embed] });
+  } catch (err) {
+    console.error('Error sending staff welcome:', err);
+  }
+}
 
 // ==================== SLASH COMMANDS ====================
 async function registerCommands() {
@@ -424,6 +483,30 @@ async function registerCommands() {
       .setDescription('🔒 Close support ticket (Staff)')
       .addStringOption(opt => opt.setName('reason').setDescription('Reason'))
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+
+    new SlashCommandBuilder()
+      .setName('reopenticket')
+      .setDescription('🔓 Reopen closed ticket (Staff)')
+      .addStringOption(opt => opt.setName('ticketid').setDescription('Ticket channel name').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+
+    // ===== STAFF MANAGEMENT =====
+    new SlashCommandBuilder()
+      .setName('makestaff')
+      .setDescription('👮 Promote user to staff (Admin only)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to promote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+    new SlashCommandBuilder()
+      .setName('removestaff')
+      .setDescription('👤 Remove staff role (Admin only)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to demote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+    new SlashCommandBuilder()
+      .setName('stafflist')
+      .setDescription('📋 View all staff members')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
   ];
 
   const body = commands.map(c => c.toJSON());
@@ -493,6 +576,10 @@ async function handleCommand(interaction) {
     'announce': handleAnnounce,
     'history': handleHistory,
     'closeticket': handleCloseTicket,
+    'reopenticket': handleReopenTicket,
+    'makestaff': handleMakeStaff,
+    'removestaff': handleRemoveStaff,
+    'stafflist': handleStaffList,
   };
 
   const handler = handlers[commandName];
@@ -1083,19 +1170,297 @@ async function handleCloseTicket(interaction) {
     return interaction.editReply('❌ This only works in ticket channels!');
   }
 
+  const ticketData = tickets.get(channel.id);
+  if (!ticketData) {
+    return interaction.editReply('❌ Ticket data not found!');
+  }
+
+  // Store closed ticket info
+  closedTickets.set(channel.id, {
+    ...ticketData,
+    closedBy: interaction.user.id,
+    closedAt: new Date(),
+    reason,
+    channelName: channel.name
+  });
+
   const embed = new Discord.EmbedBuilder()
-    .setTitle('🔒 Ticket Closing')
-    .setDescription(`Closing in 5 seconds...\n\n**Reason:** ${reason}\n**Closed by:** ${interaction.user.tag}`)
-    .setColor('#ff0000');
+    .setTitle('🔒 Ticket Closed')
+    .setDescription(
+      `**Reason:** ${reason}\n` +
+      `**Closed by:** ${interaction.user}\n\n` +
+      `This channel will be deleted in 10 seconds.\n` +
+      `Staff can reopen with: \`/reopenticket ticketid:${channel.name}\``
+    )
+    .setColor('#ff0000')
+    .setTimestamp();
 
   await interaction.editReply({ embeds: [embed] });
+  await channel.send({ embeds: [embed] });
+
+  // Notify user via DM
+  try {
+    const user = await client.users.fetch(ticketData.userId);
+    await user.send({
+      content: `🔒 **Your ticket has been closed!**\n\n` +
+      `**Reason:** ${reason}\n` +
+      `**Closed by:** ${interaction.user.tag}\n\n` +
+      `If you need more help, open a new ticket in <#${CONFIG.OPEN_TICKET}>!`
+    });
+  } catch (err) {
+    console.log('Could not DM user');
+  }
 
   setTimeout(async () => {
     try {
       await channel.delete();
       tickets.delete(channel.id);
+    } catch (err) {
+      console.error('Error deleting ticket:', err);
+    }
+  }, 10000);
+}
+
+async function handleReopenTicket(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const ticketId = interaction.options.getString('ticketid');
+  
+  // Find closed ticket
+  let ticketData = null;
+  for (const [channelId, data] of closedTickets.entries()) {
+    if (data.channelName === ticketId) {
+      ticketData = data;
+      closedTickets.delete(channelId);
+      break;
+    }
+  }
+
+  if (!ticketData) {
+    return interaction.editReply('❌ Ticket not found or already reopened!');
+  }
+
+  try {
+    const user = await client.users.fetch(ticketData.userId);
+    
+    // Create new ticket channel
+    const ticketChannel = await interaction.guild.channels.create({
+      name: ticketData.channelName,
+      type: Discord.ChannelType.GuildText,
+      parent: interaction.channel.parent,
+      permissionOverwrites: [
+        { id: interaction.guild.id, deny: [Discord.PermissionFlagsBits.ViewChannel] },
+        { id: user.id, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages] },
+        { id: CONFIG.STAFF_ROLE, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages, Discord.PermissionFlagsBits.ManageChannels] },
+      ],
+    });
+
+    tickets.set(ticketChannel.id, { userId: user.id, createdAt: new Date(), reopened: true });
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🔓 Ticket Reopened')
+      .setDescription(
+        `Hello ${user}!\n\n` +
+        `Your ticket has been **reopened** by ${interaction.user}!\n\n` +
+        `**Previous Close Reason:** ${ticketData.reason || 'N/A'}\n\n` +
+        `Continue your conversation here. Staff will assist you!`
+      )
+      .setColor('#00ff00')
+      .setTimestamp();
+
+    await ticketChannel.send({ content: `${user} <@&${CONFIG.STAFF_ROLE}>`, embeds: [embed] });
+    
+    // DM user
+    try {
+      await user.send(`🔓 Your ticket has been **reopened**! Check: <#${ticketChannel.id}>`);
     } catch (err) {}
-  }, 5000);
+
+    await interaction.editReply(`✅ Ticket reopened! <#${ticketChannel.id}>`);
+
+  } catch (err) {
+    console.error('Reopen error:', err);
+    await interaction.editReply('❌ Failed to reopen ticket!');
+  }
+}
+
+// ===== STAFF MANAGEMENT =====
+async function handleMakeStaff(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  
+  const user = interaction.options.getUser('user');
+  
+  try {
+    const member = await interaction.guild.members.fetch(user.id);
+    const role = await interaction.guild.roles.fetch(CONFIG.STAFF_ROLE);
+    
+    if (!role) {
+      return interaction.editReply('❌ Staff role not found! Check CONFIG.STAFF_ROLE');
+    }
+
+    if (member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+      return interaction.editReply('⚠️ User is already staff!');
+    }
+
+    await member.roles.add(role);
+    staffMembers.add(user.id);
+
+    // Send welcome to staff chat
+    const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+    if (staffChannel) {
+      const welcomeEmbed = new Discord.EmbedBuilder()
+        .setTitle('🎉 New Staff Member!')
+        .setDescription(
+          `Welcome ${user} to the OTO staff team! 👮\n\n` +
+          `**Promoted by:** ${interaction.user}\n` +
+          `**Date:** <t:${Math.floor(Date.now() / 1000)}:F>\n\n` +
+          `**Staff Responsibilities:**\n` +
+          `• Manage tournaments\n` +
+          `• Handle player issues\n` +
+          `• Moderate community\n` +
+          `• Respond to tickets\n\n` +
+          `**Use \`/help\` to see all staff commands!**`
+        )
+        .setColor('#00ff00')
+        .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: 'Welcome to the team!' })
+        .setTimestamp();
+
+      await staffChannel.send({ content: `<@&${CONFIG.STAFF_ROLE}> ${user}`, embeds: [welcomeEmbed] });
+    }
+
+    // DM the new staff member
+    try {
+      const dmEmbed = new Discord.EmbedBuilder()
+        .setTitle('🎉 Congratulations! You are now OTO Staff!')
+        .setDescription(
+          `You have been promoted to **Staff** by ${interaction.user.tag}!\n\n` +
+          `**Your Powers:**\n` +
+          `• Create & manage tournaments\n` +
+          `• Add/remove players\n` +
+          `• Warn & timeout users\n` +
+          `• Handle support tickets\n` +
+          `• Manage invites\n\n` +
+          `**Important Channels:**\n` +
+          `• Staff Chat: <#${CONFIG.STAFF_CHAT}>\n` +
+          `• Staff Tools: <#${CONFIG.STAFF_TOOLS}>\n\n` +
+          `**Quick Commands:**\n` +
+          `\`/help\` - See all commands\n` +
+          `\`/create\` - Create tournament\n` +
+          `\`/participants\` - View players\n\n` +
+          `**Welcome to the team! 💪**`
+        )
+        .setColor('#ffd700')
+        .setThumbnail(CONFIG.QR_IMAGE)
+        .setFooter({ text: 'Be responsible and fair!' });
+
+      await user.send({ embeds: [dmEmbed] });
+    } catch (err) {
+      console.log('Could not DM new staff');
+    }
+
+    await interaction.editReply(`✅ ${user.tag} is now **Staff**! Welcome message sent! 🎉`);
+
+  } catch (err) {
+    console.error('Make staff error:', err);
+    await interaction.editReply(`❌ Failed to promote user: ${err.message}`);
+  }
+}
+
+async function handleRemoveStaff(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  
+  const user = interaction.options.getUser('user');
+  
+  try {
+    const member = await interaction.guild.members.fetch(user.id);
+    const role = await interaction.guild.roles.fetch(CONFIG.STAFF_ROLE);
+    
+    if (!role) {
+      return interaction.editReply('❌ Staff role not found!');
+    }
+
+    if (!member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+      return interaction.editReply('⚠️ User is not staff!');
+    }
+
+    await member.roles.remove(role);
+    staffMembers.delete(user.id);
+
+    // Notify staff chat
+    const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+    if (staffChannel) {
+      const embed = new Discord.EmbedBuilder()
+        .setTitle('👤 Staff Member Removed')
+        .setDescription(
+          `${user} is no longer staff.\n\n` +
+          `**Removed by:** ${interaction.user}\n` +
+          `**Date:** <t:${Math.floor(Date.now() / 1000)}:F>`
+        )
+        .setColor('#ff0000')
+        .setTimestamp();
+
+      await staffChannel.send({ embeds: [embed] });
+    }
+
+    // DM the user
+    try {
+      await user.send(
+        `👤 You have been **removed from staff** in OTO Tournament.\n\n` +
+        `Removed by: ${interaction.user.tag}\n\n` +
+        `You can still participate in tournaments as a regular member!`
+      );
+    } catch (err) {}
+
+    await interaction.editReply(`✅ ${user.tag} removed from staff!`);
+
+  } catch (err) {
+    console.error('Remove staff error:', err);
+    await interaction.editReply(`❌ Failed to demote user: ${err.message}`);
+  }
+}
+
+async function handleStaffList(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    const role = await interaction.guild.roles.fetch(CONFIG.STAFF_ROLE);
+    
+    if (!role || role.members.size === 0) {
+      return interaction.editReply('❌ No staff members found!');
+    }
+
+    const staffList = role.members
+      .sort((a, b) => a.joinedTimestamp - b.joinedTimestamp)
+      .map((member, i) => {
+        const status = member.presence?.status || 'offline';
+        const statusEmoji = {
+          'online': '🟢',
+          'idle': '🟡',
+          'dnd': '🔴',
+          'offline': '⚫'
+        }[status];
+        return `${i + 1}. ${statusEmoji} ${member.user.tag} - <@${member.id}>`;
+      })
+      .join('\n');
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('👮 OTO Staff Members')
+      .setDescription(staffList)
+      .setColor('#3498db')
+      .addFields(
+        { name: '📊 Total Staff', value: `${role.members.size}`, inline: true },
+        { name: '🟢 Online', value: `${role.members.filter(m => m.presence?.status === 'online').size}`, inline: true },
+        { name: '⚫ Offline', value: `${role.members.filter(m => !m.presence || m.presence?.status === 'offline').size}`, inline: true }
+      )
+      .setFooter({ text: 'OTO Staff Team' })
+      .setTimestamp();
+
+    await interaction.editReply({ embeds: [embed] });
+
+  } catch (err) {
+    console.error('Staff list error:', err);
+    await interaction.editReply('❌ Failed to fetch staff list!');
+  }
 }
 
 // ==================== BUTTON HANDLERS ====================
