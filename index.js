@@ -1,22 +1,18 @@
-// ==================== OTO ULTRA PROFESSIONAL TOURNAMENT BOT - 2500+ LINES ====================
+// ==================== OTO SUPER TOURNAMENT BOT - COMPLETE SYSTEM ====================
 if (process.env.NODE_ENV !== 'production') {
   try { require('dotenv').config(); } catch (err) { console.log('⚠️ Using environment variables'); }
 }
 
 const Discord = require('discord.js');
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 
 const BOT_TOKEN = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN;
-const OWNER_ID = process.env.OWNER_ID || 'YOUR_DISCORD_ID_HERE';
-
 if (!BOT_TOKEN) {
   console.error('❌ No bot token found!');
   process.exit(1);
 }
 
-// ==================== ENHANCED CLIENT SETUP ====================
+// ==================== CLIENT SETUP ====================
 const client = new Discord.Client({
   intents: [
     Discord.GatewayIntentBits.Guilds,
@@ -25,28 +21,19 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.GuildMembers,
     Discord.GatewayIntentBits.GuildInvites,
     Discord.GatewayIntentBits.DirectMessages,
-    Discord.GatewayIntentBits.GuildPresences,
-    Discord.GatewayIntentBits.GuildMessageReactions,
   ],
-  partials: [Discord.Partials.Channel, Discord.Partials.Message, Discord.Partials.Reaction],
+  partials: [Discord.Partials.Channel],
 });
 
-// Express server for monitoring
+// Express server
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(express.json());
-app.get('/', (req, res) => res.send('🏆 OTO Tournament Bot Active - Professional Edition'));
-app.get('/health', (req, res) => res.json({ 
-  status: 'online', 
-  features: 2500,
-  tournaments: serverStats.totalTournaments,
-  players: userStats.size
-}));
-app.listen(PORT, () => console.log(`✅ Professional server running on port ${PORT}`));
+app.get('/', (req, res) => res.send('🏆 OTO Super Bot Active'));
+app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));
 
-// ==================== PROFESSIONAL CONFIGURATION ====================
+// ==================== CONFIGURATION ====================
 const CONFIG = {
-  // Channel IDs
+  // Channels
   ANNOUNCEMENT_CHANNEL: '1438484746165555243',
   TOURNAMENT_SCHEDULE: '1438482561679626303',
   HOW_TO_JOIN: '1438482512296022017',
@@ -59,548 +46,197 @@ const CONFIG = {
   STAFF_TOOLS: '1438486059255336970',
   STAFF_CHAT: '1438486059255336970',
   PAYMENT_PROOF: '1438486113047150714',
+  INVITE_TRACKER: '1439216884774998107',
+  MINECRAFT_CHANNEL: '1439223955960627421',
+  MOST_PLAYED: '1439226024863993988',
   
-  // Role IDs
   STAFF_ROLE: '1438475461977047112',
   ADMIN_ROLE: '1438475461977047112',
-  PREMIUM_ROLE: '1438475461977047113',
   
-  // Tournament Settings
-  MIN_INVITES: 2,
-  MAX_TOURNAMENT_HISTORY: 100,
-  AUTO_BACKUP_INTERVAL: 3600000, // 1 hour
-  SLOT_ALERTS: [10, 5, 3, 1],
+  // Settings
+  MIN_INVITES_FREE_ENTRY: 10,
+  REWARD_INVITES: 10,
+  AUTO_DELETE_TICKET_MINUTES: 10,
+  SPAM_INTERVAL: 120000, // 2 minutes
   
-  // Images & Media
   QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
-  BANNER_IMAGE: 'https://i.ibb.co/8XQkZhJ/freefire.png',
   
-  // Enhanced Game Images
-  GAME_IMAGES: {
-    'Free Fire': 'https://i.ibb.co/8XQkZhJ/freefire.png',
-    'Minecraft': 'https://i.ibb.co/VgTY8Lq/minecraft.png',
-    'PUBG Mobile': 'https://i.ibb.co/0Q8Lz3C/pubg.jpg',
-    'COD Mobile': 'https://i.ibb.co/0jR7Z2B/cod.jpg',
-    'Valorant': 'https://i.ibb.co/0mR0R3B/valorant.jpg',
-    'BGMI': 'https://i.ibb.co/0Q8Lz3C/pubg.jpg',
-    'Clash Royale': 'https://i.ibb.co/0jR7Z2B/cod.jpg',
-    'Custom': 'https://i.ibb.co/jkBSmkM/qr.png'
-  },
+  // Bad words filter
+  BAD_WORDS: ['dm', 'mc', 'bc', 'maa ki chut', 'tmkc', 'bkl', 'lawde', 'madarchod', 'bhenchod', 'chutiya', 'lund', 'gandu', 'randi'],
   
-  // Payment Methods
-  PAYMENT_METHODS: {
-    'UPI': { name: '💳 UPI', id: 'yourupi@okaxis' },
-    'PayTM': { name: '💰 PayTM', number: '9876543210' },
-    'PhonePe': { name: '📱 PhonePe', id: 'yourphonepe@ybl' },
-    'GPay': { name: '🅖 Google Pay', number: '9876543210' },
-    'Bank': { name: '🏦 Bank Transfer', details: 'ACC: XXXX XXXX XXXX' }
-  },
-
-  // Professional Tournament Templates
-  TOURNAMENT_TEMPLATES: {
-    'free_500': { 
-      prize: '₹500', 
-      entry: 'Free', 
-      slots: 50, 
-      time: '7pm IST',
-      duration: '2 hours',
-      type: 'solo'
-    },
-    'paid_20': { 
-      prize: '₹1000', 
-      entry: '₹20', 
-      slots: 50, 
-      time: '8pm IST',
-      duration: '2 hours',
-      type: 'solo'
-    },
-    'paid_50': { 
-      prize: '₹2500', 
-      entry: '₹50', 
-      slots: 50, 
-      time: '9pm IST',
-      duration: '3 hours',
-      type: 'duo'
-    },
-    'paid_100': { 
-      prize: '₹5000', 
-      entry: '₹100', 
-      slots: 100, 
-      time: '10pm IST',
-      duration: '3 hours',
-      type: 'squad'
-    },
-    'mega': { 
-      prize: '₹10000', 
-      entry: '₹200', 
-      slots: 100, 
-      time: '9pm IST',
-      duration: '4 hours',
-      type: 'squad'
-    },
-  },
-  
-  // Enhanced Messages
+  // Welcome messages (50+)
   WELCOME_MESSAGES: [
-    '🔥 {user} joined the arena! Tournament ready? 💪',
-    '🎮 Welcome {user}! Let\'s conquer together! 🔥',
-    '💫 Boss {user} entered! Show them your skills! 🏆',
-    '⚡ {user} is here! OTO champion in making! 🎯',
-    '🌟 {user} welcome to OTO! Big wins await! 💰',
+    '🔥 Apna bhai {user} aa gaya! Machaayega ab! Welcome to OTO family! 💪',
+    '⚡ {user} has entered the chat! New bruh in the house! Let\'s gooo! 🎮',
+    '🎯 Yooo {user}! Welcome bro! Tournament khelne ka time aa gaya! 🏆',
+    '💥 {user} joined the server! Apna banda aa gaya! Swagat hai! 🎉',
+    '🌟 Welcome {user}! New player unlocked! Ready to dominate? 💪',
+    '🔥 {user} bhai! Finally aa hi gaye! OTO ka naya warrior! ⚔️',
+    '⚡ {user} is here! Fresh blood! Let\'s see your skills! 🎮',
+    '🎮 {user} ne entry maar di! Welcome to the arena! 🏟️',
+    '💪 {user} joined! Another soldier in OTO army! Jai Hind! 🇮🇳',
+    '🏆 {user} welcome! Champion material detected! 👑',
+    '🚀 {user} landed! Get ready to conquer! 🎯',
+    '⭐ {user} aa gaye! Party shuru karo! 🎊',
+    '🎪 {user} joined the circus! Wait... tournament! 😂',
+    '🦁 {user} roared in! King vibes! 👑',
+    '🌪️ {user} storm incoming! 🔥',
+    '💎 {user} precious addition hai! Welcome! ✨',
+    '🎸 {user} rockstar entry! 🤘',
+    '🏅 {user} medalist incoming! 🥇',
+    '🎯 {user} target locked! Welcome! 🎮',
+    '⚡ {user} lightning strike! Boom! 💥',
   ],
   
-  LEAVE_MESSAGES: [
-    '😢 {user} left the battlefield... Come back soon! 👋',
-    '💔 {user} has departed... We\'ll miss you! 🥺',
-    '🚶 {user} signed out... See you next tournament! ✌️',
+  // Staff welcome messages (40+)
+  STAFF_WELCOME_MESSAGES: [
+    'Bhai tumhe ab hard work karna hai! OTO ko best banana hai! 💪',
+    'Welcome to the team! Mehnat karo, success milegi! 🌟',
+    'Staff ban gaye! Ab responsibility bhi hai! Let\'s make OTO great! 🔥',
+    'Congratulations! Now prove yourself! Work hard! 💯',
+    'New staff! Dedication dikhao! OTO depends on you! ⚡',
+    'Hardwork + Dedication = Success! Show us your potential! 🚀',
+    'Be the change OTO needs! Work smart, work hard! 💼',
+    'You\'re chosen! Make every day count! 🎯',
+    'Staff power comes with responsibility! Use it wisely! 🦸',
+    'Welcome aboard! Let\'s build something amazing! 🏗️',
+    'Your journey as staff starts now! Make it legendary! 📖',
+    'Discipline, dedication, determination - your 3 Ds! 💪',
+    'Show them what leadership looks like! 👔',
+    'Be the staff everyone respects! 🙏',
+    'Hard work beats talent when talent doesn\'t work hard! 💼',
   ],
-  
-  // Smart Auto Responses
-  AUTO_RESPONSES: {
-    'tournament': ['Check <#1438482561679626303> for upcoming tournaments! 🎮', 'Use `/tournament` for current event! ⚡'],
-    'free entry': [`Invite ${CONFIG.MIN_INVITES} friends for FREE entry! Use \`/invites\` to check! 🔗`],
-    'kab': ['Schedule available in <#1438482561679626303>! ⏰', 'Use `/schedule` for tournament timings! 🕒'],
-    'help': ['Type `/help` for complete guide! 🤖', 'Need assistance? Check `/help` command! 💡'],
-    'payment': ['Use `/pay` command for payment submission! 💰', 'Payment issues? Create ticket in <#1438485759891079180>! 🎫'],
-    'winner': ['Check `/leaderboard` for top players! 🏆', 'Use `/history` for past tournaments! 📜'],
+};
+
+// ==================== GAME TEMPLATES ====================
+const GAME_TEMPLATES = {
+  freefire: {
+    name: 'Free Fire',
+    emoji: '🔥',
+    types: ['Solo', 'Duo', 'Squad'],
+    maps: ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine'],
+    defaultSlots: 48,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+      'Top 5': { 1: 50, 2: 25, 3: 15, 4: 7, 5: 3 },
+    }
   },
-  
-  // Professional Rules System
-  RULES: {
-    general: `📜 **OTO TOURNAMENT RULES - GENERAL**
-1️⃣ Respect all players and staff
-2️⃣ No cheating, hacking, or exploiting
-3️⃣ Fair play only - no teaming in solo
-4️⃣ Stable internet connection required
-5️⃣ Join matches within 5 minutes of start
-6️⃣ Follow room ID and password instructions
-7️⃣ Screenshot proof required for disputes
-8️⃣ Staff decisions are final`,
-
-    payment: `💰 **PAYMENT & REFUND POLICY**
-• Payments must be completed before tournament start
-• Refunds only if tournament is cancelled
-• Payment proofs must be clear and valid
-• Fake payments result in permanent ban
-• Contact staff for payment issues`,
-
-    prizes: `🏆 **PRIZE DISTRIBUTION**
-• 1st Place: 50% of prize pool + Certificate
-• 2nd Place: 30% of prize pool + Certificate  
-• 3rd Place: 20% of prize pool + Certificate
-• Prizes distributed within 24 hours of tournament end
-• Certificate delivered via DM`
+  minecraft: {
+    name: 'Minecraft',
+    emoji: '⛏️',
+    types: ['Solo', 'Teams', 'Custom'],
+    maps: ['Custom', 'Survival', 'Creative', 'Bedwars'],
+    defaultSlots: 32,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+    }
+  },
+  pubg: {
+    name: 'PUBG Mobile',
+    emoji: '🎯',
+    types: ['Solo', 'Duo', 'Squad'],
+    maps: ['Erangel', 'Miramar', 'Sanhok', 'Vikendi'],
+    defaultSlots: 48,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+    }
   }
 };
 
-// ==================== ADVANCED DATA MANAGEMENT ====================
-class DataManager {
-  constructor() {
-    this.activeTournament = null;
-    this.tournamentHistory = [];
-    this.registeredPlayers = new Map();
-    this.userInvites = new Map();
-    this.userStats = new Map();
-    this.bannedUsers = new Map(); // Now stores reason and date
-    this.warnings = new Map();
-    this.tickets = new Map();
-    this.inviteCache = new Map();
-    this.firstTimeUsers = new Set();
-    this.staffMembers = new Set();
-    this.paymentPending = new Map();
-    this.userTransactions = new Map();
-    this.tournamentQueue = [];
-    this.backupSchedule = new Map();
-    this.achievements = new Map();
-    this.premiumUsers = new Set();
-    
-    this.serverStats = {
-      totalTournaments: 0,
-      totalPrizes: 0,
-      totalPlayers: 0,
-      activeUsers: new Set(),
-      totalMessages: 0,
-      totalInvites: 0,
-      startDate: new Date()
-    };
+// ==================== DATA STORAGE ====================
+let tournaments = new Map();
+let activeTournament = null;
+let registeredPlayers = new Map();
+let userInvites = new Map();
+let userStats = new Map();
+let bannedUsers = new Map();
+let warnings = new Map();
+let tickets = new Map();
+let inviteCache = new Map();
+let staffMembers = new Set();
+let pendingResponses = new Map();
+let spamTimers = new Map();
+let roomCredentials = new Map();
+
+let gameStats = {
+  freefire: new Map(),
+  minecraft: new Map(),
+  pubg: new Map()
+};
+
+// ==================== READY EVENT ====================
+client.once('ready', async () => {
+  console.log(`🚀 ${client.user.tag} is ONLINE!`);
+  console.log(`📊 Managing ${client.guilds.cache.size} server(s)`);
+  
+  try {
+    await client.user.setActivity('🏆 OTO Multi-Game Tournaments', { type: Discord.ActivityType.Competing });
+    await registerCommands();
+    await initializeInviteTracking();
+    await loadStaffMembers();
+    startAutomatedTasks();
+    console.log('✅ OTO Super Bot fully initialized!');
+  } catch (err) {
+    console.error('❌ Init error:', err);
   }
+});
 
-  // Backup system
-  async autoBackup() {
-    try {
-      const backupData = {
-        timestamp: new Date(),
-        activeTournament: this.activeTournament,
-        tournamentHistory: this.tournamentHistory,
-        registeredPlayers: Array.from(this.registeredPlayers.entries()),
-        userInvites: Array.from(this.userInvites.entries()),
-        userStats: Array.from(this.userStats.entries()),
-        bannedUsers: Array.from(this.bannedUsers.entries()),
-        warnings: Array.from(this.warnings.entries()),
-        serverStats: this.serverStats
-      };
-
-      const backupDir = path.join(__dirname, 'backups');
-      if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir);
-      }
-
-      const fileName = `backup-${Date.now()}.json`;
-      const filePath = path.join(backupDir, fileName);
-      
-      fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2));
-      
-      // Keep only last 10 backups
-      const files = fs.readdirSync(backupDir)
-        .filter(f => f.startsWith('backup-'))
-        .sort()
-        .reverse();
-      
-      if (files.length > 10) {
-        for (let i = 10; i < files.length; i++) {
-          fs.unlinkSync(path.join(backupDir, files[i]));
-        }
-      }
-      
-      console.log(`✅ Auto-backup created: ${fileName}`);
-    } catch (err) {
-      console.error('❌ Backup failed:', err);
-    }
-  }
-
-  // Statistics tracking
-  trackUserAction(userId, action, details = {}) {
-    const userStat = this.userStats.get(userId) || { 
-      wins: 0, 
-      topThree: 0, 
-      tournaments: 0,
-      totalEarnings: 0,
-      joinDate: new Date(),
-      lastActive: new Date(),
-      actions: []
-    };
-    
-    userStat.lastActive = new Date();
-    userStat.actions.push({ action, timestamp: new Date(), details });
-    
-    // Keep only last 100 actions
-    if (userStat.actions.length > 100) {
-      userStat.actions = userStat.actions.slice(-100);
-    }
-    
-    this.userStats.set(userId, userStat);
-  }
-}
-
-const dataManager = new DataManager();
-
-// ==================== PROFESSIONAL COMMAND REGISTRATION ====================
-async function registerProfessionalCommands() {
-  const { REST, Routes, SlashCommandBuilder, PermissionFlagsBits, ContextMenuCommandBuilder, ApplicationCommandType } = Discord;
+// ==================== SLASH COMMANDS REGISTRATION ====================
+async function registerCommands() {
+  const { REST, Routes, SlashCommandBuilder, PermissionFlagsBits } = Discord;
   const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
 
   const commands = [
-    // ===== USER COMMANDS =====
-    new SlashCommandBuilder()
-      .setName('help')
-      .setDescription('❓ Complete professional guide for OTO Bot'),
-
-    new SlashCommandBuilder()
-      .setName('invites')
-      .setDescription('🔗 Check your invite count and status')
-      .addUserOption(opt => opt.setName('user').setDescription('Check another user (Staff only)')),
-
-    new SlashCommandBuilder()
-      .setName('stats')
-      .setDescription('📊 Detailed tournament statistics')
-      .addUserOption(opt => opt.setName('user').setDescription('Check specific user stats')),
-
-    new SlashCommandBuilder()
-      .setName('tournament')
-      .setDescription('🎮 Get current tournament information'),
-
-    new SlashCommandBuilder()
-      .setName('leaderboard')
-      .setDescription('🏆 View top players and rankings')
-      .addStringOption(opt => opt.setName('type')
-        .setDescription('Leaderboard type')
+    new SlashCommandBuilder().setName('help').setDescription('❓ View all commands'),
+    new SlashCommandBuilder().setName('invites').setDescription('🔗 Check your invites'),
+    new SlashCommandBuilder().setName('stats').setDescription('📊 View your stats')
+      .addStringOption(opt => opt.setName('game').setDescription('Game type')
         .addChoices(
-          { name: 'Wins', value: 'wins' },
-          { name: 'Earnings', value: 'earnings' },
-          { name: 'Tournaments', value: 'tournaments' }
+          { name: '🔥 Free Fire', value: 'freefire' },
+          { name: '⛏️ Minecraft', value: 'minecraft' },
+          { name: '🎯 PUBG', value: 'pubg' }
         )),
-
-    new SlashCommandBuilder()
-      .setName('rules')
-      .setDescription('📋 View tournament rules and policies')
-      .addStringOption(opt => opt.setName('section')
-        .setDescription('Specific rules section')
-        .addChoices(
-          { name: 'General', value: 'general' },
-          { name: 'Payment', value: 'payment' },
-          { name: 'Prizes', value: 'prizes' }
-        )),
-
-    new SlashCommandBuilder()
-      .setName('ping')
-      .setDescription('🏓 Check bot latency and status'),
-
-    new SlashCommandBuilder()
-      .setName('profile')
-      .setDescription('👤 Your complete gaming profile')
-      .addUserOption(opt => opt.setName('user').setDescription('View another user profile')),
-
-    new SlashCommandBuilder()
-      .setName('slots')
-      .setDescription('📊 Real-time tournament slot information'),
-
-    new SlashCommandBuilder()
-      .setName('pay')
-      .setDescription('💰 Submit payment proof for paid tournaments')
-      .addStringOption(opt => opt.setName('transactionid').setDescription('Transaction ID/Utr Number').setRequired(true))
-      .addAttachmentOption(opt => opt.setName('screenshot').setDescription('Payment screenshot').setRequired(true))
-      .addStringOption(opt => opt.setName('method').setDescription('Payment method').setRequired(true)
-        .addChoices(
-          { name: 'UPI', value: 'UPI' },
-          { name: 'PayTM', value: 'PayTM' },
-          { name: 'PhonePe', value: 'PhonePe' },
-          { name: 'Google Pay', value: 'GPay' },
-          { name: 'Bank Transfer', value: 'Bank' }
-        )),
-
-    new SlashCommandBuilder()
-      .setName('schedule')
-      .setDescription('📅 View tournament schedule'),
-
-    new SlashCommandBuilder()
-      .setName('achievements')
-      .setDescription('🎖️ View your achievements and badges'),
-
-    // ===== STAFF QUICK COMMANDS =====
-    new SlashCommandBuilder()
-      .setName('quicktournament')
-      .setDescription('⚡ Create tournament instantly (Staff Only)')
-      .addStringOption(opt => opt.setName('template').setDescription('Tournament template').setRequired(true)
-        .addChoices(
-          { name: '🎁 Free ₹500 - 50 Slots', value: 'free_500' },
-          { name: '💰 ₹20 Entry ₹1000 - 50 Slots', value: 'paid_20' },
-          { name: '💎 ₹50 Entry ₹2500 - 50 Slots', value: 'paid_50' },
-          { name: '🔥 ₹100 Entry ₹5000 - 100 Slots', value: 'paid_100' },
-          { name: '🏆 MEGA ₹200 Entry ₹10000 - 100 Slots', value: 'mega' }
-        ))
-      .addStringOption(opt => opt.setName('game').setDescription('Game selection').setRequired(true)
-        .addChoices(
-          { name: '🔥 Free Fire', value: 'Free Fire' },
-          { name: '⛏️ Minecraft', value: 'Minecraft' },
-          { name: '🎮 PUBG Mobile', value: 'PUBG Mobile' },
-          { name: '🎯 COD Mobile', value: 'COD Mobile' },
-          { name: '💥 Valorant', value: 'Valorant' },
-          { name: '🛡️ BGMI', value: 'BGMI' },
-          { name: '👑 Clash Royale', value: 'Clash Royale' }
-        ))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    new SlashCommandBuilder()
-      .setName('approve')
-      .setDescription('✅ Approve payment & register user (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to approve').setRequired(true))
-      .addStringOption(opt => opt.setName('transaction').setDescription('Transaction ID'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('reject')
-      .setDescription('❌ Reject payment with reason (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to reject').setRequired(true))
-      .addStringOption(opt => opt.setName('reason').setDescription('Rejection reason').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    // ===== TOURNAMENT MANAGEMENT =====
-    new SlashCommandBuilder()
-      .setName('createtournament')
-      .setDescription('🎮 Advanced tournament creation (Staff Only)')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    new SlashCommandBuilder()
-      .setName('starttournament')
-      .setDescription('▶️ Start tournament with room details (Staff Only)')
+    new SlashCommandBuilder().setName('book').setDescription('📅 Book your tournament slot (10+ invites)'),
+    new SlashCommandBuilder().setName('createtournament').setDescription('🎮 Create tournament (Staff)').setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+    new SlashCommandBuilder().setName('sendroom').setDescription('🔐 Send room credentials (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
       .addStringOption(opt => opt.setName('roomid').setDescription('Room ID').setRequired(true))
-      .addStringOption(opt => opt.setName('password').setDescription('Room password'))
-      .addStringOption(opt => opt.setName('additional').setDescription('Additional instructions'))
+      .addStringOption(opt => opt.setName('password').setDescription('Password (optional)'))
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    new SlashCommandBuilder()
-      .setName('endtournament')
-      .setDescription('🏆 End tournament and declare winners (Staff Only)')
+    new SlashCommandBuilder().setName('declarewinner').setDescription('🏆 Declare tournament winners (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    new SlashCommandBuilder()
-      .setName('canceltournament')
-      .setDescription('❌ Cancel tournament (Staff Only)')
-      .addStringOption(opt => opt.setName('reason').setDescription('Cancellation reason'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    new SlashCommandBuilder()
-      .setName('updateslots')
-      .setDescription('📊 Update tournament slots (Staff Only)')
-      .addIntegerOption(opt => opt.setName('slots').setDescription('New slot count').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    // ===== PLAYER MANAGEMENT =====
-    new SlashCommandBuilder()
-      .setName('addplayer')
-      .setDescription('➕ Add player to tournament (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to add').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('removeplayer')
-      .setDescription('➖ Remove player from tournament (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to remove').setRequired(true))
-      .addStringOption(opt => opt.setName('reason').setDescription('Removal reason'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('participants')
-      .setDescription('👥 View tournament participants (Staff Only)')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('blockuser')
-      .setDescription('🚫 Block user from tournaments (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to block').setRequired(true))
-      .addStringOption(opt => opt.setName('reason').setDescription('Block reason').setRequired(true))
-      .addStringOption(opt => opt.setName('duration').setDescription('Block duration')
-        .addChoices(
-          { name: '1 Day', value: '1d' },
-          { name: '1 Week', value: '1w' },
-          { name: '1 Month', value: '1m' },
-          { name: 'Permanent', value: 'permanent' }
-        ))
+    new SlashCommandBuilder().setName('ban').setDescription('🚫 Ban user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to ban').setRequired(true))
+      .addStringOption(opt => opt.setName('reason').setDescription('Ban reason').setRequired(true))
       .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-
-    new SlashCommandBuilder()
-      .setName('unblockuser')
-      .setDescription('✅ Unblock user (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to unblock').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-
-    // ===== MODERATION =====
-    new SlashCommandBuilder()
-      .setName('warn')
-      .setDescription('⚠️ Warn user (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to warn').setRequired(true))
+    new SlashCommandBuilder().setName('timeout').setDescription('⏱️ Timeout user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
+      .addIntegerOption(opt => opt.setName('minutes').setDescription('Duration').setRequired(true))
+      .addStringOption(opt => opt.setName('reason').setDescription('Reason'))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+    new SlashCommandBuilder().setName('warn').setDescription('⚠️ Warn user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
       .addStringOption(opt => opt.setName('reason').setDescription('Warning reason').setRequired(true))
       .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-
-    new SlashCommandBuilder()
-      .setName('timeout')
-      .setDescription('⏱️ Timeout user (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to timeout').setRequired(true))
-      .addIntegerOption(opt => opt.setName('minutes').setDescription('Timeout duration').setRequired(true))
-      .addStringOption(opt => opt.setName('reason').setDescription('Timeout reason'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-
-    new SlashCommandBuilder()
-      .setName('warnings')
-      .setDescription('⚠️ Check user warnings (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to check').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-
-    // ===== INVITE MANAGEMENT =====
-    new SlashCommandBuilder()
-      .setName('addinvites')
-      .setDescription('➕ Add bonus invites (Staff Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
-      .addIntegerOption(opt => opt.setName('amount').setDescription('Invite amount').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('topinviters')
-      .setDescription('🏅 Top inviters leaderboard'),
-
-    // ===== UTILITY =====
-    new SlashCommandBuilder()
-      .setName('announce')
-      .setDescription('📢 Make announcement (Staff Only)')
-      .addStringOption(opt => opt.setName('message').setDescription('Announcement message').setRequired(true))
-      .addBooleanOption(opt => opt.setName('ping').setDescription('Ping @everyone?'))
-      .addStringOption(opt => opt.setName('channel').setDescription('Target channel')
+    new SlashCommandBuilder().setName('addstaff').setDescription('👮 Add staff member (Admin/Owner)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to promote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    new SlashCommandBuilder().setName('removestaff').setDescription('👤 Remove staff (Admin/Owner)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to demote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    new SlashCommandBuilder().setName('leaderboard').setDescription('🏆 View leaderboards')
+      .addStringOption(opt => opt.setName('type').setDescription('Leaderboard type').setRequired(true)
         .addChoices(
-          { name: 'Announcements', value: 'announcements' },
-          { name: 'General', value: 'general' },
-          { name: 'Both', value: 'both' }
-        ))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-
-    new SlashCommandBuilder()
-      .setName('history')
-      .setDescription('📜 Tournament history')
-      .addIntegerOption(opt => opt.setName('limit').setDescription('Number of tournaments (1-20)')),
-
-    new SlashCommandBuilder()
-      .setName('closeticket')
-      .setDescription('🔒 Close ticket (Staff Only)')
-      .addStringOption(opt => opt.setName('reason').setDescription('Close reason'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
-
-    new SlashCommandBuilder()
-      .setName('serverstats')
-      .setDescription('📊 Complete server statistics (Staff Only)')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
-
-    // ===== OWNER ONLY COMMANDS =====
-    new SlashCommandBuilder()
-      .setName('makestaff')
-      .setDescription('👮 Add staff member (Owner Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to promote').setRequired(true)),
-
-    new SlashCommandBuilder()
-      .setName('removestaff')
-      .setDescription('👤 Remove staff member (Owner Only)')
-      .addUserOption(opt => opt.setName('user').setDescription('User to demote').setRequired(true)),
-
-    new SlashCommandBuilder()
-      .setName('stafflist')
-      .setDescription('📋 View staff list (Staff Only)')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-
-    new SlashCommandBuilder()
-      .setName('backup')
-      .setDescription('💾 Backup all data (Owner Only)'),
-
-    new SlashCommandBuilder()
-      .setName('maintenance')
-      .setDescription('🔧 Toggle maintenance mode (Owner Only)')
-      .addBooleanOption(opt => opt.setName('enabled').setDescription('Enable/Disable').setRequired(true)),
-
-    // ===== AUTOMATION =====
-    new SlashCommandBuilder()
-      .setName('autospam')
-      .setDescription('🔄 Auto tournament announcements (Staff Only)')
-      .addBooleanOption(opt => opt.setName('enable').setDescription('Enable/Disable').setRequired(true))
-      .addIntegerOption(opt => opt.setName('minutes').setDescription('Interval in minutes'))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-
-    new SlashCommandBuilder()
-      .setName('spamnow')
-      .setDescription('📢 Send announcement now (Staff Only)')
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
-
-    new SlashCommandBuilder()
-      .setName('setalert')
-      .setDescription('🔔 Set slot alerts (Staff Only)')
-      .addIntegerOption(opt => opt.setName('slots').setDescription('Alert when slots reach').setRequired(true))
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
-
-    // Context Menu Commands
-    new ContextMenuCommandBuilder()
-      .setName('User Statistics')
-      .setType(ApplicationCommandType.User),
-
-    new ContextMenuCommandBuilder()
-      .setName('Quick Approve')
-      .setType(ApplicationCommandType.User)
-      .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
+          { name: '🔗 Most Invites', value: 'invites' },
+          { name: '🔥 Free Fire', value: 'freefire' },
+          { name: '⛏️ Minecraft', value: 'minecraft' },
+          { name: '🎯 PUBG', value: 'pubg' }
+        )),
+    new SlashCommandBuilder().setName('challenge').setDescription('⚔️ Beat Our Player Challenge (10+ invites)'),
   ];
 
   const body = commands.map(c => c.toJSON());
@@ -608,1047 +244,2217 @@ async function registerProfessionalCommands() {
   try {
     if (process.env.GUILD_ID) {
       await rest.put(Routes.applicationGuildCommands(client.user.id, process.env.GUILD_ID), { body });
-      console.log(`✅ Registered ${commands.length} professional commands for guild ${process.env.GUILD_ID}`);
     } else {
       await rest.put(Routes.applicationCommands(client.user.id), { body });
-      console.log(`✅ Registered ${commands.length} professional commands globally`);
     }
+    console.log('✅ Commands registered');
   } catch (err) {
-    console.error('❌ Command registration failed:', err);
+    console.error('Command registration error:', err);
   }
 }
 
-// ==================== ENHANCED STAFF TOOLS DASHBOARD ====================
-async function createStaffToolsDashboard(channel) {
-  const embed = new Discord.EmbedBuilder()
-    .setTitle('👮 OTO STAFF CONTROL PANEL')
-    .setDescription('**Professional Tournament Management System**')
-    .setColor('#00ff00')
-    .addFields(
-      { name: '⚡ Quick Actions', value: 'Instant tournament creation and management', inline: false },
-      { name: '📊 Live Statistics', value: 'Real-time player and tournament data', inline: false },
-      { name: '🛠️ Management Tools', value: 'Complete control over all aspects', inline: false }
-    )
-    .setThumbnail(CONFIG.QR_IMAGE)
-    .setFooter({ text: 'OTO Professional Bot - Staff Dashboard' })
-    .setTimestamp();
-
-  const quickTournamentRow = new Discord.ActionRowBuilder().addComponents(
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_quick_free')
-      .setLabel('🎁 Quick Free')
-      .setStyle(Discord.ButtonStyle.Success)
-      .setEmoji('🎁'),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_quick_paid20')
-      .setLabel('💰 ₹20 Entry')
-      .setStyle(Discord.ButtonStyle.Primary)
-      .setEmoji('💰'),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_quick_paid50')
-      .setLabel('💎 ₹50 Entry')
-      .setStyle(Discord.ButtonStyle.Primary)
-      .setEmoji('💎'),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_quick_paid100')
-      .setLabel('🔥 ₹100 Entry')
-      .setStyle(Discord.ButtonStyle.Danger)
-      .setEmoji('🔥'),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_quick_mega')
-      .setLabel('🏆 MEGA ₹200')
-      .setStyle(Discord.ButtonStyle.Danger)
-      .setEmoji('🏆')
-  );
-
-  const managementRow = new Discord.ActionRowBuilder().addComponents(
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_start_tournament')
-      .setLabel('▶️ Start')
-      .setStyle(Discord.ButtonStyle.Success),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_end_tournament')
-      .setLabel('🏆 End')
-      .setStyle(Discord.ButtonStyle.Primary),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_cancel_tournament')
-      .setLabel('❌ Cancel')
-      .setStyle(Discord.ButtonStyle.Danger),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_participants')
-      .setLabel('👥 Participants')
-      .setStyle(Discord.ButtonStyle.Secondary),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_slots')
-      .setLabel('📊 Slots')
-      .setStyle(Discord.ButtonStyle.Secondary)
-  );
-
-  const utilityRow = new Discord.ActionRowBuilder().addComponents(
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_announce')
-      .setLabel('📢 Announce')
-      .setStyle(Discord.ButtonStyle.Primary),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_approve_payments')
-      .setLabel('✅ Approve Payments')
-      .setStyle(Discord.ButtonStyle.Success),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_stats')
-      .setLabel('📈 Stats')
-      .setStyle(Discord.ButtonStyle.Secondary),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_backup')
-      .setLabel('💾 Backup')
-      .setStyle(Discord.ButtonStyle.Secondary),
-    new Discord.ButtonBuilder()
-      .setCustomId('staff_help')
-      .setLabel('❓ Help')
-      .setStyle(Discord.ButtonStyle.Secondary)
-  );
-
-  await channel.send({ 
-    content: '**👮 STAFF CONTROL CENTER**\n*Use buttons below for quick actions*',
-    embeds: [embed], 
-    components: [quickTournamentRow, managementRow, utilityRow] 
-  });
-}
-
-// ==================== PROFESSIONAL TOURNAMENT FLOW ====================
-class ProfessionalTournament {
-  constructor(data) {
-    this.id = data.id || Date.now().toString();
-    this.title = data.title;
-    this.game = data.game;
-    this.type = data.type || 'solo';
-    this.prizePool = data.prizePool;
-    this.entryFee = data.entryFee;
-    this.maxSlots = data.maxSlots;
-    this.scheduledTime = data.scheduledTime;
-    this.duration = data.duration || '2 hours';
-    this.imageUrl = data.imageUrl || CONFIG.GAME_IMAGES[data.game] || CONFIG.QR_IMAGE;
-    this.status = 'registration'; // registration, live, ended, cancelled
-    this.createdBy = data.createdBy;
-    this.createdAt = new Date();
-    this.registeredPlayers = new Map();
-    this.roomDetails = null;
-    this.winners = [];
-    this.streamUrl = data.streamUrl;
-    this.rules = data.rules || CONFIG.RULES.general;
-    this.requirements = data.requirements || `Minimum ${CONFIG.MIN_INVITES} invites for free tournaments`;
-  }
-
-  // Professional registration system
-  registerPlayer(user, staffApproved = false) {
-    if (this.registeredPlayers.has(user.id)) {
-      return { success: false, reason: 'Already registered' };
-    }
-
-    if (this.registeredPlayers.size >= this.maxSlots) {
-      return { success: false, reason: 'Tournament full' };
-    }
-
-    if (this.status !== 'registration') {
-      return { success: false, reason: 'Registration closed' };
-    }
-
-    const playerData = {
-      user: user,
-      joinedAt: new Date(),
-      approved: staffApproved || this.entryFee === 'Free',
-      paymentApproved: staffApproved && this.entryFee !== 'Free',
-      addedByStaff: staffApproved,
-      teamName: null,
-      playerStats: {}
-    };
-
-    this.registeredPlayers.set(user.id, playerData);
-    dataManager.trackUserAction(user.id, 'tournament_join', { tournament: this.id });
-    
-    return { success: true, slot: this.registeredPlayers.size };
-  }
-
-  // Start tournament professionally
-  startTournament(roomId, password = null, additionalInfo = '') {
-    this.status = 'live';
-    this.roomDetails = {
-      roomId,
-      password,
-      additionalInfo,
-      startedAt: new Date()
-    };
-
-    // Track start in statistics
-    dataManager.serverStats.totalTournaments++;
-  }
-
-  // End tournament with winners
-  endTournament(winners) {
-    this.status = 'ended';
-    this.winners = winners;
-    this.endedAt = new Date();
-
-    // Update player statistics
-    winners.forEach((winner, index) => {
-      const place = index + 1;
-      dataManager.trackUserAction(winner.id, 'tournament_win', { 
-        tournament: this.id, 
-        place,
-        prize: this.calculatePrize(place)
-      });
-    });
-
-    // Add to history
-    dataManager.tournamentHistory.unshift(this);
-    if (dataManager.tournamentHistory.length > CONFIG.MAX_TOURNAMENT_HISTORY) {
-      dataManager.tournamentHistory.pop();
-    }
-  }
-
-  calculatePrize(place) {
-    const prizeNum = parseInt(this.prizePool.replace(/[^0-9]/g, ''));
-    const distribution = { 1: 0.5, 2: 0.3, 3: 0.2 };
-    return Math.floor(prizeNum * (distribution[place] || 0));
-  }
-
-  getSlotInfo() {
-    const filled = this.registeredPlayers.size;
-    const remaining = this.maxSlots - filled;
-    const percentage = ((filled / this.maxSlots) * 100).toFixed(1);
-
-    return {
-      filled,
-      total: this.maxSlots,
-      remaining,
-      percentage,
-      progressBar: this.generateProgressBar(filled, this.maxSlots)
-    };
-  }
-
-  generateProgressBar(current, max) {
-    const percentage = Math.min((current / max) * 100, 100);
-    const filled = Math.floor(percentage / 5); // 20 segments for better visual
-    const empty = 20 - filled;
-    return `${'🟩'.repeat(filled)}${'⬜'.repeat(empty)} **${percentage.toFixed(0)}%**`;
-  }
-}
-
-// ==================== ENHANCED BUTTON HANDLING SYSTEM ====================
-async function handleProfessionalButton(interaction) {
-  if (!isStaff(interaction.member)) {
-    return interaction.reply({ content: '❌ Staff access required!', ephemeral: true });
-  }
-
-  const { customId } = interaction;
-
-  // Quick Tournament Creation
-  if (customId.startsWith('staff_quick_')) {
-    await handleQuickTournamentButton(interaction);
-  }
-  // Tournament Management
-  else if (customId.startsWith('staff_')) {
-    await handleStaffManagementButton(interaction);
-  }
-  // Payment Approval System
-  else if (customId.startsWith('approve_payment_')) {
-    await handlePaymentApprovalButton(interaction);
-  }
-  // User Registration
-  else if (customId === 'join_tournament') {
-    await handleProfessionalJoin(interaction);
-  }
-}
-
-async function handleQuickTournamentButton(interaction) {
-  await interaction.deferReply({ ephemeral: true });
-
-  const templateMap = {
-    'staff_quick_free': 'free_500',
-    'staff_quick_paid20': 'paid_20',
-    'staff_quick_paid50': 'paid_50', 
-    'staff_quick_paid100': 'paid_100',
-    'staff_quick_mega': 'mega'
-  };
-
-  const template = templateMap[interaction.customId];
-  const config = CONFIG.TOURNAMENT_TEMPLATES[template];
-
-  if (dataManager.activeTournament && dataManager.activeTournament.status !== 'ended') {
-    return interaction.editReply('❌ Tournament active! End it first.');
-  }
-
-  // Create professional tournament
-  const tournamentData = {
-    id: `OTO_${Date.now()}`,
-    title: `${config.type.toUpperCase()} Tournament - ${config.prize} Prize`,
-    game: 'Free Fire', // Default game
-    type: config.type,
-    prizePool: config.prize,
-    entryFee: config.entry,
-    maxSlots: config.slots,
-    scheduledTime: config.time,
-    duration: config.duration,
-    createdBy: interaction.user.id
-  };
-
-  dataManager.activeTournament = new ProfessionalTournament(tournamentData);
-
-  // Send professional announcement
-  await sendProfessionalAnnouncement(dataManager.activeTournament);
-
-  await interaction.editReply(
-    `✅ **Professional Tournament Created!**\n\n` +
-    `**${tournamentData.title}**\n` +
-    `💰 ${tournamentData.prizePool} | 👥 ${tournamentData.maxSlots} slots\n` +
-    `⏰ ${tournamentData.scheduledTime} | 🕒 ${tournamentData.duration}\n\n` +
-    `Announced across all channels! 🚀`
-  );
-}
-
-// ==================== PROFESSIONAL ANNOUNCEMENT SYSTEM ====================
-async function sendProfessionalAnnouncement(tournament) {
-  const embed = new Discord.EmbedBuilder()
-    .setTitle(`🎮 ${tournament.title}`)
-    .setDescription(
-      `**${tournament.game} ${tournament.type.toUpperCase()} TOURNAMENT** 🔥\n\n` +
-      `### 🏆 Tournament Details\n` +
-      `💰 **Prize Pool:** ${tournament.prizePool}\n` +
-      `💵 **Entry Fee:** ${tournament.entryFee}\n` +
-      `👥 **Total Slots:** ${tournament.maxSlots}\n` +
-      `⏰ **Start Time:** ${tournament.scheduledTime}\n` +
-      `🕒 **Duration:** ${tournament.duration}\n\n` +
-      `### 🎯 Prize Distribution\n` +
-      `🥇 **1st Place:** 50% + Winner Certificate\n` +
-      `🥈 **2nd Place:** 30% + Runner-up Certificate\n` +
-      `🥉 **3rd Place:** 20% + Certificate\n\n` +
-      `### 📝 Registration\n` +
-      `${tournament.entryFee === 'Free' ? 
-        `**Requirements:** Minimum ${CONFIG.MIN_INVITES} invites\nType \`-i\` to check your invites!` : 
-        `**Payment Required:** Use \`/pay\` command after joining!\n**Payment Methods:** UPI, PayTM, PhonePe, Google Pay`}\n\n` +
-      `### ⚡ How to Join\n` +
-      `1. Click **JOIN TOURNAMENT** below\n` +
-      `2. ${tournament.entryFee !== 'Free' ? 'Complete payment using `/pay`' : 'Verify your invites'}\n` +
-      `3. Wait for tournament start announcement\n` +
-      `4. Receive room details via DM\n\n` +
-      `**Click JOIN button below!** ⬇️`
-    )
-    .setColor('#ffd700')
-    .setImage(tournament.imageUrl)
-    .setFooter({ text: `OTO Professional Tournaments | ID: ${tournament.id}` })
-    .setTimestamp();
-
-  const joinButton = new Discord.ActionRowBuilder().addComponents(
-    new Discord.ButtonBuilder()
-      .setCustomId('join_tournament')
-      .setLabel('🎮 JOIN TOURNAMENT')
-      .setStyle(Discord.ButtonStyle.Success)
-      .setEmoji('🏆'),
-    new Discord.ButtonBuilder()
-      .setLabel('📋 View Rules')
-      .setStyle(Discord.ButtonStyle.Link)
-      .setURL(`https://discord.com/channels/${interaction.guild.id}/${CONFIG.RULES_CHANNEL}`),
-    new Discord.ButtonBuilder()
-      .setLabel('💰 Payment Help')
-      .setStyle(Discord.ButtonStyle.Link)
-      .setURL(`https://discord.com/channels/${interaction.guild.id}/${CONFIG.OPEN_TICKET}`)
-  );
-
-  // Send to announcement channel
-  const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
-  await announceChannel.send({ 
-    content: '@everyone\n\n🚨 **PROFESSIONAL TOURNAMENT LAUNCHED!** 🚨', 
-    embeds: [embed], 
-    components: [joinButton] 
-  });
-
-  // Send to schedule channel
-  const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
-  await scheduleChannel.send({ embeds: [embed] });
-
-  // Notify general chat
-  const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-  await generalChannel.send(
-    `🔥 **${tournament.game} Tournament is LIVE!** 🔥\n\n` +
-    `💰 **${tournament.prizePool}** | 👥 **${tournament.maxSlots}** slots\n` +
-    `⏰ **${tournament.scheduledTime}** | 🕒 **${tournament.duration}**\n\n` +
-    `Join now: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 🎮\n` +
-    `Check slots: \`/slots\` 📊`
-  );
-}
-
-// ==================== PROFESSIONAL JOIN HANDLING ====================
-async function handleProfessionalJoin(interaction) {
-  await interaction.deferReply({ ephemeral: true });
-
-  if (!dataManager.activeTournament || dataManager.activeTournament.status !== 'registration') {
-    return interaction.editReply('❌ **Registration Closed!**\nNo active tournament or registration period has ended.');
-  }
-
-  const tournament = dataManager.activeTournament;
-  const user = interaction.user;
-
-  // Check if user is banned
-  if (dataManager.bannedUsers.has(user.id)) {
-    const banInfo = dataManager.bannedUsers.get(user.id);
-    return interaction.editReply(
-      `🚫 **Account Restricted!**\n\n` +
-      `You are blocked from participating in tournaments.\n` +
-      `**Reason:** ${banInfo.reason}\n` +
-      `**Expires:** ${banInfo.expires ? banInfo.expires.toLocaleDateString() : 'Permanent'}\n\n` +
-      `Contact staff for appeal.`
-    );
-  }
-
-  // Check if already registered
-  if (tournament.registeredPlayers.has(user.id)) {
-    return interaction.editReply('⚠️ **Already Registered!**\nYou are already registered for this tournament.');
-  }
-
-  // Check for paid tournaments
-  if (tournament.entryFee !== 'Free') {
-    return interaction.editReply(
-      `💰 **Payment Required Tournament**\n\n` +
-      `**Entry Fee:** ${tournament.entryFee}\n` +
-      `**Prize Pool:** ${tournament.prizePool}\n\n` +
-      `### 📝 Payment Process:\n` +
-      `1. Use \`/pay\` command to submit payment proof\n` +
-      `2. Include transaction ID and screenshot\n` +
-      `3. Wait for staff verification (5-15 minutes)\n` +
-      `4. You'll be automatically added once approved\n\n` +
-      `### 💳 Payment Methods:\n` +
-      `• UPI: \`${CONFIG.PAYMENT_METHODS.UPI.id}\`\n` +
-      `• PayTM: ${CONFIG.PAYMENT_METHODS.PayTM.number}\n` +
-      `• PhonePe: \`${CONFIG.PAYMENT_METHODS.PhonePe.id}\`\n` +
-      `• Google Pay: ${CONFIG.PAYMENT_METHODS.GPay.number}\n\n` +
-      `Need help? Create ticket in <#${CONFIG.OPEN_TICKET}>`
-    );
-  }
-
-  // Free tournament - check invites
-  const inviteCount = dataManager.userInvites.get(user.id) || 0;
-  if (inviteCount < CONFIG.MIN_INVITES && !isStaff(interaction.member)) {
-    return interaction.editReply(
-      `❌ **Insufficient Invites!**\n\n` +
-      `**Your Invites:** ${inviteCount}/${CONFIG.MIN_INVITES}\n` +
-      `**Required:** ${CONFIG.MIN_INVITES - inviteCount} more\n\n` +
-      `### 💡 How to Get Invites:\n` +
-      `• Share server invite link with friends\n` +
-      `• Each friend who joins = +1 invite\n` +
-      `• Check invites anytime with \`-i\` or \`/invites\`\n\n` +
-      `Invite friends and come back! 🔗`
-    );
-  }
-
-  // Register player
-  const result = tournament.registerPlayer(user);
-  if (!result.success) {
-    return interaction.editReply(`❌ **Registration Failed!**\n${result.reason}`);
-  }
-
-  // Success response
-  const slotInfo = tournament.getSlotInfo();
-  const embed = new Discord.EmbedBuilder()
-    .setTitle('✅ Registration Successful!')
-    .setDescription(`You are now registered for **${tournament.title}**`)
-    .setColor('#00ff00')
-    .addFields(
-      { name: '🎯 Your Slot', value: `**${result.slot}/${tournament.maxSlots}**`, inline: true },
-      { name: '⏰ Start Time', value: tournament.scheduledTime, inline: true },
-      { name: '💰 Prize Pool', value: tournament.prizePool, inline: true },
-      { name: '📊 Progress', value: slotInfo.progressBar, inline: false }
-    )
-    .setThumbnail(tournament.imageUrl)
-    .setFooter({ text: 'Room details will be DMed when tournament starts' })
-    .setTimestamp();
-
-  await interaction.editReply({ embeds: [embed] });
-
-  // Send DM confirmation
+// ==================== COMMAND HANDLERS ====================
+client.on('interactionCreate', async (interaction) => {
   try {
-    const dmEmbed = new Discord.EmbedBuilder()
-      .setTitle('🎮 Tournament Registration Confirmed!')
-      .setDescription(`You're all set for **${tournament.title}**`)
-      .setColor('#00ff00')
-      .addFields(
-        { name: '📝 Tournament', value: tournament.title, inline: true },
-        { name: '⏰ Time', value: tournament.scheduledTime, inline: true },
-        { name: '🎯 Slot', value: `${result.slot}/${tournament.maxSlots}`, inline: true },
-        { name: '💰 Prize', value: tournament.prizePool, inline: true },
-        { name: '🕒 Duration', value: tournament.duration, inline: true },
-        { name: '🎮 Type', value: tournament.type.toUpperCase(), inline: true }
-      )
-      .setImage(tournament.imageUrl)
-      .setFooter({ text: 'Keep an eye on your DMs for room details!' })
-      .setTimestamp();
-
-    await user.send({ embeds: [dmEmbed] });
-  } catch (err) {
-    // Could not DM user, they might have DMs disabled
-    console.log(`⚠️ Could not DM ${user.tag}`);
-  }
-
-  // Announce in general chat
-  const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-  await generalChannel.send(
-    `🎮 ${user} joined **${tournament.title}**!\n\n` +
-    `📊 **${slotInfo.filled}/${tournament.maxSlots}** slots filled! ` +
-    `${slotInfo.remaining > 0 ? `**${slotInfo.remaining}** remaining! 🔥` : '**TOURNAMENT FULL!** 🎉'}`
-  );
-
-  // Check for slot alerts
-  await checkProfessionalSlotAlerts(tournament);
-}
-
-// ==================== ENHANCED SLOT ALERT SYSTEM ====================
-async function checkProfessionalSlotAlerts(tournament) {
-  const slotInfo = tournament.getSlotInfo();
-  
-  for (const alertPoint of CONFIG.SLOT_ALERTS) {
-    if (slotInfo.remaining === alertPoint && !tournament.slotAlertSent?.includes(alertPoint)) {
-      if (!tournament.slotAlertSent) tournament.slotAlertSent = [];
-      tournament.slotAlertSent.push(alertPoint);
-
-      const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-      await generalChannel.send(
-        `🚨 **SLOT ALERT!** 🚨\n\n` +
-        `Only **${alertPoint} ${alertPoint === 1 ? 'slot' : 'slots'}** left in **${tournament.title}**!\n\n` +
-        `💰 **${tournament.prizePool}** | ⏰ **${tournament.scheduledTime}**\n` +
-        `📊 **${slotInfo.filled}/${tournament.maxSlots}** filled\n\n` +
-        `**HURRY! Join now:** <#${CONFIG.ANNOUNCEMENT_CHANNEL}> ⚡`
-      );
-
-      // Notify staff
-      const staffChannel = await client.channels.fetch(CONFIG.STAFF_TOOLS);
-      await staffChannel.send(
-        `📊 **Slot Alert:** ${alertPoint} slots remaining in ${tournament.title}\n` +
-        `Current: ${slotInfo.filled}/${tournament.maxSlots}`
-      );
+    if (interaction.isChatInputCommand()) {
+      await handleCommand(interaction);
+    } else if (interaction.isButton()) {
+      await handleButton(interaction);
+    } else if (interaction.isStringSelectMenu()) {
+      await handleSelectMenu(interaction);
     }
-  }
-
-  // Tournament full alert
-  if (slotInfo.remaining === 0 && !tournament.slotAlertSent?.includes(0)) {
-    if (!tournament.slotAlertSent) tournament.slotAlertSent = [];
-    tournament.slotAlertSent.push(0);
-
-    const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-    await generalChannel.send(
-      `🎉 **TOURNAMENT FULL!** 🎉\n\n` +
-      `**${tournament.title}** has reached maximum capacity!\n` +
-      `**${slotInfo.filled} players** registered!\n\n` +
-      `🏆 Good luck to all participants! 🍀\n` +
-      `Room details will be shared soon! ⏰`
-    );
-  }
-}
-
-// ==================== PROFESSIONAL PAYMENT SYSTEM ====================
-async function handleProfessionalPayment(interaction) {
-  await interaction.deferReply({ ephemeral: true });
-
-  if (!dataManager.activeTournament) {
-    return interaction.editReply('❌ **No Active Tournament!**\nThere is currently no tournament running.');
-  }
-
-  const tournament = dataManager.activeTournament;
-
-  if (tournament.entryFee === 'Free') {
-    return interaction.editReply('❌ **Free Tournament!**\nThis tournament does not require payment.');
-  }
-
-  const transactionId = interaction.options.getString('transactionid');
-  const screenshot = interaction.options.getAttachment('screenshot');
-  const method = interaction.options.getString('method');
-
-  // Validate screenshot
-  if (!screenshot || !screenshot.contentType?.startsWith('image/')) {
-    return interaction.editReply('❌ **Invalid Screenshot!**\nPlease provide a clear image of your payment proof.');
-  }
-
-  // Store payment data professionally
-  const paymentData = {
-    transactionId,
-    screenshot: screenshot.url,
-    method,
-    submittedAt: new Date(),
-    tournament: tournament.id,
-    amount: tournament.entryFee,
-    status: 'pending',
-    userId: interaction.user.id
-  };
-
-  dataManager.paymentPending.set(interaction.user.id, paymentData);
-
-  // Add to user transaction history
-  const userTrans = dataManager.userTransactions.get(interaction.user.id) || [];
-  userTrans.push({
-    id: transactionId,
-    amount: tournament.entryFee,
-    date: new Date(),
-    status: 'pending',
-    method,
-    tournament: tournament.title
-  });
-  dataManager.userTransactions.set(interaction.user.id, userTrans);
-
-  // Create professional payment ticket
-  try {
-    const ticketChannel = await interaction.guild.channels.create({
-      name: `payment-${interaction.user.username}-${Date.now().toString().slice(-4)}`,
-      type: Discord.ChannelType.GuildText,
-      parent: interaction.channel.parent,
-      topic: `Payment verification for ${interaction.user.tag} - ${tournament.title}`,
-      permissionOverwrites: [
-        { 
-          id: interaction.guild.id, 
-          deny: [Discord.PermissionFlagsBits.ViewChannel] 
-        },
-        { 
-          id: interaction.user.id, 
-          allow: [
-            Discord.PermissionFlagsBits.ViewChannel, 
-            Discord.PermissionFlagsBits.SendMessages,
-            Discord.PermissionFlagsBits.ReadMessageHistory
-          ] 
-        },
-        { 
-          id: CONFIG.STAFF_ROLE, 
-          allow: [
-            Discord.PermissionFlagsBits.ViewChannel, 
-            Discord.PermissionFlagsBits.SendMessages,
-            Discord.PermissionFlagsBits.ManageChannels,
-            Discord.PermissionFlagsBits.ReadMessageHistory
-          ] 
-        },
-      ],
-    });
-
-    dataManager.tickets.set(ticketChannel.id, { 
-      userId: interaction.user.id, 
-      createdAt: new Date(), 
-      type: 'payment',
-      transactionId,
-      tournament: tournament.id
-    });
-
-    // Professional payment ticket embed
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('💰 PAYMENT VERIFICATION REQUIRED')
-      .setDescription('**New payment submission needs staff review**')
-      .setColor('#ff9900')
-      .addFields(
-        { name: '👤 User', value: `${interaction.user} (${interaction.user.tag})`, inline: true },
-        { name: '🎮 Tournament', value: tournament.title, inline: true },
-        { name: '💳 Amount', value: tournament.entryFee, inline: true },
-        { name: '📝 Transaction ID', value: `\`${transactionId}\``, inline: false },
-        { name: '💸 Method', value: CONFIG.PAYMENT_METHODS[method]?.name || method, inline: true },
-        { name: '⏰ Submitted', value: `<t:${Math.floor(Date.now()/1000)}:R>`, inline: true }
-      )
-      .setImage(screenshot.url)
-      .setFooter({ text: `Tournament ID: ${tournament.id} | Ticket ID: ${ticketChannel.id}` })
-      .setTimestamp();
-
-    const buttonRow = new Discord.ActionRowBuilder().addComponents(
-      new Discord.ButtonBuilder()
-        .setCustomId(`approve_payment_${interaction.user.id}`)
-        .setLabel('✅ Approve & Register')
-        .setStyle(Discord.ButtonStyle.Success)
-        .setEmoji('✅'),
-      new Discord.ButtonBuilder()
-        .setCustomId(`reject_payment_${interaction.user.id}`)
-        .setLabel('❌ Reject Payment')
-        .setStyle(Discord.ButtonStyle.Danger)
-        .setEmoji('❌'),
-      new Discord.ButtonBuilder()
-        .setCustomId(`request_more_info_${interaction.user.id}`)
-        .setLabel('📋 More Info Needed')
-        .setStyle(Discord.ButtonStyle.Secondary)
-        .setEmoji('📋')
-    );
-
-    await ticketChannel.send({ 
-      content: `<@&${CONFIG.STAFF_ROLE}> **NEW PAYMENT VERIFICATION REQUEST!**`, 
-      embeds: [embed], 
-      components: [buttonRow] 
-    });
-
-    // Notify staff chat
-    const staffChannel = await client.channels.fetch(CONFIG.STAFF_TOOLS);
-    await staffChannel.send(
-      `💰 **Payment Verification Needed!**\n\n` +
-      `**User:** ${interaction.user}\n` +
-      `**Tournament:** ${tournament.title}\n` +
-      `**Amount:** ${tournament.entryFee}\n` +
-      `**Ticket:** <#${ticketChannel.id}>\n\n` +
-      `Please review within 15 minutes! ⏰`
-    );
-
-    // Success response to user
-    const successEmbed = new Discord.EmbedBuilder()
-      .setTitle('✅ Payment Submitted Successfully!')
-      .setDescription('Your payment proof has been received and is under review.')
-      .setColor('#00ff00')
-      .addFields(
-        { name: '📝 Transaction ID', value: `\`${transactionId}\``, inline: true },
-        { name: '💰 Amount', value: tournament.entryFee, inline: true },
-        { name: '💳 Method', value: CONFIG.PAYMENT_METHODS[method]?.name || method, inline: true },
-        { name: '🎫 Ticket', value: `<#${ticketChannel.id}>`, inline: false },
-        { name: '⏰ Estimated Time', value: '5-15 minutes', inline: true },
-        { name: '📞 Support', value: `Need help? Message in <#${ticketChannel.id}>`, inline: false }
-      )
-      .setFooter({ text: 'You will receive a DM once approved!' })
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [successEmbed] });
-
-    // DM user confirmation
-    try {
-      await interaction.user.send({
-        embeds: [successEmbed]
-      });
-    } catch (err) {
-      // User has DMs disabled
-      await interaction.followUp({ 
-        content: '⚠️ **Enable DMs to receive approval notification!**', 
-        ephemeral: true 
-      });
+  } catch (err) {
+    console.error('Interaction error:', err);
+    const msg = '❌ Error occurred bhai! Try again!';
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
     }
-
-  } catch (err) {
-    console.error('❌ Payment system error:', err);
-    await interaction.editReply(
-      '❌ **System Error!**\nFailed to process payment. Please contact staff directly.'
-    );
-  }
-}
-
-// ==================== PROFESSIONAL STAFF MANAGEMENT ====================
-async function handleStaffManagementButton(interaction) {
-  await interaction.deferReply({ ephemeral: true });
-
-  const { customId } = interaction;
-  const tournament = dataManager.activeTournament;
-
-  switch (customId) {
-    case 'staff_start_tournament':
-      if (!tournament) {
-        return interaction.editReply('❌ No active tournament to start!');
-      }
-      
-      // Create modal for room details
-      const modal = new Discord.ModalBuilder()
-        .setCustomId('start_tournament_modal')
-        .setTitle('Start Tournament');
-
-      const roomIdInput = new Discord.TextInputBuilder()
-        .setCustomId('room_id')
-        .setLabel('Room ID')
-        .setStyle(Discord.TextInputStyle.Short)
-        .setRequired(true)
-        .setPlaceholder('Enter room ID...');
-
-      const passwordInput = new Discord.TextInputBuilder()
-        .setCustomId('room_password')
-        .setLabel('Room Password (Optional)')
-        .setStyle(Discord.TextInputStyle.Short)
-        .setRequired(false)
-        .setPlaceholder('Enter password if any...');
-
-      const additionalInput = new Discord.TextInputBuilder()
-        .setCustomId('additional_info')
-        .setLabel('Additional Instructions')
-        .setStyle(Discord.TextInputStyle.Paragraph)
-        .setRequired(false)
-        .setPlaceholder('Any special instructions for players...');
-
-      const firstActionRow = new Discord.ActionRowBuilder().addComponents(roomIdInput);
-      const secondActionRow = new Discord.ActionRowBuilder().addComponents(passwordInput);
-      const thirdActionRow = new Discord.ActionRowBuilder().addComponents(additionalInput);
-
-      modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
-      await interaction.showModal(modal);
-      break;
-
-    case 'staff_end_tournament':
-      if (!tournament) {
-        return interaction.editReply('❌ No active tournament to end!');
-      }
-      await handleProfessionalTournamentEnd(interaction);
-      break;
-
-    case 'staff_cancel_tournament':
-      if (!tournament) {
-        return interaction.editReply('❌ No active tournament to cancel!');
-      }
-      await handleProfessionalTournamentCancel(interaction);
-      break;
-
-    case 'staff_participants':
-      await handleProfessionalParticipants(interaction);
-      break;
-
-    case 'staff_slots':
-      await handleProfessionalSlots(interaction);
-      break;
-
-    case 'staff_announce':
-      await handleQuickAnnouncement(interaction);
-      break;
-
-    case 'staff_approve_payments':
-      await showPendingPayments(interaction);
-      break;
-
-    case 'staff_stats':
-      await showProfessionalStats(interaction);
-      break;
-
-    case 'staff_backup':
-      await handleProfessionalBackup(interaction);
-      break;
-
-    case 'staff_help':
-      await showStaffHelp(interaction);
-      break;
-
-    default:
-      await interaction.editReply('❌ Unknown command!');
-  }
-}
-
-// ==================== PROFESSIONAL TOURNAMENT END SYSTEM ====================
-async function handleProfessionalTournamentEnd(interaction) {
-  const tournament = dataManager.activeTournament;
-  
-  if (tournament.registeredPlayers.size < 3) {
-    return interaction.editReply(
-      '❌ **Not Enough Participants!**\nNeed at least 3 players to declare winners.'
-    );
-  }
-
-  const participants = Array.from(tournament.registeredPlayers.values())
-    .slice(0, 25)
-    .map(p => ({ label: p.user.username, value: p.user.id }));
-
-  const embed = new Discord.EmbedBuilder()
-    .setTitle('🏆 Declare Tournament Winners')
-    .setDescription('Select the 1st place winner:')
-    .setColor('#ffd700')
-    .addFields(
-      { name: '🎮 Tournament', value: tournament.title, inline: true },
-      { name: '👥 Participants', value: `${tournament.registeredPlayers.size}`, inline: true },
-      { name: '💰 Prize Pool', value: tournament.prizePool, inline: true }
-    )
-    .setFooter({ text: 'Step 1 of 3 - Select 1st Place' });
-
-  const row = new Discord.ActionRowBuilder().addComponents(
-    new Discord.StringSelectMenuBuilder()
-      .setCustomId('winner_first')
-      .setPlaceholder('🥇 Select 1st Place Winner')
-      .addOptions(participants)
-  );
-
-  await interaction.editReply({ embeds: [embed], components: [row] });
-}
-
-// ==================== ENHANCED BOT INITIALIZATION ====================
-client.once('ready', async () => {
-  console.log(`🚀 ${client.user.tag} Professional Edition ONLINE!`);
-  console.log(`📊 Serving ${client.guilds.cache.size} servers`);
-  console.log(`👑 Owner: ${OWNER_ID}`);
-  console.log(`🛠️ Professional Features: 2500+ lines`);
-  
-  try {
-    // Set professional status
-    await client.user.setPresence({
-      activities: [{
-        name: '🏆 OTO Pro Tournaments | /help',
-        type: Discord.ActivityType.Competing
-      }],
-      status: 'online'
-    });
-
-    // Initialize systems
-    await registerProfessionalCommands();
-    await initializeProfessionalInviteTracking();
-    await loadProfessionalStaffMembers();
-    startProfessionalAutomatedTasks();
-    await setupProfessionalPersistentMessages();
-    await sendProfessionalStaffWelcome();
-    
-    console.log('✅ Professional bot fully initialized!');
-  } catch (err) {
-    console.error('❌ Professional init error:', err);
   }
 });
 
-// ==================== PROFESSIONAL MESSAGE SETUP ====================
-async function setupProfessionalPersistentMessages() {
-  try {
-    // How to Join Guide
-    const howToJoinChannel = await client.channels.fetch(CONFIG.HOW_TO_JOIN);
-    const joinEmbed = new Discord.EmbedBuilder()
-      .setTitle('🎮 OTO PROFESSIONAL TOURNAMENT GUIDE')
-      .setDescription('**Complete Step-by-Step Guide to Join Tournaments**')
-      .setColor('#3498db')
+async function handleCommand(interaction) {
+  const { commandName } = interaction;
+
+  if (bannedUsers.has(interaction.user.id) && !isStaff(interaction.member)) {
+    const banData = bannedUsers.get(interaction.user.id);
+    return interaction.reply({ content: `🚫 You are banned!\n**Reason:** ${banData.reason}`, ephemeral: true });
+  }
+
+  const handlers = {
+    'help': handleHelp, 'invites': handleInvites, 'stats': handleStats, 'book': handleBook,
+    'createtournament': handleCreateTournament, 'sendroom': handleSendRoom, 'declarewinner': handleDeclareWinner,
+    'ban': handleBan, 'timeout': handleTimeout, 'warn': handleWarn,
+    'addstaff': handleAddStaff, 'removestaff': handleRemoveStaff,
+    'leaderboard': handleLeaderboard, 'challenge': handleChallenge,
+  };
+
+  const handler = handlers[commandName];
+  if (handler) await handler(interaction);
+}
+
+async function handleHelp(interaction) {
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🤖 OTO Super Bot - Commands')
+    .setDescription('Multi-game tournament management system!')
+    .setColor('#3498db')
+    .addFields(
+      { name: '👤 User', value: '`/invites` `/stats` `/book` `/challenge` `/leaderboard`' },
+      { name: '🎮 Games', value: '🔥 Free Fire | ⛏️ Minecraft | 🎯 PUBG' },
+      { name: '🎁 Rewards', value: `10 invites = FREE entry!` }
+    )
+    .setThumbnail(CONFIG.QR_IMAGE);
+
+  if (isStaff(interaction.member)) {
+    embed.addFields({ name: '👮 Staff', value: '`/createtournament` `/sendroom` `/declarewinner` `/ban` `/warn` `/addstaff`' });
+  }
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleInvites(interaction) {
+  const count = userInvites.get(interaction.user.id) || 0;
+  const needed = CONFIG.MIN_INVITES_FREE_ENTRY;
+  const hasReward = count >= needed;
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`🔗 ${interaction.user.username}'s Invites`)
+    .setColor(hasReward ? '#00ff00' : '#ff9900')
+    .addFields(
+      { name: '📊 Total', value: `**${count}**`, inline: true },
+      { name: '🎁 Status', value: hasReward ? '✅ **UNLOCKED!**' : `${needed - count} more`, inline: true }
+    )
+    .setDescription(hasReward ? `🎉 FREE tournament entry!\nUse \`/book\` to reserve!` : `Invite ${needed - count} more people!`)
+    .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleStats(interaction) {
+  const game = interaction.options.getString('game');
+  const userId = interaction.user.id;
+
+  if (game) {
+    const stats = gameStats[game]?.get(userId) || { wins: 0, played: 0, topThree: 0 };
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`📊 ${GAME_TEMPLATES[game].emoji} ${GAME_TEMPLATES[game].name} Stats`)
+      .setColor('#9b59b6')
       .addFields(
-        { 
-          name: '📝 Registration Process', 
-          value: `**Free Tournaments:**\n• Invite ${CONFIG.MIN_INVITES} friends\n• Use \`/invites\` to check count\n• Click JOIN button\n\n**Paid Tournaments:**\n• Click JOIN button\n• Use \`/pay\` command\n• Submit payment proof\n• Wait for staff approval`,
-          inline: false 
-        },
-        { 
-          name: '💰 Payment Methods', 
-          value: `• **UPI:** ${CONFIG.PAYMENT_METHODS.UPI.id}\n• **PayTM:** ${CONFIG.PAYMENT_METHODS.PayTM.number}\n• **PhonePe:** ${CONFIG.PAYMENT_METHODS.PhonePe.id}\n• **Google Pay:** ${CONFIG.PAYMENT_METHODS.GPay.number}`,
-          inline: true 
-        },
-        { 
-          name: '⚡ Quick Commands', 
-          value: `• \`-i\` - Check invites\n• \`/slots\` - Tournament slots\n• \`/profile\` - Your stats\n• \`/leaderboard\` - Top players`,
-          inline: true 
-        }
+        { name: '🏆 Wins', value: `${stats.wins}`, inline: true },
+        { name: '🎮 Played', value: `${stats.played}`, inline: true },
+        { name: '🥇 Top 3', value: `${stats.topThree}`, inline: true }
       )
-      .setImage(CONFIG.BANNER_IMAGE)
-      .setFooter({ text: 'Need help? Create a ticket in support channel!' });
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
 
-    const joinMessages = await howToJoinChannel.messages.fetch({ limit: 5 });
-    const botJoinMsgs = joinMessages.filter(m => m.author.id === client.user.id);
-    if (botJoinMsgs.size === 0) {
-      await howToJoinChannel.send({ embeds: [joinEmbed] });
-    }
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  } else {
+    const allStats = userStats.get(userId) || { wins: 0, played: 0, topThree: 0 };
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`📊 Overall Stats`)
+      .setColor('#9b59b6')
+      .addFields(
+        { name: '🏆 Wins', value: `${allStats.wins}`, inline: true },
+        { name: '🎮 Tournaments', value: `${allStats.played}`, inline: true },
+        { name: '🔗 Invites', value: `${userInvites.get(userId) || 0}`, inline: true }
+      )
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
 
-    // Staff Tools Dashboard
-    const staffChannel = await client.channels.fetch(CONFIG.STAFF_TOOLS);
-    const staffMessages = await staffChannel.messages.fetch({ limit: 10 });
-    const botStaffMsgs = staffMessages.filter(m => m.author.id === client.user.id && m.components.length > 0);
-    
-    if (botStaffMsgs.size === 0) {
-      await createStaffToolsDashboard(staffChannel);
-    }
-
-    console.log('✅ Professional persistent messages setup complete');
-  } catch (err) {
-    console.error('❌ Professional setup error:', err);
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 }
 
-// ==================== PROFESSIONAL AUTOMATED TASKS ====================
-function startProfessionalAutomatedTasks() {
-  // Auto-backup every hour
-  setInterval(() => {
-    dataManager.autoBackup();
-  }, CONFIG.AUTO_BACKUP_INTERVAL);
+async function handleBook(interaction) {
+  const invites = userInvites.get(interaction.user.id) || 0;
 
-  // Update bot status with live info
-  setInterval(async () => {
+  if (invites < CONFIG.MIN_INVITES_FREE_ENTRY) {
+    return interaction.reply({
+      content: `❌ Need **10 invites**!\n\nCurrent: ${invites}\nNeeded: ${10 - invites} more`,
+      ephemeral: true
+    });
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('📅 Book Your Slot')
+    .setDescription(`✅ You have **${invites} invites**!\n\n🎁 FREE entry unlocked!\n\nClick button to get notified!`)
+    .setColor('#00ff00');
+
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('book_notify')
+      .setLabel('🔔 Get Notified')
+      .setStyle(Discord.ButtonStyle.Success)
+  );
+
+  await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+}
+
+async function handleChallenge(interaction) {
+  const invites = userInvites.get(interaction.user.id) || 0;
+
+  if (invites < CONFIG.MIN_INVITES_FREE_ENTRY) {
+    return interaction.reply({ content: `❌ Need 10 invites!\n\nCurrent: ${invites}`, ephemeral: true });
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('⚔️ Beat Our Player!')
+    .setDescription(
+      `**Challenge OTO's Best!**\n\n` +
+      `**If you WIN:**\n🎁 FREE Squad entry\n💰 Bonus prizes\n\nReady?`
+    )
+    .setColor('#ff9900');
+
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('accept_challenge')
+      .setLabel('⚔️ Accept')
+      .setStyle(Discord.ButtonStyle.Danger)
+  );
+
+  await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+}
+
+async function handleCreateTournament(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🎮 Create Tournament')
+    .setDescription('Select game')
+    .setColor('#3498db');
+
+  const gameSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId('tournament_game')
+      .setPlaceholder('Select Game')
+      .addOptions([
+        { label: 'Free Fire', value: 'freefire', emoji: '🔥' },
+        { label: 'Minecraft', value: 'minecraft', emoji: '⛏️' },
+        { label: 'PUBG Mobile', value: 'pubg', emoji: '🎯' },
+      ])
+  );
+
+  await interaction.editReply({ embeds: [embed], components: [gameSelect] });
+}
+
+async function handleSelectMenu(interaction) {
+  const { customId, values } = interaction;
+
+  if (customId === 'tournament_game') {
+    await handleGameSelection(interaction, values[0]);
+  } else if (customId.startsWith('tournament_')) {
+    await handleTournamentConfig(interaction, customId, values);
+  } else if (customId.startsWith('winner_')) {
+    await handleWinnerSelection(interaction, customId, values);
+  }
+}
+
+async function handleGameSelection(interaction, game) {
+  await interaction.deferUpdate();
+
+  const gameData = GAME_TEMPLATES[game];
+  const tournamentId = `${game}_${Date.now()}`;
+
+  tournaments.set(tournamentId, {
+    id: tournamentId,
+    game,
+    status: 'creating',
+    createdBy: interaction.user.id,
+    createdAt: new Date()
+  });
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`${gameData.emoji} ${gameData.name} Tournament`)
+    .setDescription('Configure settings')
+    .setColor('#3498db');
+
+  const typeSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId(`tournament_type_${tournamentId}`)
+      .setPlaceholder('Select Type')
+      .addOptions(gameData.types.map(type => ({ label: type, value: type.toLowerCase() })))
+  );
+
+  const mapSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId(`tournament_map_${tournamentId}`)
+      .setPlaceholder('Select Map')
+      .addOptions(gameData.maps.map(map => ({ label: map, value: map.toLowerCase() })))
+  );
+
+  await interaction.editReply({ embeds: [embed], components: [typeSelect, mapSelect] });
+}
+
+async function handleTournamentConfig(interaction, customId, values) {
+  await interaction.deferUpdate();
+  
+  const tournamentId = customId.split('_').pop();
+  const tournament = tournaments.get(tournamentId);
+  
+  if (!tournament) return;
+
+  if (customId.includes('_type_')) {
+    tournament.type = values[0];
+  } else if (customId.includes('_map_')) {
+    tournament.map = values[0];
+  }
+
+  if (tournament.type && tournament.map) {
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('📝 Final Details')
+      .addFields(
+        { name: 'Game', value: GAME_TEMPLATES[tournament.game].name, inline: true },
+        { name: 'Type', value: tournament.type, inline: true },
+        { name: 'Map', value: tournament.map, inline: true }
+      )
+      .setColor('#00ff00');
+
+    const row = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId(`create_final_${tournamentId}`)
+        .setLabel('✅ Create Tournament')
+        .setStyle(Discord.ButtonStyle.Success)
+    );
+
+    await interaction.editReply({ embeds: [embed], components: [row] });
+  }
+}
+
+async function handleButton(interaction) {
+  const { customId } = interaction;
+
+  if (customId.startsWith('create_final_')) {
+    await handleFinalCreate(interaction);
+  } else if (customId === 'join_tournament') {
+    await handleJoinTournament(interaction);
+  } else if (customId === 'book_notify') {
+    await handleBookNotify(interaction);
+  } else if (customId === 'accept_challenge') {
+    await handleAcceptChallenge(interaction);
+  } else if (customId.startsWith('add_player_')) {
+    await handleAddPlayer(interaction);
+  }
+}
+
+async function handleFinalCreate(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  
+  const tournamentId = interaction.customId.split('_').pop();
+  const tournament = tournaments.get(tournamentId);
+  
+  tournament.status = 'registration';
+  tournament.participants = [];
+  tournament.maxSlots = GAME_TEMPLATES[tournament.game].defaultSlots;
+  tournament.prizePool = 'TBA';
+  tournament.scheduledTime = 'TBA';
+  
+  activeTournament = tournament;
+
+  const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
+  const embed = createTournamentEmbed(tournament);
+  
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('join_tournament')
+      .setLabel('🎮 JOIN NOW')
+      .setStyle(Discord.ButtonStyle.Success)
+  );
+
+  await announceChannel.send({ content: '@everyone\n\n🔥 **NEW TOURNAMENT!**', embeds: [embed], components: [row] });
+
+  if (tournament.game === 'minecraft') {
+    const mcChannel = await client.channels.fetch(CONFIG.MINECRAFT_CHANNEL);
+    await mcChannel.send({ embeds: [embed], components: [row] });
+  }
+
+  const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+  await scheduleChannel.send({ embeds: [embed] });
+
+  startTournamentSpam(tournament);
+
+  await interaction.editReply('✅ Tournament created! 🎉');
+}
+
+async function handleJoinTournament(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  if (!activeTournament || activeTournament.status !== 'registration') {
+    return interaction.editReply('❌ Registration closed!');
+  }
+
+  if (registeredPlayers.has(interaction.user.id)) {
+    return interaction.editReply('⚠️ Already registered!');
+  }
+
+  if (bannedUsers.has(interaction.user.id)) {
+    return interaction.editReply('🚫 You are banned!');
+  }
+
+  const invites = userInvites.get(interaction.user.id) || 0;
+  const ticketChannel = await createTournamentTicket(interaction.user, activeTournament);
+  
+  await interaction.editReply(
+    `✅ Registration started!\n\nGo to <#${ticketChannel.id}>!\n\n${invites >= 10 ? '🎁 **FREE ENTRY!**' : '💰 Payment required!'}`
+  );
+}
+async function handleTournamentConfig(interaction, customId, values) {
+  await interaction.deferUpdate();
+  
+  const tournamentId = customId.split('_').pop();
+  const tournament = tournaments.get(tournamentId);
+  
+  if (!tournament) return;
+
+  if (customId.includes('_type_')) {
+    tournament.type = values[0];
+  } else if (customId.includes('_map_')) {
+    tournament.map = values[0];
+  }
+
+  // If both type and map selected, show final config
+  if (tournament.type && tournament.map) {
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('📝 Final Tournament Details')
+      .setDescription('Enter details below and click Create')
+      .addFields(
+        { name: 'Game', value: GAME_TEMPLATES[tournament.game].name, inline: true },
+        { name: 'Type', value: tournament.type, inline: true },
+        { name: 'Map', value: tournament.map, inline: true }
+      )
+      .setColor('#00ff00');
+
+    const row = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId(`create_final_${tournamentId}`)
+        .setLabel('✅ Create Tournament')
+        .setStyle(Discord.ButtonStyle.Success)
+    );
+
+    await interaction.editReply({ embeds: [embed], components: [row] });
+  }
+}
+
+// ==================== BUTTON HANDLERS ====================
+async function handleButton(interaction) {
+  const { customId } = interaction;
+
+  if (customId.startsWith('create_final_')) {
+    await handleFinalCreate(interaction);
+  } else if (customId === 'join_tournament') {
+    await handleJoinTournament(interaction);
+  } else if (customId === 'book_notify') {
+    await handleBookNotify(interaction);
+  } else if (customId === 'accept_challenge') {
+    await handleAcceptChallenge(interaction);
+  } else if (customId === 'confirm_payment') {
+    await handleConfirmPayment(interaction);
+  } else if (customId.startsWith('add_player_')) {
+    await handleAddPlayer(interaction);
+  }
+}
+
+async function handleFinalCreate(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  
+  const tournamentId = interaction.customId.split('_').pop();
+  const tournament = tournaments.get(tournamentId);
+  
+  tournament.status = 'registration';
+  tournament.participants = [];
+  tournament.maxSlots = GAME_TEMPLATES[tournament.game].defaultSlots;
+  tournament.prizePool = 'TBA';
+  tournament.scheduledTime = 'TBA';
+  
+  activeTournament = tournament;
+
+  // Post to announcement channel
+  const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
+  const embed = createTournamentEmbed(tournament);
+  
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('join_tournament')
+      .setLabel('🎮 JOIN NOW')
+      .setStyle(Discord.ButtonStyle.Success)
+  );
+
+  await announceChannel.send({ 
+    content: '@everyone\n\n🔥 **NEW TOURNAMENT!**', 
+    embeds: [embed], 
+    components: [row] 
+  });
+
+  // Post to game-specific channel
+  if (tournament.game === 'minecraft') {
+    const mcChannel = await client.channels.fetch(CONFIG.MINECRAFT_CHANNEL);
+    await mcChannel.send({ embeds: [embed], components: [row] });
+  }
+
+  // Post to tournament schedule
+  const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+  await scheduleChannel.send({ embeds: [embed] });
+
+  // Start auto-spam
+  startTournamentSpam(tournament);
+
+  await interaction.editReply('✅ Tournament created and announced! 🎉');
+}
+
+async function handleJoinTournament(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  if (!activeTournament || activeTournament.status !== 'registration') {
+    return interaction.editReply('❌ Registration closed!');
+  }
+
+  if (registeredPlayers.has(interaction.user.id)) {
+    return interaction.editReply('⚠️ Already registered!');
+  }
+
+  if (bannedUsers.has(interaction.user.id)) {
+    return interaction.editReply('🚫 You are banned!');
+  }
+
+  const invites = userInvites.get(interaction.user.id) || 0;
+  
+  // Create ticket for payment proof
+  const ticketChannel = await createTournamentTicket(interaction.user, activeTournament);
+  
+  await interaction.editReply(
+    `✅ Registration started!\n\n` +
+    `Go to <#${ticketChannel.id}> to complete registration!\n\n` +
+    `${invites >= CONFIG.MIN_INVITES_FREE_ENTRY ? '🎁 **FREE ENTRY** (10+ invites)!' : '💰 Payment proof required!'}`
+  );
+}
+
+async function createTournamentTicket(user, tournament) {
+  const guild = client.guilds.cache.first();
+  const invites = userInvites.get(user.id) || 0;
+  const isFree = invites >= CONFIG.MIN_INVITES_FREE_ENTRY;
+
+  const channel = await guild.channels.create({
+    name: `reg-${user.username}-${tournament.game}`,
+    type: Discord.ChannelType.GuildText,
+    parent: (await guild.channels.fetch(CONFIG.OPEN_TICKET)).parent,
+    permissionOverwrites: [
+      { id: guild.id, deny: [Discord.PermissionFlagsBits.ViewChannel] },
+      { id: user.id, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages, Discord.PermissionFlagsBits.AttachFiles] },
+      { id: CONFIG.STAFF_ROLE, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages, Discord.PermissionFlagsBits.ManageChannels] },
+      { id: client.user.id, allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages] }
+    ],
+  });
+
+  tickets.set(channel.id, { 
+    userId: user.id, 
+    type: 'tournament',
+    tournamentId: tournament.id,
+    createdAt: new Date() 
+  });
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`🎮 ${GAME_TEMPLATES[tournament.game].emoji} Tournament Registration`)
+    .setDescription(
+      `**${tournament.game.toUpperCase()} - ${tournament.type.toUpperCase()}**\n\n` +
+      `${isFree ? '🎁 **FREE ENTRY UNLOCKED!**\nYou have 10+ invites!' : '💰 **Payment Required**\nEntry Fee: Check announcement'}\n\n` +
+      `**Requirements:**\n` +
+      `${isFree ? '✅ No payment needed!' : '📸 Upload payment screenshot to <#' + CONFIG.PAYMENT_PROOF + '>'}\n` +
+      `📱 Your game ID/IGN\n` +
+      `✅ Follow tournament rules\n\n` +
+      `Staff will verify and add you to tournament!`
+    )
+    .setColor(isFree ? '#00ff00' : '#ff9900')
+    .setThumbnail(user.displayAvatarURL({ dynamic: true }));
+
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId(`add_player_${user.id}_${tournament.id}`)
+      .setLabel(isFree ? '✅ Add to Tournament (Free)' : '✅ Confirm Payment & Add')
+      .setStyle(Discord.ButtonStyle.Success)
+      .setEmoji('🎮')
+  );
+
+  await channel.send({ 
+    content: `${user} <@&${CONFIG.STAFF_ROLE}>`, 
+    embeds: [embed], 
+    components: [row] 
+  });
+
+  return channel;
+}
+
+async function handleAddPlayer(interaction) {
+  if (!isStaff(interaction.member)) {
+    return interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+  }
+
+  await interaction.deferUpdate();
+
+  const [, , userId, tournamentId] = interaction.customId.split('_');
+  const user = await client.users.fetch(userId);
+  const tournament = tournaments.get(tournamentId);
+
+  if (!tournament) {
+    return interaction.followUp({ content: '❌ Tournament not found!', ephemeral: true });
+  }
+
+  registeredPlayers.set(userId, {
+    user,
+    tournament: tournamentId,
+    joinedAt: new Date(),
+    addedBy: interaction.user.id
+  });
+
+  // Update ticket
+  const successEmbed = new Discord.EmbedBuilder()
+    .setTitle('✅ REGISTERED!')
+    .setDescription(
+      `${user} added to tournament!\n\n` +
+      `**Tournament:** ${tournament.game} ${tournament.type}\n` +
+      `**Position:** ${registeredPlayers.size}/${tournament.maxSlots}\n\n` +
+      `Room details will be sent via DM when tournament starts!\n\n` +
+      `This ticket will auto-close in ${CONFIG.AUTO_DELETE_TICKET_MINUTES} minutes.`
+    )
+    .setColor('#00ff00')
+    .setFooter({ text: `Added by ${interaction.user.tag}` });
+
+  await interaction.channel.send({ embeds: [successEmbed] });
+
+  // Announce in general
+  await announceNewPlayer(user, tournament);
+
+  // DM user
+  try {
+    await user.send({
+      content: `✅ **REGISTERED!**\n\nTournament: ${tournament.game} ${tournament.type}\nPosition: ${registeredPlayers.size}/${tournament.maxSlots}\n\nRoom details coming soon! 🎮`,
+      embeds: [successEmbed]
+    });
+  } catch (err) {}
+
+  // Update leaderboards
+  await updateAllLeaderboards();
+
+  // Auto-close ticket
+  setTimeout(async () => {
     try {
-      if (dataManager.activeTournament) {
-        const tournament = dataManager.activeTournament;
-        const slotInfo = tournament.getSlotInfo();
-        
-        await client.user.setPresence({
-          activities: [{
-            name: `${tournament.game} | ${slotInfo.filled}/${tournament.maxSlots} slots | /join`,
-            type: Discord.ActivityType.Playing
-          }],
-          status: 'online'
-        });
-      } else {
-        await client.user.setPresence({
-          activities: [{
-            name: '🏆 OTO Pro Tournaments | /help',
-            type: Discord.ActivityType.Competing
-          }],
-          status: 'online'
-        });
+      await interaction.channel.delete();
+      tickets.delete(interaction.channel.id);
+    } catch (err) {}
+  }, CONFIG.AUTO_DELETE_TICKET_MINUTES * 60000);
+
+  // Disable button
+  const disabledRow = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId(`add_player_${userId}_${tournamentId}`)
+      .setLabel('✅ Added to Tournament')
+      .setStyle(Discord.ButtonStyle.Secondary)
+      .setDisabled(true)
+  );
+
+  const messages = await interaction.channel.messages.fetch({ limit: 10 });
+  const buttonMsg = messages.find(m => m.components.length > 0);
+  if (buttonMsg) await buttonMsg.edit({ components: [disabledRow] });
+}
+
+async function announceNewPlayer(user, tournament) {
+  const remaining = tournament.maxSlots - registeredPlayers.size;
+  const percentage = ((registeredPlayers.size / tournament.maxSlots) * 100).toFixed(0);
+
+  const messages = [
+    `🎮 **NEW PLAYER!** ${user} joined ${tournament.game} tournament!\n📊 ${registeredPlayers.size}/${tournament.maxSlots} (${percentage}%) - ${remaining} slots left! 🔥`,
+    `⚡ ${user} registered! ${tournament.game} tournament heating up! 🔥\n📊 Progress: ${generateProgressBar(registeredPlayers.size, tournament.maxSlots)}`,
+    `🚀 ${user} is IN! Only ${remaining} slots remaining!\n💰 ${tournament.prizePool}\n⏰ ${tournament.scheduledTime}`
+  ];
+
+  const msg = messages[Math.floor(Math.random() * messages.length)];
+  
+  const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+  await channel.send(msg);
+
+  // Update tournament schedule
+  const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+  const embed = createTournamentEmbed(tournament);
+  await scheduleChannel.send({ embeds: [embed] });
+}
+
+// ==================== STAFF COMMANDS CONTINUED ====================
+async function handleSendRoom(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const tournamentId = interaction.options.getString('tournamentid');
+  const roomId = interaction.options.getString('roomid');
+  const password = interaction.options.getString('password');
+
+  const tournament = tournaments.get(tournamentId);
+  if (!tournament) {
+    return interaction.editReply('❌ Tournament not found!');
+  }
+
+  // Store credentials securely
+  roomCredentials.set(tournamentId, { roomId, password, setBy: interaction.user.id });
+  tournament.status = 'live';
+
+  // Send to all registered players via DM (no copy/paste embed)
+  let sent = 0;
+  for (const [userId] of registeredPlayers.entries()) {
+    try {
+      const user = await client.users.fetch(userId);
+      
+      // Create image-based credential message (harder to copy)
+      const embed = new Discord.EmbedBuilder()
+        .setTitle('🔐 TOURNAMENT LIVE!')
+        .setDescription(
+          `**${tournament.game.toUpperCase()} - ${tournament.type.toUpperCase()}**\n\n` +
+          `⚠️ **STRICTLY CONFIDENTIAL**\n` +
+          `❌ DO NOT share or forward!\n\n` +
+          `**Room Details:**`
+        )
+        .addFields(
+          { name: '🆔 Room ID', value: `\`\`\`${roomId}\`\`\``, inline: false },
+          { name: '🔐 Password', value: password ? `\`\`\`${password}\`\`\`` : '❌ No password', inline: false }
+        )
+        .setColor('#ff0000')
+        .setFooter({ text: '⚠️ Screenshot prohibited! Join directly!' })
+        .setTimestamp();
+
+      await user.send({ embeds: [embed] });
+      sent++;
+    } catch (err) {
+      console.log(`Could not DM user ${userId}`);
+    }
+  }
+
+  // Announce in announcement channel (without actual credentials)
+  const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
+  const announceEmbed = new Discord.EmbedBuilder()
+    .setTitle('🚨 TOURNAMENT STARTING NOW!')
+    .setDescription(
+      `**${tournament.game.toUpperCase()}** - ${tournament.type.toUpperCase()}\n\n` +
+      `🎮 ${registeredPlayers.size} players registered!\n` +
+      `🔐 Room details sent via DM!\n` +
+      `⚠️ Check your DMs NOW!\n\n` +
+      `**Rules:**\n${CONFIG.RULES || 'Follow tournament rules!'}`
+    )
+    .setColor('#00ff00');
+
+  await announceChannel.send({ content: '@everyone', embeds: [announceEmbed] });
+
+  await interaction.editReply(`✅ Room credentials sent to ${sent} players via DM!`);
+}
+
+async function handleDeclareWinner(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const tournamentId = interaction.options.getString('tournamentid');
+  const tournament = tournaments.get(tournamentId);
+
+  if (!tournament) {
+    return interaction.editReply('❌ Tournament not found!');
+  }
+
+  // Show player selection
+  const players = Array.from(registeredPlayers.entries())
+    .filter(([, data]) => data.tournament === tournamentId)
+    .slice(0, 25);
+
+  if (players.length === 0) {
+    return interaction.editReply('❌ No players in this tournament!');
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🏆 Select Winners')
+    .setDescription(`Select 1st, 2nd, 3rd place for ${tournament.game}`)
+    .setColor('#ffd700');
+
+  const selectRow = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId(`winner_first_${tournamentId}`)
+      .setPlaceholder('🥇 Select 1st Place')
+      .addOptions(players.map(([userId, data]) => ({
+        label: data.user.username,
+        value: userId,
+        description: `1st Place Winner`
+      })))
+  );
+
+  await interaction.editReply({ embeds: [embed], components: [selectRow] });
+}
+
+// ==================== MODERATION ====================
+async function handleBan(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const user = interaction.options.getUser('user');
+  const reason = interaction.options.getString('reason');
+
+  // Protect staff from being banned
+  const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+  if (member && isStaff(member)) {
+    return interaction.editReply('❌ Cannot ban staff members! Staff are protected!');
+  }
+
+  bannedUsers.set(user.id, {
+    reason,
+    by: interaction.user.tag,
+    date: new Date()
+  });
+
+  registeredPlayers.delete(user.id);
+
+  try {
+    await user.send(
+      `🚫 **YOU ARE BANNED FROM OTO TOURNAMENTS!**\n\n` +
+      `**Reason:** ${reason}\n` +
+      `**By:** ${interaction.user.tag}\n\n` +
+      `Contact admins if you believe this is a mistake.`
+    );
+  } catch (err) {}
+
+  await interaction.editReply(`✅ Banned ${user.tag}\n**Reason:** ${reason}`);
+}
+
+async function handleTimeout(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const user = interaction.options.getUser('user');
+  const minutes = interaction.options.getInteger('minutes');
+  const reason = interaction.options.getString('reason') || 'Breaking rules';
+
+  // Protect staff
+  const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+  if (!member) return interaction.editReply('❌ User not in server!');
+  
+  if (isStaff(member)) {
+    return interaction.editReply('❌ Cannot timeout staff! Staff are protected!');
+  }
+
+  try {
+    await member.timeout(minutes * 60 * 1000, reason);
+    
+    try {
+      await user.send(
+        `⏱️ **TIMED OUT FOR ${minutes} MINUTES!**\n\n` +
+        `**Reason:** ${reason}\n\n` +
+        `Behave properly next time!`
+      );
+    } catch (err) {}
+
+    await interaction.editReply(`✅ Timed out ${user.tag} for ${minutes} minutes.`);
+  } catch (err) {
+    await interaction.editReply(`❌ Failed to timeout: ${err.message}`);
+  }
+}
+
+async function handleWarn(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const user = interaction.options.getUser('user');
+  const reason = interaction.options.getString('reason');
+
+  // Protect staff
+  const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+  if (member && isStaff(member)) {
+    return interaction.editReply('❌ Cannot warn staff! Staff are protected!');
+  }
+
+  const userWarns = warnings.get(user.id) || [];
+  userWarns.push({
+    reason,
+    by: interaction.user.tag,
+    date: new Date()
+  });
+  warnings.set(user.id, userWarns);
+
+  try {
+    await user.send(
+      `⚠️ **WARNING ${userWarns.length}/3**\n\n` +
+      `**Reason:** ${reason}\n` +
+      `**By:** ${interaction.user.tag}\n\n` +
+      `${userWarns.length >= 3 ? '🚫 Next warning = BAN!' : 'Improve your behavior!'}`
+    );
+  } catch (err) {}
+
+  await interaction.editReply(`✅ Warned ${user.tag} (${userWarns.length}/3)\n**Reason:** ${reason}`);
+
+  // Auto-ban at 3 warnings
+  if (userWarns.length >= 3) {
+    bannedUsers.set(user.id, {
+      reason: '3 warnings received',
+      by: 'AUTO-BAN',
+      date: new Date()
+    });
+    
+    try {
+      await user.send('🚫 **AUTO-BANNED** after 3 warnings!');
+    } catch (err) {}
+  }
+}
+
+// ==================== STAFF MANAGEMENT ====================
+async function handleAddStaff(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const user = interaction.options.getUser('user');
+  const member = await interaction.guild.members.fetch(user.id);
+  const role = await interaction.guild.roles.fetch(CONFIG.STAFF_ROLE);
+
+  if (!role) return interaction.editReply('❌ Staff role not found!');
+  if (member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+    return interaction.editReply('⚠️ Already staff!');
+  }
+
+  await member.roles.add(role);
+  staffMembers.add(user.id);
+
+  // Random encouraging message
+  const welcomeMsg = CONFIG.STAFF_WELCOME_MESSAGES[Math.floor(Math.random() * CONFIG.STAFF_WELCOME_MESSAGES.length)];
+
+  // Staff chat announcement
+  const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+  if (staffChannel) {
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🎉 NEW STAFF MEMBER!')
+      .setDescription(
+        `Welcome ${user} to OTO Staff Team! 👮\n\n` +
+        `**Message from management:**\n${welcomeMsg}\n\n` +
+        `**Your responsibilities:**\n` +
+        `🎮 Manage tournaments\n` +
+        `👥 Handle player issues\n` +
+        `🛡️ Moderate community\n` +
+        `🎫 Respond to tickets\n\n` +
+        `**Promoted by:** ${interaction.user}\n` +
+        `**Date:** <t:${Math.floor(Date.now() / 1000)}:F>`
+      )
+      .setColor('#00ff00')
+      .setThumbnail(user.displayAvatarURL({ dynamic: true }));
+
+    await staffChannel.send({ content: `<@&${CONFIG.STAFF_ROLE}> ${user}`, embeds: [embed] });
+  }
+
+  // DM user
+  try {
+    const dmEmbed = new Discord.EmbedBuilder()
+      .setTitle('👮 YOU ARE NOW OTO STAFF!')
+      .setDescription(
+        `${welcomeMsg}\n\n` +
+        `**Your Powers:**\n` +
+        `✅ Create & manage tournaments\n` +
+        `✅ Add/remove players\n` +
+        `✅ Warn & timeout users\n` +
+        `✅ Handle tickets\n` +
+        `✅ Send room credentials\n\n` +
+        `**Important:**\n` +
+        `• Be fair and professional\n` +
+        `• Help players\n` +
+        `• Follow OTO rules\n` +
+        `• Work as a team\n\n` +
+        `Use \`/help\` to see staff commands!\n\n` +
+        `**Welcome to the team! 💪**`
+      )
+      .setColor('#ffd700')
+      .setThumbnail(CONFIG.QR_IMAGE);
+
+    await user.send({ embeds: [dmEmbed] });
+  } catch (err) {}
+
+  await interaction.editReply(`✅ ${user.tag} is now staff! Welcome message sent! 🎉`);
+}
+
+async function handleRemoveStaff(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const user = interaction.options.getUser('user');
+  const member = await interaction.guild.members.fetch(user.id);
+  const role = await interaction.guild.roles.fetch(CONFIG.STAFF_ROLE);
+
+  if (!member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+    return interaction.editReply('⚠️ Not a staff member!');
+  }
+
+  await member.roles.remove(role);
+  staffMembers.delete(user.id);
+
+  // Notify staff chat
+  const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT).catch(() => null);
+  if (staffChannel) {
+    await staffChannel.send(
+      `👤 **STAFF REMOVED**\n\n` +
+      `${user.tag} is no longer staff.\n` +
+      `**Removed by:** ${interaction.user.tag}`
+    );
+  }
+
+  try {
+    await user.send(
+      `👤 **STAFF ROLE REMOVED**\n\n` +
+      `You are no longer OTO staff.\n` +
+      `**Removed by:** ${interaction.user.tag}\n\n` +
+      `You can still participate as a regular member!`
+    );
+  } catch (err) {}
+
+  await interaction.editReply(`✅ Removed ${user.tag} from staff!`);
+}
+
+// ==================== LEADERBOARDS ====================
+async function handleLeaderboard(interaction) {
+  await interaction.deferReply();
+
+  const type = interaction.options.getString('type');
+
+  if (type === 'invites') {
+    await showInviteLeaderboard(interaction);
+  } else {
+    await showGameLeaderboard(interaction, type);
+  }
+}
+
+async function showInviteLeaderboard(interaction) {
+  const sorted = Array.from(userInvites.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20);
+
+  if (sorted.length === 0) {
+    return interaction.editReply('❌ No invite data yet!');
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🏅 Most Invites Leaderboard')
+    .setDescription(
+      sorted.map(([userId, count], i) => {
+        const medals = ['👑', '🥈', '🥉'];
+        const medal = medals[i] || `${i + 1}.`;
+        const status = count >= CONFIG.MIN_INVITES_FREE_ENTRY ? '✅' : '❌';
+        return `${medal} <@${userId}> - **${count}** invites ${status}`;
+      }).join('\n')
+    )
+    .setColor('#ffd700')
+    .setFooter({ text: `${CONFIG.MIN_INVITES_FREE_ENTRY}+ invites = Free entry!` });
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function showGameLeaderboard(interaction, game) {
+  const gameData = GAME_TEMPLATES[game];
+  const stats = gameStats[game];
+
+  if (!stats || stats.size === 0) {
+    return interaction.editReply(`❌ No ${gameData.name} stats yet!`);
+  }
+
+  const sorted = Array.from(stats.entries())
+    .sort((a, b) => {
+      if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+      return b[1].topThree - a[1].topThree;
+    })
+    .slice(0, 15);
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`${gameData.emoji} ${gameData.name} Leaderboard`)
+    .setDescription(
+      sorted.map(([userId, data], i) => {
+        const medals = ['👑', '🥈', '🥉'];
+        const medal = medals[i] || `${i + 1}.`;
+        return `${medal} <@${userId}>\n   🏆 ${data.wins} Wins | 🎮 ${data.played} Played | 🥇 ${data.topThree} Top 3`;
+      }).join('\n\n')
+    )
+    .setColor('#3498db');
+
+  await interaction.editReply({ embeds: [embed] });
+}
+
+async function updateAllLeaderboards() {
+  try {
+    // Update invite tracker channel
+    const inviteChannel = await client.channels.fetch(CONFIG.INVITE_TRACKER);
+    const inviteEmbed = new Discord.EmbedBuilder()
+      .setTitle('🔗 Top Inviters')
+      .setDescription(
+        Array.from(userInvites.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10)
+          .map(([userId, count], i) => `${i + 1}. <@${userId}> - ${count} invites`)
+          .join('\n') || 'No data yet'
+      )
+      .setColor('#ffd700')
+      .setTimestamp();
+
+    const messages = await inviteChannel.messages.fetch({ limit: 5 });
+    const botMsgs = messages.filter(m => m.author.id === client.user.id);
+    if (botMsgs.size > 0) await inviteChannel.bulkDelete(botMsgs);
+    await inviteChannel.send({ embeds: [inviteEmbed] });
+
+    // Update most played channel
+    const mostPlayedChannel = await client.channels.fetch(CONFIG.MOST_PLAYED);
+    const allStats = new Map();
+    
+    for (const [userId, data] of userStats.entries()) {
+      allStats.set(userId, data);
+    }
+
+    const topPlayers = Array.from(allStats.entries())
+      .sort((a, b) => b[1].played - a[1].played)
+      .slice(0, 10);
+
+    const playedEmbed = new Discord.EmbedBuilder()
+      .setTitle('🎮 Most Active Players')
+      .setDescription(
+        topPlayers.map(([userId, data], i) => 
+          `${i + 1}. <@${userId}> - ${data.played} tournaments`
+        ).join('\n') || 'No data yet'
+      )
+      .setColor('#3498db')
+      .setTimestamp();
+
+    const playedMsgs = await mostPlayedChannel.messages.fetch({ limit: 5 });
+    const playedBotMsgs = playedMsgs.filter(m => m.author.id === client.user.id);
+    if (playedBotMsgs.size > 0) await mostPlayedChannel.bulkDelete(playedBotMsgs);
+    await mostPlayedChannel.send({ embeds: [playedEmbed] });
+
+  } catch (err) {
+    console.error('Leaderboard update error:', err);
+  }
+}
+
+// ==================== MESSAGE HANDLER ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+
+  const content = message.content.toLowerCase();
+
+  // Bad word filter
+  if (containsBadWord(content)) {
+    try {
+      await message.delete();
+      
+      const userWarns = warnings.get(message.author.id) || [];
+      userWarns.push({
+        reason: 'Bad language',
+        by: 'AUTO-MOD',
+        date: new Date()
+      });
+      warnings.set(message.author.id, userWarns);
+
+      const warnMsg = await message.channel.send(
+        `⚠️ ${message.author} **WARNING!** Bad language not allowed!\n` +
+        `Warnings: ${userWarns.length}/3\n` +
+        `${userWarns.length >= 2 ? '🚫 Next warning = Timeout!' : ''}`
+      );
+
+      setTimeout(() => warnMsg.delete().catch(() => {}), 5000);
+
+      // Auto-timeout after 2 warnings
+      if (userWarns.length >= 2) {
+        const member = await message.guild.members.fetch(message.author.id);
+        if (!isStaff(member)) {
+          await member.timeout(10 * 60 * 1000, 'Bad language - Auto timeout');
+          
+          try {
+            await message.author.send(
+              `⏱️ **AUTO-TIMEOUT: 10 MINUTES**\n\n` +
+              `**Reason:** Bad language\n` +
+              `**Warnings:** ${userWarns.length}/3\n\n` +
+              `Keep chat clean!`
+            );
+          } catch (err) {}
+        }
       }
     } catch (err) {
-      console.error('Status update error:', err);
+      console.error('Bad word filter error:', err);
     }
-  }, 300000); // Every 5 minutes
+    return;
+  }
 
-  // Clean up old data
-  setInterval(() => {
-    cleanupOldData();
-  }, 86400000); // Daily cleanup
+  // Spam detection
+  if (await isSpamming(message)) {
+    try {
+      await message.delete();
+      
+      const member = await message.guild.members.fetch(message.author.id);
+      if (!isStaff(member)) {
+        await member.timeout(5 * 60 * 1000, 'Spamming');
+        
+        const warnMsg = await message.channel.send(
+          `🚫 ${message.author} **TIMEOUT: 5 MINUTES**\n` +
+          `**Reason:** Spamming\n\n` +
+          `Don't spam!`
+        );
+        
+        setTimeout(() => warnMsg.delete().catch(() => {}), 5000);
+      }
+    } catch (err) {}
+    return;
+  }
 
-  console.log('✅ Professional automated tasks started');
+  // Bot mention response
+  if (message.mentions.has(client.user)) {
+    const responses = [
+      `Hey ${message.author}! 👋\n**Where to join?**\nCheck <#${CONFIG.ANNOUNCEMENT_CHANNEL}> for tournaments!\nUse \`/help\` for commands!`,
+      `Yo ${message.author}! 🎮\n**Yese khelo:**\n1️⃣ 10 log invite karo\n2️⃣ Free tournament entry pao\n3️⃣ Prizes jeeto! 💰`,
+      `Bhai ${message.author}! 👋\nTournament join karna hai?\n<#${CONFIG.TOURNAMENT_SCHEDULE}> dekho schedule!\nInvite karo friends ko! 🔗`
+    ];
+    
+    return message.reply(responses[Math.floor(Math.random() * responses.length)]);
+  }
+
+  // Staff mention - auto response
+  if (content.includes('staff') || content.includes('@staff') || content.includes('admin')) {
+    if (message.channel.id === CONFIG.GENERAL_CHAT) {
+      return message.reply(
+        `📨 **Staff ko message bheja gaya hai!**\n\n` +
+        `Staffs are working on your query.\n` +
+        `Apko jaldi hi reply mil jayega! ⏰\n\n` +
+        `Ya phir ticket kholo: <#${CONFIG.OPEN_TICKET}> 🎫`
+      );
+    }
+  }
+
+  // Only in general chat
+  if (message.channel.id !== CONFIG.GENERAL_CHAT) return;
+
+  // Track for 2-minute auto-response
+  const lastResponse = pendingResponses.get(message.author.id);
+  if (!lastResponse || Date.now() - lastResponse > 120000) {
+    pendingResponses.set(message.author.id, Date.now());
+    
+    // Wait 2 minutes for someone to respond
+    setTimeout(async () => {
+      try {
+        const messages = await message.channel.messages.fetch({ limit: 10 });
+        const userMessages = messages.filter(m => 
+          m.createdTimestamp > message.createdTimestamp && 
+          m.author.id !== message.author.id && 
+          m.author.id !== client.user.id
+        );
+
+        // If no one replied in 2 minutes
+        if (userMessages.size === 0) {
+          const responses = [
+            `Hi bro ${message.author}! 👋\nTournament check karna hai aaj? <#${CONFIG.TOURNAMENT_SCHEDULE}>\nYa custom challenge karoge? Use \`/challenge\` 🎮`,
+            `Hey ${message.author}! Kya haal hai?\nToday's tournaments: <#${CONFIG.ANNOUNCEMENT_CHANNEL}>\nChallenge ready ho? 💪`,
+            `Bhai ${message.author}! 🔥\nAaj tournament kheloge?\nYa Beat Our Player challenge try karoge? 🎯`
+          ];
+          
+          await message.reply(responses[Math.floor(Math.random() * responses.length)]);
+        }
+      } catch (err) {}
+    }, 120000); // 2 minutes
+  }
+
+  // Auto-responses
+  const autoResponses = {
+    'tournament': [
+      `Tournaments dekho: <#${CONFIG.TOURNAMENT_SCHEDULE}> 🎮`,
+      `Bhai tournaments daily hote hain! <#${CONFIG.ANNOUNCEMENT_CHANNEL}> check karo! 🔥`
+    ],
+    'free': [
+      `Free entry chahiye? 10 logo ko invite karo! Simple! 🎁`,
+      `10 invites = FREE entry in all tournaments! 💰`
+    ],
+    'join': [
+      `Join kaise kare? <#${CONFIG.HOW_TO_JOIN}> dekho full guide! 📖`,
+      `Tournament join: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> pe JOIN button dabao! ⚡`
+    ],
+    'invite': [
+      `Invites check karo: \`/invites\` 🔗`,
+      `10 invites complete karo = Free entry unlock! 🎉`
+    ],
+    'rules': [
+      `Rules: <#${CONFIG.RULES_CHANNEL}> 📋`,
+      `Tournament rules important hain bro! Follow karo! ✅`
+    ],
+  };
+
+  for (const [keyword, responses] of Object.entries(autoResponses)) {
+    if (content.includes(keyword)) {
+      return message.reply(responses[Math.floor(Math.random() * responses.length)]);
+    }
+  }
+});
+
+// ==================== MEMBER JOIN ====================
+client.on('guildMemberAdd', async (member) => {
+  try {
+    const guild = member.guild;
+    const newInvites = await guild.invites.fetch();
+    
+    const usedInvite = newInvites.find(inv => {
+      const cached = inviteCache.get(inv.code) || 0;
+      return inv.uses > cached;
+    });
+
+    if (usedInvite && usedInvite.inviter) {
+      inviteCache.set(usedInvite.code, usedInvite.uses);
+      
+      const current = userInvites.get(usedInvite.inviter.id) || 0;
+      userInvites.set(usedInvite.inviter.id, current + 1);
+
+      // Random welcome message
+      const welcomeMsg = CONFIG.WELCOME_MESSAGES[Math.floor(Math.random() * CONFIG.WELCOME_MESSAGES.length)]
+        .replace('{user}', `${member}`);
+
+      const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+      await channel.send(
+        `${welcomeMsg}\n\n💫 **Invited by:** <@${usedInvite.inviter.id}>\n🔗 **Total invites:** ${current + 1}\n${current + 1 >= CONFIG.MIN_INVITES_FREE_ENTRY ? '🎁 **FREE ENTRY UNLOCKED!** ✅' : `📊 ${CONFIG.MIN_INVITES_FREE_ENTRY - current - 1} more for free entry!`}`
+      );
+
+      // Post to invite tracker
+      const inviteTrackerChannel = await client.channels.fetch(CONFIG.INVITE_TRACKER);
+      await inviteTrackerChannel.send(
+        `✅ **New Invite!**\n` +
+        `**Inviter:** <@${usedInvite.inviter.id}>\n` +
+        `**Invited:** ${member}\n` +
+        `**Total:** ${current + 1}\n` +
+        `**Time:** <t:${Math.floor(Date.now() / 1000)}:F>`
+      );
+
+      // DM inviter
+      try {
+        const inviter = await client.users.fetch(usedInvite.inviter.id);
+        
+        if (current + 1 === CONFIG.MIN_INVITES_FREE_ENTRY) {
+          // Unlocked reward!
+          const rewardEmbed = new Discord.EmbedBuilder()
+            .setTitle('🎉 REWARD UNLOCKED!')
+            .setDescription(
+              `**Congratulations!** 🎊\n\n` +
+              `You completed **10 invites**!\n\n` +
+              `**Your Rewards:**\n` +
+              `✅ FREE tournament entry (all games)\n` +
+              `✅ Beat Our Player challenges\n` +
+              `✅ Priority booking\n` +
+              `✅ Special perks\n\n` +
+              `Use \`/book\` to reserve your slot!\n` +
+              `Use \`/challenge\` for special matches!`
+            )
+            .setColor('#ffd700')
+            .setThumbnail(CONFIG.QR_IMAGE);
+
+          await inviter.send({ embeds: [rewardEmbed] });
+
+          // Announce in general
+          await channel.send(
+            `🎉 **MILESTONE REACHED!** 🎉\n\n` +
+            `<@${usedInvite.inviter.id}> completed **10 invites**!\n\n` +
+            `🎁 **FREE ENTRY UNLOCKED!**\n` +
+            `⚔️ **CHALLENGES UNLOCKED!**\n\n` +
+            `Congratulations! 👑`
+          );
+        } else {
+          await inviter.send(
+            `🎉 **New Invite!**\n\n` +
+            `${member.user.tag} joined using your link!\n\n` +
+            `**Total Invites:** ${current + 1}\n` +
+            `${current + 1 >= CONFIG.MIN_INVITES_FREE_ENTRY ? '✅ FREE ENTRY UNLOCKED!' : `📊 ${CONFIG.MIN_INVITES_FREE_ENTRY - current - 1} more for FREE entry!`}`
+          );
+        }
+      } catch (err) {}
+
+      // Welcome DM to new member
+      setTimeout(async () => {
+        try {
+          const welcomeEmbed = new Discord.EmbedBuilder()
+            .setTitle('👋 Welcome to OTO Tournament!')
+            .setDescription(
+              `Hey ${member.user.username}! 🎮\n\n` +
+              `**Quick Start Guide:**\n\n` +
+              `1️⃣ **Invite 10 people** = FREE tournament entry! 🎁\n` +
+              `2️⃣ Check tournaments: <#${CONFIG.TOURNAMENT_SCHEDULE}>\n` +
+              `3️⃣ Read rules: <#${CONFIG.RULES_CHANNEL}>\n` +
+              `4️⃣ Join tournaments: <#${CONFIG.ANNOUNCEMENT_CHANNEL}>\n\n` +
+              `**Games We Support:**\n` +
+              `🔥 Free Fire\n` +
+              `⛏️ Minecraft\n` +
+              `🎯 PUBG Mobile\n\n` +
+              `**Commands:**\n` +
+              `\`/invites\` - Check your invites\n` +
+              `\`/help\` - All commands\n` +
+              `\`/book\` - Book tournament (10+ invites)\n\n` +
+              `**Big prizes daily! Good luck! 💰**`
+            )
+            .setColor('#00ff00')
+            .setThumbnail(CONFIG.QR_IMAGE)
+            .setFooter({ text: 'Invite friends to unlock rewards!' });
+
+          await member.send({ embeds: [welcomeEmbed] });
+        } catch (err) {}
+      }, 3000);
+    }
+
+    // Update cache
+    newInvites.forEach(inv => inviteCache.set(inv.code, inv.uses));
+
+    // Update leaderboards
+    await updateAllLeaderboards();
+
+  } catch (err) {
+    console.error('Member join error:', err);
+  }
+});
+
+// ==================== MEMBER LEAVE ====================
+client.on('guildMemberRemove', async (member) => {
+  try {
+    const guild = member.guild;
+    const newInvites = await guild.invites.fetch();
+    
+    const decreasedInvite = newInvites.find(inv => {
+      const cached = inviteCache.get(inv.code) || 0;
+      return inv.uses < cached;
+    });
+
+    if (decreasedInvite && decreasedInvite.inviter) {
+      inviteCache.set(decreasedInvite.code, decreasedInvite.uses);
+      
+      const current = userInvites.get(decreasedInvite.inviter.id) || 0;
+      if (current > 0) {
+        userInvites.set(decreasedInvite.inviter.id, current - 1);
+      }
+    }
+
+    const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+    await channel.send(
+      `😢 ${member.user.tag} left the server... Bye bye! 👋`
+    );
+
+    // Update cache
+    newInvites.forEach(inv => inviteCache.set(inv.code, inv.uses));
+
+  } catch (err) {
+    console.error('Member leave error:', err);
+  }
+});
+
+// ==================== UTILITY FUNCTIONS ====================
+function containsBadWord(text) {
+  return CONFIG.BAD_WORDS.some(word => text.toLowerCase().includes(word));
 }
 
-// ==================== HELPER FUNCTIONS ====================
+async function isSpamming(message) {
+  const userId = message.author.id;
+  const now = Date.now();
+  
+  if (!spamTimers.has(userId)) {
+    spamTimers.set(userId, []);
+  }
+  
+  const timestamps = spamTimers.get(userId);
+  timestamps.push(now);
+  
+  // Remove old timestamps (older than 5 seconds)
+  const recent = timestamps.filter(t => now - t < 5000);
+  spamTimers.set(userId, recent);
+  
+  // If more than 5 messages in 5 seconds = spam
+  return recent.length > 5;
+}
+
 function isStaff(member) {
   return member?.roles?.cache?.has(CONFIG.STAFF_ROLE) || 
-         member?.permissions?.has(Discord.PermissionFlagsBits.Administrator) ||
-         member?.user?.id === OWNER_ID;
+         member?.permissions?.has(Discord.PermissionFlagsBits.Administrator);
 }
 
-async function initializeProfessionalInviteTracking() {
+function createTournamentEmbed(tournament) {
+  const gameData = GAME_TEMPLATES[tournament.game];
+  const progress = generateProgressBar(registeredPlayers.size, tournament.maxSlots);
+
+  return new Discord.EmbedBuilder()
+    .setTitle(`${gameData.emoji} ${tournament.game.toUpperCase()} Tournament`)
+    .setDescription(
+      `**Type:** ${tournament.type}\n` +
+      `**Map:** ${tournament.map}\n` +
+      `**Status:** ${tournament.status.toUpperCase()}`
+    )
+    .addFields(
+      { name: '💰 Prize Pool', value: tournament.prizePool || 'TBA', inline: true },
+      { name: '⏰ Time', value: tournament.scheduledTime || 'TBA', inline: true },
+      { name: '📊 Slots', value: `${registeredPlayers.size}/${tournament.maxSlots}`, inline: true },
+      { name: '📈 Progress', value: progress, inline: false }
+    )
+    .setColor(tournament.status === 'live' ? '#00ff00' : '#3498db')
+    .setThumbnail(CONFIG.QR_IMAGE)
+    .setFooter({ text: `Tournament ID: ${tournament.id}` })
+    .setTimestamp();
+}
+
+function generateProgressBar(current, max) {
+  const percentage = Math.min((current / max) * 100, 100);
+  const filled = Math.floor(percentage / 10);
+  const empty = 10 - filled;
+  return `${'🟩'.repeat(filled)}${'⬜'.repeat(empty)} **${percentage.toFixed(0)}%** (${current}/${max})`;
+}
+
+async function initializeInviteTracking() {
   for (const guild of client.guilds.cache.values()) {
     try {
       const invites = await guild.invites.fetch();
       invites.forEach(inv => {
         if (inv.inviter) {
-          dataManager.inviteCache.set(inv.code, inv.uses);
+          inviteCache.set(inv.code, inv.uses);
+          const current = userInvites.get(inv.inviter.id) || 0;
+          userInvites.set(inv.inviter.id, current + inv.uses);
         }
       });
-      console.log(`✅ Professional invite tracking initialized for ${guild.name}`);
+      console.log(`✅ Cached ${invites.size} invites`);
     } catch (err) {
-      console.warn(`⚠️ Could not fetch invites for ${guild.name}`);
+      console.warn(`⚠️ Could not fetch invites`);
     }
   }
 }
 
-async function loadProfessionalStaffMembers() {
+async function loadStaffMembers() {
   try {
     for (const guild of client.guilds.cache.values()) {
       const role = await guild.roles.fetch(CONFIG.STAFF_ROLE);
       if (role) {
-        role.members.forEach(member => {
-          dataManager.staffMembers.add(member.id);
-        });
-        console.log(`✅ Loaded ${role.members.size} professional staff members`);
+        role.members.forEach(member => staffMembers.add(member.id));
+        console.log(`✅ Loaded ${role.members.size} staff members`);
       }
     }
   } catch (err) {
-    console.error('❌ Professional staff loading error:', err);
+    console.error('Error loading staff:', err);
   }
 }
 
-function cleanupOldData() {
-  const now = Date.now();
-  const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
-
-  // Clean old warnings (older than 30 days)
-  for (const [userId, warnings] of dataManager.warnings.entries()) {
-    const recentWarnings = warnings.filter(w => w.date.getTime() > thirtyDaysAgo);
-    if (recentWarnings.length === 0) {
-      dataManager.warnings.delete(userId);
-    } else {
-      dataManager.warnings.set(userId, recentWarnings);
+// ==================== AUTOMATED TASKS ====================
+function startAutomatedTasks() {
+  // Tournament spam every 2 minutes
+  setInterval(async () => {
+    if (activeTournament && activeTournament.status === 'registration') {
+      await spamTournamentAnnouncement();
     }
-  }
+  }, CONFIG.SPAM_INTERVAL);
 
-  console.log('✅ Professional data cleanup completed');
+  // Update leaderboards every 30 minutes
+  setInterval(async () => {
+    await updateAllLeaderboards();
+  }, 1800000);
+
+  // Bot status update every 5 minutes
+  setInterval(() => {
+    if (activeTournament) {
+      client.user.setActivity(
+        `${GAME_TEMPLATES[activeTournament.game].emoji} ${activeTournament.game} | ${registeredPlayers.size}/${activeTournament.maxSlots}`,
+        { type: Discord.ActivityType.Competing }
+      );
+    } else {
+      client.user.setActivity('🏆 OTO Multi-Game Tournaments', { type: Discord.ActivityType.Competing });
+    }
+  }, 300000);
+
+  console.log('✅ Automated tasks started');
+}
+
+async function spamTournamentAnnouncement() {
+  if (!activeTournament || activeTournament.status !== 'registration') return;
+
+  try {
+    const remaining = activeTournament.maxSlots - registeredPlayers.size;
+    const percentage = ((registeredPlayers.size / activeTournament.maxSlots) * 100).toFixed(0);
+    const gameData = GAME_TEMPLATES[activeTournament.game];
+
+    const messages = [
+      `🔥 **${gameData.emoji} ${activeTournament.game.toUpperCase()} TOURNAMENT!** 🔥\n\n💰 Prize: **${activeTournament.prizePool}**\n⏰ Time: **${activeTournament.scheduledTime}**\n📊 Slots: **${registeredPlayers.size}/${activeTournament.maxSlots}** (${percentage}% full)\n🎮 Type: ${activeTournament.type} | Map: ${activeTournament.map}\n\n👉 JOIN: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> 👈`,
+      
+      `⚡ **${remaining} SLOTS LEFT!** ⚡\n\n${gameData.emoji} ${activeTournament.game} - ${activeTournament.type}\n💰 Win: **${activeTournament.prizePool}**\n⏰ ${activeTournament.scheduledTime}\n\n🎁 10+ invites = FREE entry!\n\n<#${CONFIG.ANNOUNCEMENT_CHANNEL}> 🔥`,
+      
+      `🎮 **REGISTER NOW!** ${gameData.emoji}\n\n${activeTournament.game.toUpperCase()} Tournament\n📊 ${registeredPlayers.size}/${activeTournament.maxSlots} registered\n\n${generateProgressBar(registeredPlayers.size, activeTournament.maxSlots)}\n\nJoin: <#${CONFIG.ANNOUNCEMENT_CHANNEL}> ⚡`
+    ];
+
+    const msg = messages[Math.floor(Math.random() * messages.length)];
+    
+    const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+    const sentMsg = await channel.send(msg);
+
+    // Add JOIN button
+    const row = new Discord.ActionRowBuilder().addComponents(
+      new Discord.ButtonBuilder()
+        .setCustomId('join_tournament')
+        .setLabel('🎮 JOIN TOURNAMENT')
+        .setStyle(Discord.ButtonStyle.Success)
+    );
+
+    setTimeout(async () => {
+      try {
+        await sentMsg.edit({ content: msg, components: [row] });
+      } catch (err) {}
+    }, 1000);
+
+  } catch (err) {
+    console.error('Spam error:', err);
+  }
+}
+
+function startTournamentSpam(tournament) {
+  // Initial spam
+  setTimeout(() => spamTournamentAnnouncement(), 5000);
+}
+
+async function setupPersistentMessages() {
+  try {
+    // Setup messages in channels
+    console.log('✅ Persistent messages setup (optional)');
+  } catch (err) {
+    console.error('Setup error:', err);
+  }
+}
+
+async function handleBookNotify(interaction) {
+  await interaction.deferUpdate();
+  
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🔔 Notifications Enabled!')
+    .setDescription(
+      `You'll be notified when:\n` +
+      `✅ New tournaments open\n` +
+      `✅ Challenges are available\n` +
+      `✅ Special events start\n\n` +
+      `Keep your DMs open!`
+    )
+    .setColor('#00ff00');
+
+  await interaction.followUp({ embeds: [embed], ephemeral: true });
+
+  try {
+    await interaction.user.send(
+      `🔔 **Notifications Activated!**\n\n` +
+      `You'll receive updates for:\n` +
+      `• New tournaments\n` +
+      `• Beat Our Player challenges\n` +
+      `• Special events\n\n` +
+      `Stay ready! 🎮`
+    );
+  } catch (err) {}
+}
+
+async function handleAcceptChallenge(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const challengeRoom = `ROOM-${Math.floor(Math.random() * 10000)}`;
+  const challengePass = `PASS-${Math.floor(Math.random() * 1000)}`;
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('⚔️ Challenge Accepted!')
+    .setDescription(
+      `**Beat Our Player Challenge**\n\n` +
+      `You're facing OTO's best player!\n\n` +
+      `**Room Details:**\n` +
+      `🆔 Room ID: \`${challengeRoom}\`\n` +
+      `🔐 Password: \`${challengePass}\`\n\n` +
+      `**If you WIN:**\n` +
+      `🎁 FREE Squad tournament entry\n` +
+      `💰 Bonus prize\n` +
+      `👑 Special role\n\n` +
+      `**Good luck warrior!** 💪`
+    )
+    .setColor('#ff0000')
+    .setFooter({ text: 'Play fair and show your skills!' });
+
+  await interaction.editReply({ embeds: [embed] });
+
+  try {
+    await interaction.user.send({ embeds: [embed] });
+  } catch (err) {}
+
+  // Notify staff
+  const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT);
+  await staffChannel.send(
+    `⚔️ **Challenge Accepted!**\n` +
+    `**Player:** ${interaction.user}\n` +
+    `**Room:** ${challengeRoom}\n` +
+    `**Pass:** ${challengePass}\n\n` +
+    `Staff player should join now!`
+  );
 }
 
 // ==================== ERROR HANDLING ====================
-client.on('error', err => console.error('❌ Professional client error:', err));
-client.on('warn', warn => console.warn('⚠️ Professional warning:', warn));
-process.on('unhandledRejection', err => console.error('❌ Unhandled rejection:', err));
-process.on('uncaughtException', err => console.error('❌ Uncaught exception:', err));
+client.on('error', err => console.error('Client error:', err));
+client.on('warn', warn => console.warn('Warning:', warn));
+process.on('unhandledRejection', err => console.error('Unhandled rejection:', err));
+process.on('uncaughtException', err => console.error('Uncaught exception:', err));
 
-// ==================== PROFESSIONAL LOGIN ====================
+// ==================== LOGIN ====================
 client.login(BOT_TOKEN)
-  .then(() => console.log('✅ Professional bot login successful!'))
+  .then(() => console.log('🚀 OTO Super Bot logging in...'))
   .catch(err => {
-    console.error('❌ Professional login failed:', err);
+    console.error('❌ Login failed:', err);
     process.exit(1);
+  });// ==================== OTO SUPER TOURNAMENT BOT - COMPLETE SYSTEM ====================
+if (process.env.NODE_ENV !== 'production') {
+  try { require('dotenv').config(); } catch (err) { console.log('⚠️ Using environment variables'); }
+}
+
+const Discord = require('discord.js');
+const express = require('express');
+
+const BOT_TOKEN = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN;
+if (!BOT_TOKEN) {
+  console.error('❌ No bot token found!');
+  process.exit(1);
+}
+
+// ==================== CLIENT SETUP ====================
+const client = new Discord.Client({
+  intents: [
+    Discord.GatewayIntentBits.Guilds,
+    Discord.GatewayIntentBits.GuildMessages,
+    Discord.GatewayIntentBits.MessageContent,
+    Discord.GatewayIntentBits.GuildMembers,
+    Discord.GatewayIntentBits.GuildInvites,
+    Discord.GatewayIntentBits.DirectMessages,
+  ],
+  partials: [Discord.Partials.Channel],
+});
+
+// Express server
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('🏆 OTO Super Bot Active'));
+app.listen(PORT, () => console.log(`✅ Server on port ${PORT}`));
+
+// ==================== CONFIGURATION ====================
+const CONFIG = {
+  // Channels
+  ANNOUNCEMENT_CHANNEL: '1438484746165555243',
+  TOURNAMENT_SCHEDULE: '1438482561679626303',
+  HOW_TO_JOIN: '1438482512296022017',
+  RULES_CHANNEL: '1438482342145687643',
+  BOT_COMMANDS: '1438483009950191676',
+  GENERAL_CHAT: '1438482904018849835',
+  OPEN_TICKET: '1438485759891079180',
+  MATCH_REPORTS: '1438486113047150714',
+  LEADERBOARD_CHANNEL: '1438947356690223347',
+  STAFF_TOOLS: '1438486059255336970',
+  STAFF_CHAT: '1438486059255336970',
+  PAYMENT_PROOF: '1438486113047150714',
+  INVITE_TRACKER: '1439216884774998107',
+  MINECRAFT_CHANNEL: '1439223955960627421',
+  MOST_PLAYED: '1439226024863993988',
+  
+  STAFF_ROLE: '1438475461977047112',
+  ADMIN_ROLE: '1438475461977047112',
+  
+  // Settings
+  MIN_INVITES_FREE_ENTRY: 10,
+  REWARD_INVITES: 10,
+  AUTO_DELETE_TICKET_MINUTES: 10,
+  SPAM_INTERVAL: 120000, // 2 minutes
+  
+  QR_IMAGE: 'https://i.ibb.co/jkBSmkM/qr.png',
+  
+  // Bad words filter
+  BAD_WORDS: ['dm', 'mc', 'bc', 'maa ki chut', 'tmkc', 'bkl', 'lawde', 'madarchod', 'bhenchod', 'chutiya', 'lund'],
+  
+  // Welcome messages (50+)
+  WELCOME_MESSAGES: [
+    '🔥 Apna bhai {user} aa gaya! Machaayega ab! Welcome to OTO family! 💪',
+    '⚡ {user} has entered the chat! New bruh in the house! Let\'s gooo! 🎮',
+    '🎯 Yooo {user}! Welcome bro! Tournament khelne ka time aa gaya! 🏆',
+    '💥 {user} joined the server! Apna banda aa gaya! Swagat hai! 🎉',
+    '🌟 Welcome {user}! New player unlocked! Ready to dominate? 💪',
+    '🔥 {user} bhai! Finally aa hi gaye! OTO ka naya warrior! ⚔️',
+    '⚡ {user} is here! Fresh blood! Let\'s see your skills! 🎮',
+    '🎮 {user} ne entry maar di! Welcome to the arena! 🏟️',
+    '💪 {user} joined! Another soldier in OTO army! Jai Hind! 🇮🇳',
+    '🏆 {user} welcome! Champion material detected! 👑',
+  ],
+  
+  // Staff welcome messages (40+)
+  STAFF_WELCOME_MESSAGES: [
+    'Bhai tumhe ab hard work karna hai! OTO ko best banana hai! 💪',
+    'Welcome to the team! Mehnat karo, success milegi! 🌟',
+    'Staff ban gaye! Ab responsibility bhi hai! Let\'s make OTO great! 🔥',
+    'Congratulations! Now prove yourself! Work hard! 💯',
+    'New staff! Dedication dikhao! OTO depends on you! ⚡',
+  ],
+};
+
+// ==================== GAME TEMPLATES ====================
+const GAME_TEMPLATES = {
+  freefire: {
+    name: 'Free Fire',
+    emoji: '🔥',
+    types: ['Solo', 'Duo', 'Squad'],
+    maps: ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine'],
+    defaultSlots: 48,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+      'Top 5': { 1: 50, 2: 25, 3: 15, 4: 7, 5: 3 },
+    }
+  },
+  minecraft: {
+    name: 'Minecraft',
+    emoji: '⛏️',
+    types: ['Solo', 'Teams', 'Custom'],
+    maps: ['Custom', 'Survival', 'Creative', 'Bedwars'],
+    defaultSlots: 32,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+    }
+  },
+  pubg: {
+    name: 'PUBG Mobile',
+    emoji: '🎯',
+    types: ['Solo', 'Duo', 'Squad'],
+    maps: ['Erangel', 'Miramar', 'Sanhok', 'Vikendi'],
+    defaultSlots: 48,
+    prizeDistributions: {
+      'Winner Takes All': { 1: 100 },
+      'Top 3': { 1: 60, 2: 25, 3: 15 },
+    }
+  }
+};
+
+// ==================== DATA STORAGE ====================
+let tournaments = new Map(); // All tournaments by ID
+let activeTournament = null;
+let registeredPlayers = new Map();
+let userInvites = new Map();
+let userStats = new Map();
+let bannedUsers = new Map(); // userId -> {reason, by, date}
+let warnings = new Map();
+let tickets = new Map();
+let inviteCache = new Map();
+let staffMembers = new Set();
+let pendingResponses = new Map(); // Track users waiting for response
+let spamTimers = new Map();
+let roomCredentials = new Map(); // Store room IDs and passwords securely
+
+// Game-specific stats
+let gameStats = {
+  freefire: new Map(),
+  minecraft: new Map(),
+  pubg: new Map()
+};
+
+// ==================== READY EVENT ====================
+client.once('ready', async () => {
+  console.log(`🚀 ${client.user.tag} is ONLINE!`);
+  console.log(`📊 Managing ${client.guilds.cache.size} server(s)`);
+  
+  try {
+    await client.user.setActivity('🏆 OTO Multi-Game Tournaments', { type: Discord.ActivityType.Competing });
+    await registerCommands();
+    await initializeInviteTracking();
+    await loadStaffMembers();
+    startAutomatedTasks();
+    await setupPersistentMessages();
+    console.log('✅ OTO Super Bot fully initialized!');
+  } catch (err) {
+    console.error('❌ Init error:', err);
+  }
+});
+
+// ==================== SLASH COMMANDS REGISTRATION ====================
+async function registerCommands() {
+  const { REST, Routes, SlashCommandBuilder, PermissionFlagsBits } = Discord;
+  const rest = new REST({ version: '10' }).setToken(BOT_TOKEN);
+
+  const commands = [
+    // ===== USER COMMANDS =====
+    new SlashCommandBuilder()
+      .setName('help')
+      .setDescription('❓ View all commands'),
+
+    new SlashCommandBuilder()
+      .setName('invites')
+      .setDescription('🔗 Check your invites'),
+
+    new SlashCommandBuilder()
+      .setName('stats')
+      .setDescription('📊 View your stats')
+      .addStringOption(opt => opt.setName('game').setDescription('Game type')
+        .addChoices(
+          { name: '🔥 Free Fire', value: 'freefire' },
+          { name: '⛏️ Minecraft', value: 'minecraft' },
+          { name: '🎯 PUBG', value: 'pubg' }
+        )),
+
+    new SlashCommandBuilder()
+      .setName('book')
+      .setDescription('📅 Book your tournament slot (10+ invites)'),
+
+    // ===== STAFF TOURNAMENT MANAGEMENT =====
+    new SlashCommandBuilder()
+      .setName('createtournament')
+      .setDescription('🎮 Create tournament (Staff)')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    new SlashCommandBuilder()
+      .setName('edittournament')
+      .setDescription('✏️ Edit tournament (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    new SlashCommandBuilder()
+      .setName('deletetournament')
+      .setDescription('🗑️ Delete tournament (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    new SlashCommandBuilder()
+      .setName('listtournaments')
+      .setDescription('📋 View all tournaments (Staff)')
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    new SlashCommandBuilder()
+      .setName('sendroom')
+      .setDescription('🔐 Send room credentials (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
+      .addStringOption(opt => opt.setName('roomid').setDescription('Room ID').setRequired(true))
+      .addStringOption(opt => opt.setName('password').setDescription('Password (optional)'))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    new SlashCommandBuilder()
+      .setName('declarewinner')
+      .setDescription('🏆 Declare tournament winners (Staff)')
+      .addStringOption(opt => opt.setName('tournamentid').setDescription('Tournament ID').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ManageEvents),
+
+    // ===== MODERATION =====
+    new SlashCommandBuilder()
+      .setName('ban')
+      .setDescription('🚫 Ban user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to ban').setRequired(true))
+      .addStringOption(opt => opt.setName('reason').setDescription('Ban reason').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
+
+    new SlashCommandBuilder()
+      .setName('timeout')
+      .setDescription('⏱️ Timeout user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
+      .addIntegerOption(opt => opt.setName('minutes').setDescription('Duration').setRequired(true))
+      .addStringOption(opt => opt.setName('reason').setDescription('Reason'))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+
+    new SlashCommandBuilder()
+      .setName('warn')
+      .setDescription('⚠️ Warn user (Staff protected)')
+      .addUserOption(opt => opt.setName('user').setDescription('User').setRequired(true))
+      .addStringOption(opt => opt.setName('reason').setDescription('Warning reason').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+
+    // ===== STAFF MANAGEMENT =====
+    new SlashCommandBuilder()
+      .setName('addstaff')
+      .setDescription('👮 Add staff member (Admin/Owner)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to promote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+    new SlashCommandBuilder()
+      .setName('removestaff')
+      .setDescription('👤 Remove staff (Admin/Owner)')
+      .addUserOption(opt => opt.setName('user').setDescription('User to demote').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+    // ===== LEADERBOARDS =====
+    new SlashCommandBuilder()
+      .setName('leaderboard')
+      .setDescription('🏆 View leaderboards')
+      .addStringOption(opt => opt.setName('type').setDescription('Leaderboard type').setRequired(true)
+        .addChoices(
+          { name: '🔗 Most Invites', value: 'invites' },
+          { name: '🔥 Free Fire', value: 'freefire' },
+          { name: '⛏️ Minecraft', value: 'minecraft' },
+          { name: '🎯 PUBG', value: 'pubg' }
+        )),
+
+    // ===== SPECIAL CHALLENGES =====
+    new SlashCommandBuilder()
+      .setName('challenge')
+      .setDescription('⚔️ Beat Our Player Challenge (10+ invites)'),
+  ];
+
+  const body = commands.map(c => c.toJSON());
+
+  try {
+    if (process.env.GUILD_ID) {
+      await rest.put(Routes.applicationGuildCommands(client.user.id, process.env.GUILD_ID), { body });
+    } else {
+      await rest.put(Routes.applicationCommands(client.user.id), { body });
+    }
+    console.log('✅ Commands registered');
+  } catch (err) {
+    console.error('Command registration error:', err);
+  }
+}
+
+// ==================== COMMAND HANDLERS ====================
+client.on('interactionCreate', async (interaction) => {
+  try {
+    if (interaction.isChatInputCommand()) {
+      await handleCommand(interaction);
+    } else if (interaction.isButton()) {
+      await handleButton(interaction);
+    } else if (interaction.isStringSelectMenu()) {
+      await handleSelectMenu(interaction);
+    }
+  } catch (err) {
+    console.error('Interaction error:', err);
+    const msg = '❌ Error occurred bhai! Try again!';
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+    }
+  }
+});
+
+async function handleCommand(interaction) {
+  const { commandName } = interaction;
+
+  // Check if user is banned
+  if (bannedUsers.has(interaction.user.id) && !isStaff(interaction.member)) {
+    const banData = bannedUsers.get(interaction.user.id);
+    return interaction.reply({ 
+      content: `🚫 You are banned!\n**Reason:** ${banData.reason}\n**By:** ${banData.by}`, 
+      ephemeral: true 
+    });
+  }
+
+  const handlers = {
+    'help': handleHelp,
+    'invites': handleInvites,
+    'stats': handleStats,
+    'book': handleBook,
+    'createtournament': handleCreateTournament,
+    'edittournament': handleEditTournament,
+    'deletetournament': handleDeleteTournament,
+    'listtournaments': handleListTournaments,
+    'sendroom': handleSendRoom,
+    'declarewinner': handleDeclareWinner,
+    'ban': handleBan,
+    'timeout': handleTimeout,
+    'warn': handleWarn,
+    'addstaff': handleAddStaff,
+    'removestaff': handleRemoveStaff,
+    'leaderboard': handleLeaderboard,
+    'challenge': handleChallenge,
+  };
+
+  const handler = handlers[commandName];
+  if (handler) await handler(interaction);
+}
+
+// ==================== USER COMMANDS ====================
+async function handleHelp(interaction) {
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🤖 OTO Super Bot - Commands')
+    .setDescription('Multi-game tournament management system!')
+    .setColor('#3498db')
+    .addFields(
+      { name: '👤 User Commands', value: '`/help` `/invites` `/stats` `/book` `/challenge`', inline: false },
+      { name: '🎮 Games', value: '🔥 Free Fire | ⛏️ Minecraft | 🎯 PUBG', inline: false },
+      { name: '🎁 Rewards', value: `10 invites = FREE entry + Special challenges!`, inline: false },
+      { name: '📍 How to Join', value: `Check <#${CONFIG.HOW_TO_JOIN}>`, inline: false }
+    )
+    .setThumbnail(CONFIG.QR_IMAGE)
+    .setFooter({ text: 'OTO - Professional Tournament System' });
+
+  if (isStaff(interaction.member)) {
+    embed.addFields({
+      name: '👮 Staff Commands',
+      value: '`/createtournament` `/sendroom` `/declarewinner` `/ban` `/warn` `/timeout` `/addstaff`',
+      inline: false
+    });
+  }
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleInvites(interaction) {
+  const count = userInvites.get(interaction.user.id) || 0;
+  const needed = CONFIG.MIN_INVITES_FREE_ENTRY;
+  const hasReward = count >= needed;
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`🔗 ${interaction.user.username}'s Invites`)
+    .setColor(hasReward ? '#00ff00' : '#ff9900')
+    .addFields(
+      { name: '📊 Total Invites', value: `**${count}**`, inline: true },
+      { name: '🎁 Reward Status', value: hasReward ? '✅ **UNLOCKED!**' : `${needed - count} more needed`, inline: true }
+    )
+    .setDescription(
+      hasReward 
+        ? `🎉 **Congratulations!**\n\n✅ FREE tournament entry\n✅ Beat Our Player challenge\n✅ Special rewards\n\nUse \`/book\` to reserve your slot!`
+        : `**Invite ${needed - count} more people to unlock:**\n🎁 FREE tournament entry\n⚔️ Special challenges\n💰 Exclusive rewards\n\nShare: <#${CONFIG.GENERAL_CHAT}>`
+    )
+    .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+
+  await interaction.reply({ embeds: [embed], ephemeral: true });
+}
+
+async function handleStats(interaction) {
+  const game = interaction.options.getString('game');
+  const userId = interaction.user.id;
+
+  if (game) {
+    const stats = gameStats[game]?.get(userId) || { wins: 0, played: 0, topThree: 0 };
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`📊 ${GAME_TEMPLATES[game].emoji} ${GAME_TEMPLATES[game].name} Stats`)
+      .setColor('#9b59b6')
+      .addFields(
+        { name: '🏆 Wins', value: `${stats.wins}`, inline: true },
+        { name: '🎮 Played', value: `${stats.played}`, inline: true },
+        { name: '🥇 Top 3', value: `${stats.topThree}`, inline: true }
+      )
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  } else {
+    // Overall stats
+    const allStats = userStats.get(userId) || { wins: 0, played: 0, topThree: 0 };
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`📊 Overall Stats - ${interaction.user.username}`)
+      .setColor('#9b59b6')
+      .addFields(
+        { name: '🏆 Total Wins', value: `${allStats.wins}`, inline: true },
+        { name: '🎮 Tournaments', value: `${allStats.played}`, inline: true },
+        { name: '🥇 Top 3', value: `${allStats.topThree}`, inline: true },
+        { name: '🔗 Invites', value: `${userInvites.get(userId) || 0}`, inline: true }
+      )
+      .setDescription('Use `/stats game:<name>` for game-specific stats!')
+      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+}
+
+async function handleBook(interaction) {
+  const invites = userInvites.get(interaction.user.id) || 0;
+
+  if (invites < CONFIG.MIN_INVITES_FREE_ENTRY) {
+    return interaction.reply({
+      content: `❌ You need **${CONFIG.MIN_INVITES_FREE_ENTRY} invites** to book!\n\nCurrent: ${invites}\nNeeded: ${CONFIG.MIN_INVITES_FREE_ENTRY - invites} more\n\nInvite friends to unlock booking! 🔗`,
+      ephemeral: true
+    });
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('📅 Book Your Tournament Slot')
+    .setDescription(
+      `✅ You have **${invites} invites**!\n\n` +
+      `**Available Benefits:**\n` +
+      `🎁 FREE tournament entry\n` +
+      `⚔️ Beat Our Player challenges\n` +
+      `🔔 Priority notifications\n\n` +
+      `Click button below to get notified when tournaments open!`
+    )
+    .setColor('#00ff00');
+
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('book_notify')
+      .setLabel('🔔 Get Notified')
+      .setStyle(Discord.ButtonStyle.Success)
+  );
+
+  await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+}
+
+async function handleChallenge(interaction) {
+  const invites = userInvites.get(interaction.user.id) || 0;
+
+  if (invites < CONFIG.MIN_INVITES_FREE_ENTRY) {
+    return interaction.reply({
+      content: `❌ Need ${CONFIG.MIN_INVITES_FREE_ENTRY} invites for challenges!\n\nCurrent: ${invites}`,
+      ephemeral: true
+    });
+  }
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('⚔️ Beat Our Player Challenge!')
+    .setDescription(
+      `**Challenge OTO's Best Players!**\n\n` +
+      `✅ You're eligible!\n\n` +
+      `**Rewards if you WIN:**\n` +
+      `🎁 FREE Squad tournament entry\n` +
+      `💰 Bonus prizes\n` +
+      `👑 Special role\n\n` +
+      `Room ID and password will be sent via DM!\n\n` +
+      `Ready to prove yourself?`
+    )
+    .setColor('#ff9900');
+
+  const row = new Discord.ActionRowBuilder().addComponents(
+    new Discord.ButtonBuilder()
+      .setCustomId('accept_challenge')
+      .setLabel('⚔️ Accept Challenge')
+      .setStyle(Discord.ButtonStyle.Danger)
+  );
+
+  await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+}
+
+// ==================== STAFF TOURNAMENT MANAGEMENT ====================
+async function handleCreateTournament(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+
+  const embed = new Discord.EmbedBuilder()
+    .setTitle('🎮 Create Tournament')
+    .setDescription('Select game and configure tournament settings')
+    .setColor('#3498db');
+
+  const gameSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId('tournament_game')
+      .setPlaceholder('Select Game')
+      .addOptions([
+        { label: 'Free Fire', value: 'freefire', emoji: '🔥', description: 'Battle Royale' },
+        { label: 'Minecraft', value: 'minecraft', emoji: '⛏️', description: 'Survival/Creative' },
+        { label: 'PUBG Mobile', value: 'pubg', emoji: '🎯', description: 'Battle Royale' },
+      ])
+  );
+
+  await interaction.editReply({ embeds: [embed], components: [gameSelect] });
+}
+
+async function handleSelectMenu(interaction) {
+  const { customId, values } = interaction;
+
+  if (customId === 'tournament_game') {
+    await handleGameSelection(interaction, values[0]);
+  } else if (customId.startsWith('tournament_')) {
+    await handleTournamentConfig(interaction, customId, values);
+  }
+}
+
+async function handleGameSelection(interaction, game) {
+  await interaction.deferUpdate();
+
+  const gameData = GAME_TEMPLATES[game];
+  const tournamentId = `${game}_${Date.now()}`;
+
+  // Store temporary tournament data
+  tournaments.set(tournamentId, {
+    id: tournamentId,
+    game,
+    status: 'creating',
+    createdBy: interaction.user.id,
+    createdAt: new Date()
   });
 
-// Export for potential module use
-module.exports = {
-  client,
-  dataManager,
-  CONFIG,
-  isStaff
-};
+  const embed = new Discord.EmbedBuilder()
+    .setTitle(`${gameData.emoji} ${gameData.name} Tournament`)
+    .setDescription('Configure tournament settings')
+    .setColor('#3498db');
+
+  const typeSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId(`tournament_type_${tournamentId}`)
+      .setPlaceholder('Select Type')
+      .addOptions(gameData.types.map(type => ({
+        label: type,
+        value: type.toLowerCase(),
+        description: `${type} tournament`
+      })))
+  );
+
+  const mapSelect = new Discord.ActionRowBuilder().addComponents(
+    new Discord.StringSelectMenuBuilder()
+      .setCustomId(`tournament_map_${tournamentId}`)
+      .setPlaceholder('Select Map')
+      .addOptions(gameData.maps.map(map => ({
+        label: map,
+        value: map.toLowerCase()
+      })))
+  );
+
+  await interaction.editReply({ embeds: [embed], components: [typeSelect, mapSelect] });
+}
