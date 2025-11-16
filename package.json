@@ -1,15 +1,359 @@
 {
-  "name": "oto-bot",
-  "version": "1.0.0",
+  "name": "oto-tournament-bot",
+  "version": "2.0.0",
+  "description": "Complete Discord Tournament Management Bot with Advanced Features",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
+  "keywords": [
+    "discord",
+    "bot",
+    "tournament",
+    "gaming",
+    "free-fire",
+    "minecraft"
+  ],
+  "author": "OTO Tournaments",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^14.14.1",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "moment-timezone": "^0.5.43",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.9.0"
   }
 }
+
+// ==================== SETUP INSTRUCTIONS ====================
+
+/**
+ * 🎮 OTO TOURNAMENT BOT - COMPLETE SETUP GUIDE
+ * ============================================
+ * 
+ * STEP 1: FILE STRUCTURE
+ * ----------------------
+ * Create this folder structure:
+ * 
+ * oto-tournament-bot/
+ * ├── index.js          (Main file - Copy ALL 3 artifact parts here)
+ * ├── package.json      (This file)
+ * ├── .env             (Environment variables)
+ * └── .gitignore
+ * 
+ * 
+ * STEP 2: COMBINE ALL CODE
+ * ------------------------
+ * In index.js, combine all 3 artifact parts in this order:
+ * 
+ * 1. Start with "OTO Bot - Complete System" (Part 1)
+ *    - Contains: Config, DataManager, Profile System, Greetings
+ * 
+ * 2. Add "OTO Bot - Part 2" (Payment & Tournament Management)
+ *    - Contains: Payment approval, Tournament start, Leaderboards
+ *    - REMOVE the duplicate client.on() declarations at the start
+ * 
+ * 3. Add "OTO Bot - Part 3" (Support, Staff Tools & Startup)
+ *    - Contains: Support tickets, Staff commands, Bot ready event
+ *    - REMOVE any duplicate functions
+ * 
+ * 
+ * STEP 3: ENVIRONMENT VARIABLES (.env file)
+ * -----------------------------------------
+ * Create .env file with:
+ * 
+ * BOT_TOKEN=your_discord_bot_token_here
+ * OWNER_ID=your_discord_user_id_here
+ * PORT=3000
+ * NODE_ENV=production
+ * 
+ * 
+ * STEP 4: .gitignore FILE
+ * -----------------------
+ * Create .gitignore with:
+ * 
+ * node_modules/
+ * .env
+ * *.log
+ * .DS_Store
+ * 
+ * 
+ * STEP 5: INSTALL DEPENDENCIES
+ * ----------------------------
+ * Run in terminal:
+ * 
+ * npm install
+ * 
+ * 
+ * STEP 6: DISCORD BOT SETUP
+ * -------------------------
+ * 1. Go to https://discord.com/developers/applications
+ * 2. Create New Application
+ * 3. Go to "Bot" section
+ * 4. Click "Add Bot"
+ * 5. Enable these Privileged Gateway Intents:
+ *    ✅ PRESENCE INTENT
+ *    ✅ SERVER MEMBERS INTENT
+ *    ✅ MESSAGE CONTENT INTENT
+ * 
+ * 6. Copy bot token to .env file
+ * 
+ * 7. Go to OAuth2 → URL Generator
+ * 8. Select scopes:
+ *    ✅ bot
+ *    ✅ applications.commands
+ * 
+ * 9. Select bot permissions:
+ *    ✅ Administrator (or specific permissions)
+ * 
+ * 10. Use generated URL to invite bot to server
+ * 
+ * 
+ * STEP 7: CHANNEL & ROLE IDS
+ * --------------------------
+ * Update CONFIG in index.js with your channel IDs:
+ * 
+ * How to get IDs:
+ * 1. Enable Developer Mode in Discord (Settings → Advanced)
+ * 2. Right-click channel/role → Copy ID
+ * 3. Paste in CONFIG object
+ * 
+ * Required Channels:
+ * - ANNOUNCEMENT_CHANNEL
+ * - TOURNAMENT_SCHEDULE
+ * - HOW_TO_JOIN
+ * - GENERAL_CHAT
+ * - STAFF_TOOLS
+ * - STAFF_CHAT
+ * - INVITE_TRACKER
+ * - LEADERBOARD_CHANNEL
+ * - PROFILE_CHANNEL
+ * - MINECRAFT_CHANNEL (optional)
+ * 
+ * Required Roles:
+ * - STAFF_ROLE
+ * - ADMIN_ROLE
+ * - PLAYER_ROLE
+ * 
+ * 
+ * STEP 8: RUN THE BOT
+ * -------------------
+ * npm start
+ * 
+ * For development with auto-restart:
+ * npm run dev
+ * 
+ * 
+ * STEP 9: TEST ALL FEATURES
+ * -------------------------
+ * 
+ * ✅ User Features:
+ * - Join server → Check DM for profile setup
+ * - Complete profile
+ * - Type -i (check invites)
+ * - Type -profile (view profile)
+ * - Type -help (bot help)
+ * - Say "Hi" in general (auto-response)
+ * - Mention bot (quick help)
+ * 
+ * ✅ Tournament Features:
+ * - Staff: !ct (create tournament)
+ * - Select template from dropdown
+ * - Publish tournament
+ * - User: Join tournament
+ * - Staff: !startroom <id> <roomID> <password>
+ * - Staff: !winners <id> @user1 @user2 @user3
+ * - Staff: !endtournament <id>
+ * 
+ * ✅ Support System:
+ * - User: Click "Create Support Ticket"
+ * - Select category
+ * - Staff responds
+ * - Test auto-response (30 sec wait)
+ * 
+ * ✅ Moderation:
+ * - Send bad word → Auto-delete + warning
+ * - Spam messages → Auto-timeout
+ * - Staff: !ban @user <reason>
+ * - Staff: !timeout @user <minutes> <reason>
+ * 
+ * ✅ Beat Our Player:
+ * - Staff: !beatplayer (create challenge)
+ * - User with 10+ invites: Click button
+ * - Staff: Setup match in ticket
+ * 
+ * ✅ Leaderboards:
+ * - Invite leaderboard (auto-updates)
+ * - Tournament leaderboard: !leaderboard <game>
+ * - Activity tracking
+ * 
+ * 
+ * STEP 10: HOSTING OPTIONS
+ * ------------------------
+ * 
+ * FREE OPTIONS:
+ * 1. Replit.com
+ *    - Upload code
+ *    - Add secrets (env variables)
+ *    - Click Run
+ *    - Use UptimeRobot to keep alive
+ * 
+ * 2. Railway.app
+ *    - Connect GitHub repo
+ *    - Add environment variables
+ *    - Auto-deploys
+ * 
+ * 3. Render.com
+ *    - Connect repo
+ *    - Add env variables
+ *    - Free tier available
+ * 
+ * PAID OPTIONS:
+ * 1. DigitalOcean ($5/month)
+ * 2. AWS EC2
+ * 3. Google Cloud
+ * 4. Heroku
+ * 
+ * 
+ * TROUBLESHOOTING
+ * ---------------
+ * 
+ * ❌ Bot not responding:
+ * - Check bot token in .env
+ * - Verify bot is online in Discord
+ * - Check all intents are enabled
+ * - Verify bot has permissions
+ * 
+ * ❌ Commands not working:
+ * - Check channel IDs are correct
+ * - Verify bot can see channels
+ * - Check role IDs
+ * - Look at console for errors
+ * 
+ * ❌ Invites not tracking:
+ * - Bot needs "Manage Server" permission
+ * - Check invite cache initialization
+ * 
+ * ❌ DMs not working:
+ * - User has DMs disabled
+ * - Bot can't DM bots
+ * - Check user privacy settings
+ * 
+ * ❌ Tournaments not posting:
+ * - Verify channel IDs
+ * - Check bot permissions (Send Messages, Embed Links)
+ * - Look for errors in console
+ * 
+ * 
+ * STAFF COMMANDS REFERENCE
+ * ------------------------
+ * 
+ * TOURNAMENT MANAGEMENT:
+ * !ct                          Create tournament (template)
+ * !tournament <params>         Create custom tournament
+ * !startroom <id> <room> <pw>  Start & send room details
+ * !winners <id> @1 @2 @3       Declare winners
+ * !endtournament <id>          End tournament
+ * !tournaments                 List active tournaments
+ * !leaderboard <game>          Show game leaderboard
+ * !beatplayer                  Create beat player challenge
+ * 
+ * MODERATION:
+ * !ban @user <reason>          Ban user
+ * !timeout @user <min> <rsn>   Timeout user
+ * !untimeout @user             Remove timeout
+ * !warnings @user              Check warnings
+ * !clearwarnings @user         Clear warnings
+ * 
+ * STAFF MANAGEMENT:
+ * !addstaff @user              Add staff role
+ * !removestaff @user           Remove staff role
+ * 
+ * UTILITY:
+ * !announce <message>          Post announcement
+ * !stats                       Show bot statistics
+ * !syncprofiles                Sync profiles to channel
+ * 
+ * 
+ * USER COMMANDS REFERENCE
+ * -----------------------
+ * -i                Check invites
+ * -profile          View profile
+ * -help             Bot help
+ * Hi/Hello/Bhai     Greetings
+ * @OTO Bot          Quick help
+ * 
+ * 
+ * CUSTOMIZATION
+ * -------------
+ * 
+ * Change invite requirement:
+ * - Edit CONFIG.MIN_INVITES = 10 (change to any number)
+ * 
+ * Add more auto-responses:
+ * - Edit AUTO_RESPONSES object
+ * - Add patterns and responses
+ * 
+ * Add more tournament templates:
+ * - Edit templates object in tournament_template handler
+ * 
+ * Change prize distribution:
+ * - Edit prizeDistribution (default: 50%, 30%, 20%)
+ * 
+ * Add more games:
+ * - Add to tournamentLeaderboard in DataManager
+ * - Add template in tournament creation
+ * 
+ * 
+ * SUPPORT & COMMUNITY
+ * -------------------
+ * 
+ * Need help? Have suggestions?
+ * - GitHub: [Your Repo]
+ * - Discord: [Your Server]
+ * - Email: [Your Email]
+ * 
+ * 
+ * FEATURES SUMMARY
+ * ----------------
+ * 
+ * ✅ Complete Profile System
+ * ✅ Advanced Invite Tracking
+ * ✅ Gender-based Auto-responses
+ * ✅ Template Tournament Creation
+ * ✅ Payment Verification System
+ * ✅ Private Lobby Channels
+ * ✅ Room Detail Distribution
+ * ✅ Winner Declaration & Stats
+ * ✅ Multi-game Leaderboards
+ * ✅ Support Ticket System
+ * ✅ Beat Our Player Challenge
+ * ✅ Auto-moderation (Bad words, Spam)
+ * ✅ Staff Management Tools
+ * ✅ Activity Tracking
+ * ✅ Profile Display Channel
+ * ✅ Multiple Auto-responses
+ * ✅ Error Handling
+ * ✅ Graceful Shutdown
+ * 
+ * 
+ * VERSION HISTORY
+ * ---------------
+ * v2.0.0 - Complete rewrite with all features
+ * v1.0.0 - Initial release
+ * 
+ * 
+ * LICENSE
+ * -------
+ * MIT License - Free to use and modify
+ * 
+ * 
+ * ENJOY YOUR OTO TOURNAMENT BOT! 🎮🏆
+ * 
+ */
