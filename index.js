@@ -1,1790 +1,7 @@
-// ==================== BOT READY - ENHANCED ====================
-client.once('ready', async () => {
-  console.log('');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('          🎮 OTO TOURNAMENT BOT - FULLY LOADED           ');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('');
-  console.log(`✅ Bot: ${client.user.tag}`);
-  console.log(`✅ Servers: ${client.guilds.cache.size}`);
-  console.log(`✅ Users: ${client.users.cache.size}`);
-  console.log('');
-  console.log('🎯 ========== CORE FEATURES ==========');
-  console.log('   ✅ Profile System (DM-based with gender detection)');
-  console.log('   ✅ Invite Tracking (10 invites = FREE entry)');
-  console.log('   ✅ Welcome Messages (50+ variations, context-aware)');
-  console.log('   ✅ Enhanced Auto-Responses (Smart context detection)');
-  console.log('   ✅ No Reply System (2-min auto-response)');
-  console.log('   ✅ Bad Word Filter (Auto-delete + warnings)');
-  console.log('   ✅ Spam Detection (Auto-timeout system)');
-  console.log('');
-  console.log('🎫 ========== TICKET SYSTEM ==========');
-  console.log('   ✅ Category-based tickets (6 categories)');
-  console.log('   ✅ Dropdown menu selection');
-  console.log('   ✅ Auto-close (10 min with reopen option)');
-  console.log('   ✅ Delete/Claim/Add user options');
-  console.log('   ✅ Transcript saving');
-  console.log('   ✅ Staff notifications');
-  console.log('');
-  console.log('🏆 ========== TOURNAMENT SYSTEM ==========');
-  console.log('   ✅ Dropdown creation with templates');
-  console.log('   ✅ Multi-channel auto-posting');
-  console.log('   ✅ Registration tickets (Free/Paid)');
-  console.log('   ✅ Payment verification system');
-  console.log('   ✅ Room ID/Password distribution (protected)');
-  console.log('   ✅ Winner announcement (50%/30%/20% prizes)');
-  console.log('   ✅ Tournament management (edit/delete/start)');
-  console.log('   ✅ Auto slot updates');
-  console.log('   ✅ Beat Our Player challenges');
-  console.log('');
-  console.log('📊 ========== LEADERBOARD SYSTEMS ==========');
-  console.log('   ✅ Invite leaderboard (auto-update)');
-  console.log('   ✅ Tournament leaderboard (per game)');
-  console.log('   ✅ Most played tracking');
-  console.log('   ✅ Level system with XP');
-  console.log('   ✅ Win/loss statistics');
-  console.log('');
-  console.log('🛡️ ========== MODERATION ==========');
-  console.log('   ✅ Bad word filter (auto-delete)');
-  console.log('   ✅ Warning system (3 strikes)');
-  console.log('   ✅ Auto-timeout after warnings');
-  console.log('   ✅ Spam detection');
-  console.log('   ✅ Anti-link system');
-  console.log('   ✅ Mass mention protection');
-  console.log('   ✅ Room details protection');
-  console.log('');
-  console.log('🎮 ========== SERVER MANAGEMENT ==========');
-  console.log('   ✅ Lock/Unlock channels');
-  console.log('   ✅ Slowmode control');
-  console.log('   ✅ Message purge/clear');
-  console.log('   ✅ Kick/Ban/Timeout users');
-  console.log('   ✅ Warning management');
-  console.log('   ✅ Role management');
-  console.log('   ✅ Server statistics');
-  console.log('   ✅ Reaction roles');
-  console.log('');
-  console.log('🎉 ========== EXTRA FEATURES ==========');
-  console.log('   ✅ Level system with XP rewards');
-  console.log('   ✅ Bump reminder system');
-  console.log('   ✅ Birthday announcements');
-  console.log('   ✅ Suggestion system');
-  console.log('   ✅ Poll creation');
-  console.log('   ✅ Backup/Restore system');
-  console.log('   ✅ Announcement system');
-  console.log('');
-  console.log('📋 ========== STAFF COMMANDS ==========');
-  console.log('');
-  console.log('   🎮 TOURNAMENT MANAGEMENT:');
-  console.log('      !ct / !createtournament - Create with dropdown');
-  console.log('      !startroom <ID> <roomID> <pass> - Start & send details');
-  console.log('      !winners <ID> @1st @2nd @3rd - Declare winners');
-  console.log('      !endtournament <ID> - End tournament');
-  console.log('      !deletetournament <ID> - Delete tournament');
-  console.log('      !tournaments - List active');
-  console.log('      !leaderboard <game> - Show leaderboard');
-  console.log('      !beatplayer - Create challenge');
-  console.log('');
-  console.log('   👮 MODERATION:');
-  console.log('      !ban @user <reason> - Ban user');
-  console.log('      !kick @user <reason> - Kick user');
-  console.log('      !timeout @user <min> <reason> - Timeout');
-  console.log('      !untimeout @user - Remove timeout');
-  console.log('      !warn @user <reason> - Warn user');
-  console.log('      !warnings @user - Check warnings');
-  console.log('      !clearwarnings @user - Clear warnings');
-  console.log('');
-  console.log('   🔧 SERVER MANAGEMENT:');
-  console.log('      !lock [#channel] - Lock channel');
-  console.log('      !unlock [#channel] - Unlock channel');
-  console.log('      !slowmode <seconds> - Set slowmode');
-  console.log('      !clear <amount> - Delete messages');
-  console.log('      !serverstats - Server statistics');
-  console.log('      !roleinfo @role - Role information');
-  console.log('      !roleall @role - Give role to everyone');
-  console.log('      !removeroleall @role - Remove from everyone');
-  console.log('');
-  console.log('   👥 STAFF MANAGEMENT:');
-  console.log('      !addstaff @user - Add staff role');
-  console.log('      !removestaff @user - Remove staff role');
-  console.log('');
-  console.log('   📢 ANNOUNCEMENTS:');
-  console.log('      !announce <message> - Post announcement');
-  console.log('      !poll Question | Opt1 | Opt2 - Create poll');
-  console.log('');
-  console.log('   🎭 REACTION ROLES:');
-  console.log('      !reactionrole <msgID> <emoji> @role - Setup');
-  console.log('');
-  console.log('   💾 BACKUP (Owner Only):');
-  console.log('      !backup - Create backup');
-  console.log('      !restore - Restore from backup');
-  console.log('');
-  console.log('💬 ========== USER COMMANDS ==========');
-  console.log('   -i / !invites - Check invites');
-  console.log('   -profile / !profile - View profile');
-  console.log('   -level / !level - Check level/XP');
-  console.log('   -help / !help - Bot help');
-  console.log('   !suggest <text> - Submit suggestion');
-  console.log('   !setbirthday DD-MM - Set birthday');
-  console.log('   Hi/Hello/Bhai - Greeting responses');
-  console.log('   Mention bot - Quick help');
-  console.log('');
-  console.log('🤖 ========== AUTO-RESPONSES ==========');
-  console.log('   • Context-aware tournament help');
-  console.log('   • Payment assistance');
-  console.log('   • Invite guidance');
-  console.log('   • Profile help');
-  console.log('   • General support');
-  console.log('   • Staff tag responses');
-  console.log('   • 2-min no-reply system');
-  console.log('');
-  console.log('🔒 ========== AUTO-MODERATION ==========');
-  console.log('   • Bad word detection & deletion');
-  console.log('   • 3-strike warning system');
-  console.log('   • Spam detection (5 msgs/5 sec)');
-  console.log('   • Anti-link system');
-  console.log('   • Mass mention protection (5+)');
-  console.log('   • Room detail protection');
-  console.log('');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('          ✅ ALL SYSTEMS OPERATIONAL!');
-  console.log('          🚀 OTO TOURNAMENT BOT IS LIVE!');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('');
+// ==================== OTO TOURNAMENT BOT - COMPLETE SYSTEM ====================
+// Professional Discord Tournament Management Bot
+// Version: 2.0 - Full Featured
 
-  // Set dynamic status
-  client.user.setPresence({
-    activities: [{ name: '🏆 OTO Tournaments | Say Hi!', type: Discord.ActivityType.Playing }],
-    status: 'online'
-  });
-
-  // Initialize invite cache
-  for (const guild of client.guilds.cache.values()) {
-    try {
-      const invites = await guild.invites.fetch();
-      invites.forEach(inv => {
-        if (inv.inviter) {
-          dataManager.inviteCache.set(inv.code, inv.uses);
-        }
-      });
-      console.log(`✅ Loaded ${invites.size} invites for: ${guild.name}`);
-    } catch (err) {
-      console.log(`⚠️ Could not fetch invites for ${guild.name}`);
-    }
-  }
-
-  // Setup persistent messages after 5 seconds
-  setTimeout(() => {
-    setupPersistentMessages();
-  }, 5000);
-
-  console.log('');
-  console.log('🎯 Bot is ready to manage tournaments!');
-  console.log('💡 All features are working perfectly!');
-  console.log('📞 Need help? Check the documentation above!');
-  console.log('');
-});
-
-// Dynamic status rotation
-const statuses = [
-  '🏆 OTO Tournaments | Say Hi!',
-  '🎮 Join tournaments & win!',
-  '💰 Real money prizes daily!',
-  '🔥 Invite 10 friends = FREE!',
-  '⚡ Type -help for commands!',
-  '🎯 Free Fire & Minecraft!',
-  '💎 Active tournaments now!',
-  '👥 Growing gaming community!'
-];
-
-let statusIndex = 0;
-setInterval(() => {
-  client.user.setPresence({
-    activities: [{ name: statuses[statusIndex], type: Discord.ActivityType.Playing }],
-    status: 'online'
-  });
-  statusIndex = (statusIndex + 1) % statuses.length;
-}, 300000); // Change every 5 minutes
-
-// ==================== ERROR HANDLING ====================
-client.on('error', err => {
-  console.error('═══════════════════════════════════');
-  console.error('❌ CLIENT ERROR:', err);
-  console.error('═══════════════════════════════════');
-});
-
-client.on('warn', warn => {
-  console.warn('⚠️ WARNING:', warn);
-});
-
-process.on('unhandledRejection', err => {
-  console.error('═══════════════════════════════════');
-  console.error('❌ UNHANDLED REJECTION:', err);
-  console.error('═══════════════════════════════════');
-});
-
-process.on('uncaughtException', err => {
-  console.error('═══════════════════════════════════');
-  console.error('❌ UNCAUGHT EXCEPTION:', err);
-  console.error('═══════════════════════════════════');
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('');
-  console.log('🛑 Shutting down gracefully...');
-  client.destroy();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('');
-  console.log('🛑 Received SIGTERM, shutting down...');
-  client.destroy();
-  process.exit(0);
-});
-
-// ==================== LOGIN ====================
-client.login(BOT_TOKEN)
-  .then(() => {
-    console.log('');
-    console.log('═══════════════════════════════════════════');
-    console.log('   ✅ BOT LOGIN SUCCESSFUL!');
-    console.log('═══════════════════════════════════════════');
-    console.log('');
-  })
-  .catch(err => {
-    console.error('');
-    console.error('═══════════════════════════════════════════');
-    console.error('❌ LOGIN FAILED!');
-    console.error('Error:', err.message);
-    console.error('═══════════════════════════════════════════');
-    console.error('');
-    console.error('Please check:');
-    console.error('1. BOT_TOKEN is correct in .env file');
-    console.error('2. Bot has proper permissions');
-    console.error('3. Internet connection is stable');
-    console.error('');
-    process.exit(1);
-  });
-
-// ==================== EXPORTS ====================
-module.exports = {
-  client,
-  dataManager,
-  CONFIG,
-  ENHANCED_AUTO_RESPONSES,
-  userLevels,
-  reactionRoles,
-  birthdays
-};// ==================== REACTION ROLES SYSTEM ====================
-const reactionRoles = new Map();
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.ADMIN_ROLE)) return;
-
-  const args = message.content.split(' ');
-  const command = args[0].toLowerCase();
-
-  // Setup Reaction Roles
-  if (command === '!reactionrole') {
-    const messageId = args[1];
-    const emoji = args[2];
-    const role = message.mentions.roles.first();
-
-    if (!messageId || !emoji || !role) {
-      await message.reply('❌ Usage: `!reactionrole <messageID> <emoji> @role`');
-      return;
-    }
-
-    try {
-      const targetChannel = message.channel;
-      const targetMessage = await targetChannel.messages.fetch(messageId);
-      
-      await targetMessage.react(emoji);
-      
-      reactionRoles.set(`${messageId}_${emoji}`, role.id);
-      
-      await message.reply(`✅ Reaction role setup!\n\nReact with ${emoji} on that message to get ${role}!`);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-});
-
-// Handle Reaction Role Add
-client.on('messageReactionAdd', async (reaction, user) => {
-  if (user.bot) return;
-
-  // Fetch partial reactions
-  if (reaction.partial) {
-    try {
-      await reaction.fetch();
-    } catch (err) {
-      return;
-    }
-  }
-
-  const key = `${reaction.message.id}_${reaction.emoji.name}`;
-  const roleId = reactionRoles.get(key);
-
-  if (roleId) {
-    try {
-      const member = await reaction.message.guild.members.fetch(user.id);
-      await member.roles.add(roleId);
-      
-      try {
-        await user.send(`✅ You received the <@&${roleId}> role in ${reaction.message.guild.name}!`);
-      } catch (err) {
-        // DMs disabled
-      }
-    } catch (err) {
-      console.error('Role add error:', err);
-    }
-  }
-});
-
-// Handle Reaction Role Remove
-client.on('messageReactionRemove', async (reaction, user) => {
-  if (user.bot) return;
-
-  if (reaction.partial) {
-    try {
-      await reaction.fetch();
-    } catch (err) {
-      return;
-    }
-  }
-
-  const key = `${reaction.message.id}_${reaction.emoji.name}`;
-  const roleId = reactionRoles.get(key);
-
-  if (roleId) {
-    try {
-      const member = await reaction.message.guild.members.fetch(user.id);
-      await member.roles.remove(roleId);
-    } catch (err) {
-      console.error('Role remove error:', err);
-    }
-  }
-});
-
-// ==================== AUTO-MOD ANTI-LINK SYSTEM ====================
-const antiLinkSettings = {
-  enabled: true,
-  whitelistedChannels: [CONFIG.STAFF_TOOLS, CONFIG.STAFF_CHAT],
-  allowedDomains: ['discord.gg', 'discord.com']
-};
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-  if (message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
-  if (antiLinkSettings.whitelistedChannels.includes(message.channel.id)) return;
-
-  const linkRegex = /(https?:\/\/[^\s]+)/gi;
-  const links = message.content.match(linkRegex);
-
-  if (links && antiLinkSettings.enabled) {
-    const hasDisallowedLink = links.some(link => {
-      return !antiLinkSettings.allowedDomains.some(domain => link.includes(domain));
-    });
-
-    if (hasDisallowedLink) {
-      try {
-        await message.delete();
-        
-        const warning = await message.channel.send(
-          `⚠️ <@${message.author.id}> Links are not allowed in this channel!\n` +
-          `**Warning:** Repeated violations will result in timeout.`
-        );
-
-        setTimeout(() => warning.delete().catch(() => {}), 10000);
-
-        const warnings = dataManager.addWarning(message.author.id, 'Posted unauthorized link');
-        
-        if (warnings >= 3) {
-          await message.member.timeout(300000, 'Multiple link posting violations');
-        }
-      } catch (err) {
-        console.error('Anti-link error:', err);
-      }
-    }
-  }
-});
-
-// ==================== AUTO-MOD ANTI-SPAM MENTIONS ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-  if (message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
-
-  const mentionCount = message.mentions.users.size + message.mentions.roles.size;
-
-  if (mentionCount >= 5) {
-    try {
-      await message.delete();
-      await message.member.timeout(300000, 'Mass mention spam');
-      
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('🚨 Auto-Moderation Action')
-        .setDescription(`**User:** ${message.author.tag}\n**Action:** 5-minute timeout\n**Reason:** Mass mention spam (${mentionCount} mentions)`)
-        .setColor('#ff0000')
-        .setTimestamp();
-
-      const staffChat = await message.client.channels.fetch(CONFIG.STAFF_CHAT);
-      await staffChat.send({ embeds: [embed] });
-
-    } catch (err) {
-      console.error('Anti-spam error:', err);
-    }
-  }
-});
-
-// ==================== WELCOME/GOODBYE CHANNEL SYSTEM ====================
-const welcomeSettings = {
-  channelId: CONFIG.GENERAL_CHAT,
-  enabled: true
-};
-
-// This is already handled in the main member join event, but here's an enhanced version
-
-// ==================== AUTO-ROLE ON JOIN ====================
-client.on('guildMemberAdd', async (member) => {
-  // Auto-assign member role after X seconds
-  setTimeout(async () => {
-    try {
-      // This would be your default member role
-      // await member.roles.add('DEFAULT_MEMBER_ROLE_ID');
-    } catch (err) {
-      console.error('Auto-role error:', err);
-    }
-  }, 5000);
-});
-
-// ==================== LEVEL SYSTEM (Simple) ====================
-const userLevels = new Map();
-
-function calculateLevel(xp) {
-  return Math.floor(0.1 * Math.sqrt(xp));
-}
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-  if (message.channel.id === CONFIG.STAFF_TOOLS) return;
-
-  const userId = message.author.id;
-  const userData = userLevels.get(userId) || { xp: 0, level: 0, lastMessage: 0 };
-
-  // XP cooldown (1 minute)
-  if (Date.now() - userData.lastMessage < 60000) return;
-
-  // Random XP between 15-25
-  const xpGain = Math.floor(Math.random() * 11) + 15;
-  userData.xp += xpGain;
-  userData.lastMessage = Date.now();
-
-  const newLevel = calculateLevel(userData.xp);
-  
-  if (newLevel > userData.level) {
-    userData.level = newLevel;
-    userLevels.set(userId, userData);
-
-    // Level up message
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('🎉 Level Up!')
-      .setDescription(`<@${userId}> just reached **Level ${newLevel}**!`)
-      .setColor('#ffaa00')
-      .setThumbnail(message.author.displayAvatarURL())
-      .addFields(
-        { name: '📊 Total XP', value: `${userData.xp}`, inline: true },
-        { name: '🆙 Level', value: `${newLevel}`, inline: true }
-      )
-      .setTimestamp();
-
-    await message.channel.send({ embeds: [embed] });
-
-    // Level rewards
-    if (newLevel === 5) {
-      try {
-        await message.member.roles.add(CONFIG.PLAYER_ROLE);
-        await message.reply('🎁 Level 5 reward: PLAYER role unlocked!');
-      } catch (err) {}
-    }
-  } else {
-    userLevels.set(userId, userData);
-  }
-});
-
-// Check level command
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  
-  if (message.content.toLowerCase() === '-level' || message.content.toLowerCase() === '!level') {
-    const userId = message.author.id;
-    const userData = userLevels.get(userId) || { xp: 0, level: 0 };
-    const nextLevelXP = Math.pow((userData.level + 1) / 0.1, 2);
-    
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`📊 Level Stats - ${message.author.username}`)
-      .setThumbnail(message.author.displayAvatarURL())
-      .setColor('#3498db')
-      .addFields(
-        { name: '🆙 Level', value: `${userData.level}`, inline: true },
-        { name: '⭐ XP', value: `${userData.xp}`, inline: true },
-        { name: '🎯 Next Level', value: `${Math.floor(nextLevelXP - userData.xp)} XP needed`, inline: true }
-      )
-      .setFooter({ text: 'Keep chatting to level up!' })
-      .setTimestamp();
-
-    await message.reply({ embeds: [embed] });
-  }
-});
-
-// ==================== BUMP REMINDER SYSTEM ====================
-let lastBumpTime = null;
-const BUMP_COOLDOWN = 2 * 60 * 60 * 1000; // 2 hours
-
-client.on('messageCreate', async (message) => {
-  // Detect Disboard bump
-  if (message.author.id === '302050872383242240' && message.embeds.length > 0) {
-    const embed = message.embeds[0];
-    
-    if (embed.description && embed.description.includes('Bump done')) {
-      lastBumpTime = Date.now();
-      
-      const thankEmbed = new Discord.EmbedBuilder()
-        .setTitle('✅ Thanks for Bumping!')
-        .setDescription(`Thanks for bumping the server!\n\nNext bump available <t:${Math.floor((lastBumpTime + BUMP_COOLDOWN)/1000)}:R>`)
-        .setColor('#00ff00');
-
-      await message.channel.send({ embeds: [thankEmbed] });
-
-      // Set reminder
-      setTimeout(async () => {
-        const reminderEmbed = new Discord.EmbedBuilder()
-          .setTitle('⏰ Bump Reminder')
-          .setDescription('The server can be bumped again!\n\nUse `/bump` to bump the server!')
-          .setColor('#ffaa00');
-
-        await message.channel.send({ embeds: [reminderEmbed] });
-      }, BUMP_COOLDOWN);
-    }
-  }
-});
-
-// ==================== BACKUP SYSTEM ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (message.author.id !== OWNER_ID) return;
-
-  if (message.content.toLowerCase() === '!backup') {
-    await message.reply('⏳ Creating backup...');
-
-    const backupData = {
-      timestamp: new Date().toISOString(),
-      profiles: Array.from(dataManager.userProfiles.entries()),
-      invites: Array.from(dataManager.userInvites.entries()),
-      tournaments: Array.from(dataManager.tournaments.entries()).map(([id, t]) => [
-        id, 
-        { ...t, players: Array.from(t.players.entries()) }
-      ]),
-      warnings: Array.from(dataManager.warnings.entries()),
-      levels: Array.from(userLevels.entries()),
-      reactionRoles: Array.from(reactionRoles.entries())
-    };
-
-    const jsonData = JSON.stringify(backupData, null, 2);
-    const buffer = Buffer.from(jsonData);
-
-    await message.channel.send({
-      content: '✅ Backup created successfully!',
-      files: [{
-        attachment: buffer,
-        name: `oto-backup-${Date.now()}.json`
-      }]
-    });
-  }
-
-  if (message.content.toLowerCase() === '!restore' && message.attachments.size > 0) {
-    await message.reply('⏳ Restoring from backup...');
-
-    try {
-      const attachment = message.attachments.first();
-      const response = await fetch(attachment.url);
-      const backupData = await response.json();
-
-      // Restore data
-      dataManager.userProfiles = new Map(backupData.profiles);
-      dataManager.userInvites = new Map(backupData.invites);
-      dataManager.warnings = new Map(backupData.warnings);
-      userLevels.clear();
-      backupData.levels.forEach(([k, v]) => userLevels.set(k, v));
-
-      await message.reply('✅ Backup restored successfully!');
-    } catch (err) {
-      await message.reply(`❌ Restore failed: ${err.message}`);
-    }
-  }
-});
-
-// ==================== BIRTHDAY SYSTEM ====================
-const birthdays = new Map();
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  if (message.content.toLowerCase().startsWith('!setbirthday')) {
-    const args = message.content.split(' ');
-    const date = args[1]; // Format: DD-MM
-
-    if (!date || !date.match(/^\d{2}-\d{2}$/)) {
-      await message.reply('❌ Usage: `!setbirthday DD-MM` (e.g., `!setbirthday 25-12`)');
-      return;
-    }
-
-    birthdays.set(message.author.id, date);
-    await message.reply(`✅ Your birthday has been set to ${date}! 🎂`);
-  }
-});
-
-// Check birthdays daily
-setInterval(async () => {
-  const now = new Date();
-  const today = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  for (const [userId, birthday] of birthdays.entries()) {
-    if (birthday === today) {
-      try {
-        const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-        const user = await client.users.fetch(userId);
-
-        const embed = new Discord.EmbedBuilder()
-          .setTitle('🎂 Happy Birthday!')
-          .setDescription(`Today is <@${userId}>'s birthday! 🎉\n\nWish them a wonderful day! 🎈`)
-          .setColor('#ff1493')
-          .setThumbnail(user.displayAvatarURL())
-          .setTimestamp();
-
-        await channel.send({ embeds: [embed] });
-        
-        // Remove from map so we don't spam
-        birthdays.delete(userId);
-      } catch (err) {
-        console.error('Birthday announcement error:', err);
-      }
-    }
-  }
-}, 86400000); // Check once per day
-
-// ==================== SUGGESTION SYSTEM ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  if (message.content.toLowerCase().startsWith('!suggest')) {
-    const suggestion = message.content.slice(9).trim();
-
-    if (!suggestion) {
-      await message.reply('❌ Usage: `!suggest <your suggestion>`');
-      return;
-    }
-
-    try {
-      await message.delete();
-    } catch (err) {}
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('💡 New Suggestion')
-      .setDescription(suggestion)
-      .setColor('#3498db')
-      .setFooter({ text: `Suggested by ${message.author.tag}` })
-      .setTimestamp();
-
-    const suggestionMsg = await message.channel.send({ embeds: [embed] });
-    
-    await suggestionMsg.react('👍');
-    await suggestionMsg.react('👎');
-    await suggestionMsg.react('🤷');
-
-    await message.author.send(`✅ Your suggestion has been submitted!`).catch(() => {});
-  }
-});
-
-// ==================== POLL SYSTEM ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
-
-  if (message.content.toLowerCase().startsWith('!poll')) {
-    const args = message.content.slice(6).split('|').map(s => s.trim());
-    
-    if (args.length < 3) {
-      await message.reply('❌ Usage: `!poll Question | Option 1 | Option 2 | Option 3...`');
-      return;
-    }
-
-    const question = args[0];
-    const options = args.slice(1);
-
-    if (options.length > 10) {
-      await message.reply('❌ Maximum 10 options allowed!');
-      return;
-    }
-
-    const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('📊 ' + question)
-      .setDescription(options.map((opt, i) => `${numberEmojis[i]} ${opt}`).join('\n\n'))
-      .setColor('#3498db')
-      .setFooter({ text: `Poll by ${message.author.tag}` })
-      .setTimestamp();
-
-    const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
-    const pollMsg = await announceChannel.send({ embeds: [embed] });
-
-    for (let i = 0; i < options.length; i++) {
-      await pollMsg.react(numberEmojis[i]);
-    }
-
-    await message.reply(`✅ Poll created in <#${CONFIG.ANNOUNCEMENT_CHANNEL}>!`);
-  }
-});// ==================== ENHANCED AUTO-RESPONSE SYSTEM ====================
-const ENHANCED_AUTO_RESPONSES = {
-  // Tournament related
-  patterns: {
-    tournament: {
-      keywords: ['tournament', 'tourney', 'competition', 'match', 'game'],
-      contexts: {
-        when: ['kab', 'when', 'time', 'timing', 'schedule'],
-        how: ['kaise', 'how', 'join', 'register', 'entry'],
-        prize: ['prize', 'reward', 'money', 'winning', 'inam'],
-        free: ['free', 'muft', 'without payment', 'bina paise']
-      },
-      responses: {
-        when: [
-          'Tournament schedule: <#' + CONFIG.TOURNAMENT_SCHEDULE + '> 📅\nDaily tournaments at multiple times! 🎮',
-          'Check <#' + CONFIG.TOURNAMENT_SCHEDULE + '> for exact timings! ⏰\nNew tournaments daily! 🔥',
-          'Multiple tournaments daily! 🎯\nSchedule: <#' + CONFIG.TOURNAMENT_SCHEDULE + '> ⚡'
-        ],
-        how: [
-          'Easy steps to join:\n1️⃣ Complete profile\n2️⃣ Invite 10 friends OR pay entry\n3️⃣ Click JOIN button\n4️⃣ Win prizes! 🏆',
-          'Tournament join karna hai? 🎮\n• Check <#' + CONFIG.TOURNAMENT_SCHEDULE + '>\n• Click JOIN button\n• Follow instructions! 💯',
-          'Join process simple hai bro! ⚡\n1. Profile complete karo\n2. Tournament dekho\n3. JOIN button click karo! 🎯'
-        ],
-        prize: [
-          'Prizes from ₹500 to ₹10,000! 💰\nWin real money playing games! 🏆',
-          'Big cash prizes waiting! 💸\nCheck tournament details for prize pool! 🎮',
-          'Daily cash rewards! 💰\n₹500, ₹1000, ₹2000, ₹5000, ₹10000 prizes! 🔥'
-        ],
-        free: [
-          `FREE entry = Invite ${CONFIG.MIN_INVITES} friends! 🎁\nUse \`-i\` to check your invites! 📊`,
-          `Want FREE tournaments? 🆓\nInvite ${CONFIG.MIN_INVITES} buddies and play FREE! 🎮`,
-          'FREE entry system:\n• Invite 10 friends 👥\n• Get confirmed ✅\n• Play FREE! 🎯'
-        ]
-      }
-    },
-    
-    payment: {
-      keywords: ['payment', 'pay', 'paisa', 'money', 'transaction', 'upi', 'paytm'],
-      contexts: {
-        how: ['kaise', 'how', 'method', 'process'],
-        not_verified: ['not verified', 'pending', 'waiting', 'nahi hua'],
-        failed: ['failed', 'fail', 'error', 'problem', 'issue']
-      },
-      responses: {
-        how: [
-          'Payment methods available: 💳\n• UPI\n• PayTM\n• PhonePe\n• Google Pay\n\nSend screenshot in registration ticket! 📸',
-          'Payment kaise karein? 💰\n1. Join tournament\n2. Upload payment proof\n3. Staff will verify ✅\n4. You\'re in! 🎮',
-          'Easy payment process! 💳\n• Choose payment method\n• Pay entry fee\n• Screenshot lena\n• Upload in ticket! 📸'
-        ],
-        not_verified: [
-          'Payment verification takes 5-15 minutes! ⏱️\nStaff working on it! Be patient! 💯',
-          'Payment pending? 🕐\nStaff will verify soon! Usually 10 minutes max! ⚡',
-          'Verification in progress! ⏳\nOur staff checking payments! Please wait! 🙏'
-        ],
-        failed: [
-          'Payment issue? 🔧\nCreate ticket: Click button in <#' + CONFIG.HOW_TO_JOIN + '> 🎫',
-          'Payment problem? ❌\nContact staff through ticket system! They\'ll help! 👨‍💼',
-          'Transaction failed? 💔\nNo worries! Create support ticket for help! 🆘'
-        ]
-      }
-    },
-
-    invite: {
-      keywords: ['invite', 'invites', 'refer', 'friend', 'link'],
-      contexts: {
-        check: ['check', 'kitne', 'how many', 'count', 'dekh'],
-        get: ['kaise', 'how', 'get', 'milega', 'earn'],
-        benefit: ['benefit', 'reward', 'prize', 'faida', 'kya milega']
-      },
-      responses: {
-        check: [
-          'Check invites anytime: Type `-i` command! 📊\nQuick and easy! ⚡',
-          'Your invite count: Use `-i` command! 🔗\nSee progress towards FREE entry! 🎁',
-          'Invites check karne ke liye: `-i` type karo! 📈\nInstant results! 💯'
-        ],
-        get: [
-          'How to invite:\n1. Right-click server name 🖱️\n2. "Invite People" click karo 👥\n3. Share link with friends! 🔗\n4. When they join = +1 invite! ✅',
-          'Invite kaise karein? 🔗\n• Server invite link generate karo\n• Friends ko bhejo\n• Jaise hi join karenge, count badhega! 📈',
-          'Easy invite process! 👥\n1. Get invite link\n2. Share everywhere\n3. Track with `-i` command! 📊'
-        ],
-        benefit: [
-          `${CONFIG.MIN_INVITES} invites = FREE tournament entry! 🎁\nNo payment needed! Play FREE! 🎮`,
-          'Invite benefits:\n• 10 invites = FREE tournaments 🆓\n• Top inviters get special rewards! 🏆\n• Help grow community! 💪',
-          'Rewards for inviting:\n✅ FREE entry after 10\n✅ Leaderboard fame\n✅ Exclusive perks! ⭐'
-        ]
-      }
-    },
-
-    profile: {
-      keywords: ['profile', 'account', 'oto id', 'register', 'signup'],
-      contexts: {
-        create: ['create', 'banao', 'kaise', 'how', 'setup'],
-        check: ['check', 'dekh', 'view', 'show', 'mera'],
-        update: ['update', 'change', 'edit', 'modify', 'badal']
-      },
-      responses: {
-        create: [
-          'Profile create karna hai? 📝\nBot will DM you when you join!\nReply with:\n```\nName: Your Name\nGender: Male/Female\nState: Your State\nGame: Free Fire/Minecraft/PUBG\n```',
-          'Setup profile: 👤\n• Bot sends DM when you join\n• Fill in your details\n• Get PLAYER role! ✅\n• Start gaming! 🎮',
-          'Profile creation easy hai! 🚀\nJust follow bot\'s DM instructions!\nComplete in 1 minute! ⚡'
-        ],
-        check: [
-          'Check your profile: Type `-profile` command! 👤\nSee all your stats! 📊',
-          'Profile dekhna hai? 🔍\nCommand: `-profile`\nSee stats, OTO ID, everything! 💯',
-          'View profile anytime: `-profile` command! 📱\nTrack progress! 📈'
-        ],
-        update: [
-          'Update profile? 🔧\nCreate ticket for profile changes!\nStaff will help! 👨‍💼',
-          'Profile change chahiye? ✏️\nTicket create karo!\nStaff update kar denge! ⚡',
-          'Want to modify profile? 📝\nContact staff via ticket system! 🎫'
-        ]
-      }
-    },
-
-    help: {
-      keywords: ['help', 'madad', 'support', 'assist', 'guide', 'kaise'],
-      contexts: {
-        general: ['help', 'madad', 'support'],
-        commands: ['command', 'cmd', 'bot'],
-        stuck: ['stuck', 'confused', 'samajh nahi', 'problem']
-      },
-      responses: {
-        general: [
-          'Need help? 🆘\n• Type `-help` for commands\n• Mention bot for quick guide\n• Create ticket for personal support! 🎫',
-          'Help chahiye? 💡\n• Complete guide: <#' + CONFIG.HOW_TO_JOIN + '>\n• Commands: `-help`\n• Support: Create ticket! 🎫',
-          'We\'re here to help! 🤝\n• Quick commands: `-help`\n• Detailed guide available\n• Staff support via tickets! 👨‍💼'
-        ],
-        commands: [
-          'Bot commands: 🤖\n• `-i` - Check invites\n• `-profile` - Your profile\n• `-help` - This help\n• Just say "Hi" for greeting! 👋',
-          'Available commands: ⚡\n`-i` - Invites\n`-profile` - Profile\n`-help` - Help\n\nOr mention the bot! 🤖',
-          'Command list: 📋\n✅ `-i` for invites\n✅ `-profile` for stats\n✅ `-help` for guide\n✅ Mention bot for help! 💬'
-        ],
-        stuck: [
-          'Feeling stuck? 😕\n1. Read guide: <#' + CONFIG.HOW_TO_JOIN + '>\n2. Try commands: `-help`\n3. Still stuck? Create ticket! 🎫',
-          'Don\'t worry! We got you! 💪\n• Check pinned messages 📌\n• Use bot commands 🤖\n• Ask staff via ticket! 👨‍💼',
-          'Confused? No problem! 🔧\n• Complete guide available\n• Bot can help (mention it)\n• Staff ready to assist! ⚡'
-        ]
-      }
-    }
-  }
-};
-
-// Smart Auto-Response Handler
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.type === Discord.ChannelType.DM) return;
-
-  const content = message.content.toLowerCase().trim();
-  
-  // Skip if message is too short or too long
-  if (content.length < 3 || content.length > 200) return;
-
-  // Don't respond in staff channels
-  if (message.channel.id === CONFIG.STAFF_TOOLS || message.channel.id === CONFIG.STAFF_CHAT) return;
-
-  // Check each pattern
-  for (const [category, data] of Object.entries(ENHANCED_AUTO_RESPONSES.patterns)) {
-    // Check if message contains category keywords
-    const hasKeyword = data.keywords.some(keyword => content.includes(keyword));
-    
-    if (hasKeyword) {
-      // Find matching context
-      for (const [context, contextKeywords] of Object.entries(data.contexts)) {
-        const hasContext = contextKeywords.some(kw => content.includes(kw));
-        
-        if (hasContext && data.responses[context]) {
-          const responses = data.responses[context];
-          const response = responses[Math.floor(Math.random() * responses.length)];
-          
-          // Only respond if not recently responded (prevent spam)
-          const lastResponse = dataManager.lastMessages.get(`auto_${message.channel.id}`);
-          if (!lastResponse || Date.now() - lastResponse > 30000) { // 30 seconds cooldown
-            await message.reply(response);
-            dataManager.lastMessages.set(`auto_${message.channel.id}`, Date.now());
-            return;
-          }
-        }
-      }
-      
-      // If keyword matched but no specific context, give general response
-      if (category === 'help') {
-        const generalResponse = data.responses.general[0];
-        await message.reply(generalResponse);
-        return;
-      }
-    }
-  }
-});
-
-// ==================== SERVER MANAGEMENT COMMANDS ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.ADMIN_ROLE)) return;
-
-  const args = message.content.split(' ');
-  const command = args[0].toLowerCase();
-
-  // Lock Channel
-  if (command === '!lock') {
-    const channel = message.mentions.channels.first() || message.channel;
-    
-    try {
-      await channel.permissionOverwrites.edit(message.guild.id, {
-        SendMessages: false
-      });
-      
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('🔒 Channel Locked')
-        .setDescription(`${channel} has been locked.\n\nOnly staff can send messages now.`)
-        .setColor('#ff0000')
-        .setTimestamp();
-      
-      await channel.send({ embeds: [embed] });
-      await message.reply('✅ Channel locked!');
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Unlock Channel
-  if (command === '!unlock') {
-    const channel = message.mentions.channels.first() || message.channel;
-    
-    try {
-      await channel.permissionOverwrites.edit(message.guild.id, {
-        SendMessages: null
-      });
-      
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('🔓 Channel Unlocked')
-        .setDescription(`${channel} has been unlocked.\n\nEveryone can send messages now.`)
-        .setColor('#00ff00')
-        .setTimestamp();
-      
-      await channel.send({ embeds: [embed] });
-      await message.reply('✅ Channel unlocked!');
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Slowmode
-  if (command === '!slowmode') {
-    const seconds = parseInt(args[1]) || 0;
-    const channel = message.mentions.channels.first() || message.channel;
-    
-    try {
-      await channel.setRateLimitPerUser(seconds);
-      
-      if (seconds === 0) {
-        await message.reply(`✅ Slowmode disabled for ${channel}!`);
-      } else {
-        await message.reply(`✅ Slowmode set to ${seconds} seconds for ${channel}!`);
-      }
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Clear Messages
-  if (command === '!clear' || command === '!purge') {
-    const amount = parseInt(args[1]) || 10;
-    
-    if (amount < 1 || amount > 100) {
-      await message.reply('❌ Amount must be between 1 and 100!');
-      return;
-    }
-
-    try {
-      const deleted = await message.channel.bulkDelete(amount + 1, true);
-      
-      const reply = await message.channel.send(`✅ Deleted ${deleted.size - 1} messages!`);
-      setTimeout(() => reply.delete().catch(() => {}), 5000);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Kick User
-  if (command === '!kick') {
-    const user = message.mentions.users.first();
-    const reason = args.slice(2).join(' ') || 'No reason provided';
-    
-    if (!user) {
-      await message.reply('❌ Mention a user to kick!');
-      return;
-    }
-
-    try {
-      const member = await message.guild.members.fetch(user.id);
-      await member.kick(reason);
-      
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('👢 User Kicked')
-        .setDescription(`**User:** ${user.tag}\n**Reason:** ${reason}\n**By:** ${message.author.tag}`)
-        .setColor('#ff9900')
-        .setTimestamp();
-      
-      await message.reply({ embeds: [embed] });
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Warn User
-  if (command === '!warn') {
-    const user = message.mentions.users.first();
-    const reason = args.slice(2).join(' ') || 'No reason provided';
-    
-    if (!user) {
-      await message.reply('❌ Mention a user to warn!');
-      return;
-    }
-
-    const warnings = dataManager.addWarning(user.id, reason);
-    
-    try {
-      await user.send(
-        `⚠️ **You have been warned in ${message.guild.name}**\n\n` +
-        `**Reason:** ${reason}\n` +
-        `**Total Warnings:** ${warnings}\n` +
-        `**Warned by:** ${message.author.tag}\n\n` +
-        `Please follow server rules to avoid further action.`
-      );
-    } catch (err) {
-      // User has DMs disabled
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('⚠️ User Warned')
-      .setDescription(`**User:** ${user.tag}\n**Reason:** ${reason}\n**Total Warnings:** ${warnings}\n**By:** ${message.author.tag}`)
-      .setColor('#ffaa00')
-      .setTimestamp();
-    
-    await message.reply({ embeds: [embed] });
-
-    if (warnings >= 3) {
-      await message.channel.send(`🚨 ${user.tag} has reached 3 warnings! Consider timeout or ban.`);
-    }
-  }
-
-  // Check Warnings
-  if (command === '!warnings') {
-    const user = message.mentions.users.first();
-    
-    if (!user) {
-      await message.reply('❌ Mention a user!');
-      return;
-    }
-
-    const warnings = dataManager.getWarnings(user.id);
-    
-    if (warnings.length === 0) {
-      await message.reply(`✅ ${user.tag} has no warnings!`);
-      return;
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`⚠️ Warnings for ${user.tag}`)
-      .setDescription(`Total: **${warnings.length}** warnings`)
-      .setColor('#ffaa00');
-
-    warnings.forEach((warn, index) => {
-      embed.addFields({
-        name: `Warning ${index + 1}`,
-        value: `**Reason:** ${warn.reason}\n**Date:** <t:${Math.floor(warn.date.getTime()/1000)}:R>`,
-        inline: false
-      });
-    });
-
-    await message.reply({ embeds: [embed] });
-  }
-
-  // Clear Warnings
-  if (command === '!clearwarnings') {
-    const user = message.mentions.users.first();
-    
-    if (!user) {
-      await message.reply('❌ Mention a user!');
-      return;
-    }
-
-    dataManager.warnings.delete(user.id);
-    await message.reply(`✅ Cleared all warnings for ${user.tag}!`);
-  }
-
-  // Server Stats
-  if (command === '!serverstats') {
-    const guild = message.guild;
-    
-    const totalMembers = guild.memberCount;
-    const onlineMembers = guild.members.cache.filter(m => m.presence?.status !== 'offline').size;
-    const textChannels = guild.channels.cache.filter(c => c.type === Discord.ChannelType.GuildText).size;
-    const voiceChannels = guild.channels.cache.filter(c => c.type === Discord.ChannelType.GuildVoice).size;
-    const roles = guild.roles.cache.size;
-    const boosts = guild.premiumSubscriptionCount;
-    
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`📊 ${guild.name} Statistics`)
-      .setThumbnail(guild.iconURL())
-      .setColor('#3498db')
-      .addFields(
-        { name: '👥 Total Members', value: `${totalMembers}`, inline: true },
-        { name: '🟢 Online', value: `${onlineMembers}`, inline: true },
-        { name: '📅 Created', value: `<t:${Math.floor(guild.createdTimestamp/1000)}:R>`, inline: true },
-        { name: '💬 Text Channels', value: `${textChannels}`, inline: true },
-        { name: '🔊 Voice Channels', value: `${voiceChannels}`, inline: true },
-        { name: '🎭 Roles', value: `${roles}`, inline: true },
-        { name: '⚡ Boost Level', value: `Level ${guild.premiumTier}`, inline: true },
-        { name: '💎 Boosts', value: `${boosts}`, inline: true },
-        { name: '👑 Owner', value: `<@${guild.ownerId}>`, inline: true }
-      )
-      .setFooter({ text: `Server ID: ${guild.id}` })
-      .setTimestamp();
-
-    await message.reply({ embeds: [embed] });
-  }
-
-  // Role Info
-  if (command === '!roleinfo') {
-    const role = message.mentions.roles.first();
-    
-    if (!role) {
-      await message.reply('❌ Mention a role!');
-      return;
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`🎭 Role Information - ${role.name}`)
-      .setColor(role.color || '#99AAB5')
-      .addFields(
-        { name: '🆔 Role ID', value: role.id, inline: true },
-        { name: '👥 Members', value: `${role.members.size}`, inline: true },
-        { name: '📅 Created', value: `<t:${Math.floor(role.createdTimestamp/1000)}:R>`, inline: true },
-        { name: '🎨 Color', value: role.hexColor, inline: true },
-        { name: '📊 Position', value: `${role.position}`, inline: true },
-        { name: '🔖 Mentionable', value: role.mentionable ? 'Yes' : 'No', inline: true },
-        { name: '🔗 Mention', value: `${role}`, inline: false }
-      )
-      .setTimestamp();
-
-    await message.reply({ embeds: [embed] });
-  }
-
-  // Give Role to All
-  if (command === '!roleall') {
-    const role = message.mentions.roles.first();
-    
-    if (!role) {
-      await message.reply('❌ Mention a role!');
-      return;
-    }
-
-    await message.reply(`⏳ Adding ${role} to all members... This may take a while!`);
-
-    let count = 0;
-    for (const [, member] of message.guild.members.cache) {
-      if (!member.roles.cache.has(role.id) && !member.user.bot) {
-        try {
-          await member.roles.add(role);
-          count++;
-        } catch (err) {
-          // Ignore errors
-        }
-      }
-    }
-
-    await message.channel.send(`✅ Added ${role} to ${count} members!`);
-  }
-
-  // Remove Role from All
-  if (command === '!removeroleall') {
-    const role = message.mentions.roles.first();
-    
-    if (!role) {
-      await message.reply('❌ Mention a role!');
-      return;
-    }
-
-    await message.reply(`⏳ Removing ${role} from all members... This may take a while!`);
-
-    let count = 0;
-    for (const [, member] of role.members) {
-      try {
-        await member.roles.remove(role);
-        count++;
-      } catch (err) {
-        // Ignore errors
-      }
-    }
-
-    await message.channel.send(`✅ Removed ${role} from ${count} members!`);
-  }
-});// ==================== BOT READY ====================
-client.once('ready', async () => {
-  console.log(`✅ ${client.user.tag} is online!`);
-  console.log(`📊 Serving ${client.guilds.cache.size} servers`);
-  console.log(`👥 Monitoring ${client.users.cache.size} users`);
-  console.log('');
-  console.log('🎯 FEATURES LOADED:');
-  console.log('   ✅ Profile System (DM-based)');
-  console.log('   ✅ Invite Tracking (10 invites = FREE)');
-  console.log('   ✅ Welcome Messages (Gender-based)');
-  console.log('   ✅ Auto-Responses (Hi, Hello, Tournament, etc.)');
-  console.log('   ✅ No Reply System (2-min timeout)');
-  console.log('   ✅ Bad Word Filter + Warnings');
-  console.log('   ✅ Spam Detection + Auto-timeout');
-  console.log('   ✅ Ticket System (Auto-close 10min)');
-  console.log('   ✅ Tournament Creation (Dropdown)');
-  console.log('   ✅ Tournament Registration (Free/Paid)');
-  console.log('   ✅ Payment Verification System');
-  console.log('   ✅ Room ID/Password Distribution');
-  console.log('   ✅ Winner Announcement System');
-  console.log('   ✅ Leaderboards (Invites, Tournaments)');
-  console.log('   ✅ Most Played Tracking');
-  console.log('   ✅ Staff Commands (Ban, Timeout, etc.)');
-  console.log('   ✅ Beat Our Player Challenge');
-  console.log('');
-
-  // Set status
-  client.user.setPresence({
-    activities: [{ name: '🏆 OTO Tournaments | Say Hi!', type: Discord.ActivityType.Playing }],
-    status: 'online'
-  });
-
-  // Initialize invite cache
-  for (const guild of client.guilds.cache.values()) {
-    try {
-      const invites = await guild.invites.fetch();
-      invites.forEach(inv => {
-        if (inv.inviter) {
-          dataManager.inviteCache.set(inv.code, inv.uses);
-        }
-      });
-      console.log(`✅ Loaded invites for: ${guild.name}`);
-    } catch (err) {
-      console.log(`⚠️ Could not fetch invites for ${guild.name}`);
-    }
-  }
-
-  // Setup persistent messages
-  setTimeout(() => {
-    setupPersistentMessages();
-  }, 5000);
-
-  console.log('');
-  console.log('✅ ALL SYSTEMS OPERATIONAL!');
-  console.log('🚀 OTO Tournament Bot is LIVE!');
-  console.log('');
-  console.log('📋 STAFF COMMANDS:');
-  console.log('   !ct or !createtournament - Create tournament');
-  console.log('   !startroom <ID> <roomID> <password> - Start tournament');
-  console.log('   !winners <ID> @user1 @user2 @user3 - Declare winners');
-  console.log('   !endtournament <ID> - End tournament');
-  console.log('   !deletetournament <ID> - Delete tournament');
-  console.log('   !tournaments - List active tournaments');
-  console.log('   !leaderboard <game> - Show leaderboard');
-  console.log('   !beatplayer - Create challenge');
-  console.log('   !ban @user <reason> - Ban user');
-  console.log('   !timeout @user <minutes> <reason> - Timeout user');
-  console.log('   !untimeout @user - Remove timeout');
-  console.log('   !addstaff @user - Add staff role');
-  console.log('   !removestaff @user - Remove staff role');
-  console.log('');
-  console.log('💬 USER COMMANDS:');
-  console.log('   -i - Check invites');
-  console.log('   Hi/Hello/Bhai - Greeting responses');
-  console.log('   Mention bot - Get help');
-  console.log('');
-});
-
-// ==================== ADDITIONAL FEATURES ====================
-
-// Command to check user stats
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  
-  const content = message.content.toLowerCase().trim();
-  
-  // Check invites command
-  if (content === '-i' || content === '!invites') {
-    const invites = dataManager.getInvites(message.author.id);
-    const needed = CONFIG.MIN_INVITES;
-    
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('📊 Your Invite Status')
-      .setDescription(`<@${message.author.id}>`)
-      .setColor(invites >= needed ? '#00ff00' : '#ff0000')
-      .addFields(
-        { name: '🔗 Total Invites', value: `**${invites}**`, inline: true },
-        { name: '🎯 Required', value: `**${needed}**`, inline: true },
-        { name: '📈 Progress', value: `**${Math.min(100, (invites/needed * 100)).toFixed(0)}%**`, inline: true }
-      );
-
-    if (invites >= needed) {
-      embed.addFields({
-        name: '✅ FREE ENTRY UNLOCKED!',
-        value: 'You can now join FREE tournaments! 🎉',
-        inline: false
-      });
-    } else {
-      embed.addFields({
-        name: '🎁 Keep Inviting!',
-        value: `Invite **${needed - invites}** more friends for FREE entry!\n\nShare this server with your friends! 🔗`,
-        inline: false
-      });
-    }
-
-    await message.reply({ embeds: [embed] });
-  }
-
-  // Check profile command
-  if (content === '-profile' || content === '!profile') {
-    const profile = dataManager.getProfile(message.author.id);
-    
-    if (!profile) {
-      await message.reply('❌ You don\'t have a profile yet! Check your DMs to create one. 📩');
-      return;
-    }
-
-    const invites = dataManager.getInvites(message.author.id);
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`👤 ${profile.name}'s Profile`)
-      .setDescription(`**OTO ID:** \`${profile.otoId}\``)
-      .setColor('#3498db')
-      .setThumbnail(message.author.displayAvatarURL())
-      .addFields(
-        { name: '🎮 Game', value: profile.game, inline: true },
-        { name: '👤 Gender', value: profile.gender, inline: true },
-        { name: '📍 State', value: profile.state, inline: true },
-        { name: '🔗 Invites', value: `${invites}`, inline: true },
-        { name: '🏆 Tournaments', value: `${profile.tournaments}`, inline: true },
-        { name: '🥇 Wins', value: `${profile.wins}`, inline: true },
-        { name: '📅 Member Since', value: `<t:${Math.floor(profile.createdAt.getTime()/1000)}:R>`, inline: false }
-      )
-      .setFooter({ text: 'Keep gaming and winning!' });
-
-    await message.reply({ embeds: [embed] });
-  }
-
-  // Help command
-  if (content === '-help' || content === '!help') {
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('🤖 OTO Bot - Quick Help')
-      .setDescription('Here are the commands you can use:')
-      .setColor('#3498db')
-      .addFields(
-        { 
-          name: '📊 User Commands', 
-          value: '`-i` - Check your invites\n`-profile` - View your profile\n`-help` - This message\n`Hi/Hello/Bhai` - Friendly greetings', 
-          inline: false 
-        },
-        { 
-          name: '🎮 Getting Started', 
-          value: '1. Complete profile (via DM)\n2. Invite 10 friends\n3. Join tournaments\n4. Win prizes!', 
-          inline: false 
-        },
-        { 
-          name: '💡 Quick Tips', 
-          value: '• Mention the bot for instant help\n• Check <#' + CONFIG.TOURNAMENT_SCHEDULE + '> for tournaments\n• Create ticket if you need support', 
-          inline: false 
-        }
-      )
-      .setFooter({ text: 'Happy Gaming! 🎮' });
-
-    await message.reply({ embeds: [embed] });
-  }
-});
-
-// ==================== ROOM DETAILS PROTECTION ====================
-// Prevent copying/forwarding room details
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  if (!message.content.includes('Room ID') && !message.content.includes('Password')) return;
-
-  // Check if message contains sensitive room info
-  const hasRoomId = /room\s*id|roomid/i.test(message.content);
-  const hasPassword = /password|pass/i.test(message.content);
-
-  if (hasRoomId && hasPassword && message.channel.type !== Discord.ChannelType.DM) {
-    try {
-      await message.delete();
-      await message.channel.send(
-        `⚠️ <@${message.author.id}> Please don't share room details publicly! Check your DMs for room information. 🔒`
-      );
-    } catch (err) {
-      console.error('Could not delete message:', err);
-    }
-  }
-});
-
-// ==================== STAFF TAG RESPONSE ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-  
-  const content = message.content.toLowerCase();
-  
-  if (content.includes('staff') || content.includes('admin') || content.includes('help')) {
-    if (message.mentions.roles.has(CONFIG.STAFF_ROLE) || content.includes('@staff')) {
-      const responses = [
-        'Staffs are working hard! 💪 Aapko jaldi hi reply mil jayega! ⚡',
-        'Our team is on it! 🔥 Quick response incoming! 👨‍💼',
-        'Staff members notified! ⚡ They\'ll help you ASAP! 💫',
-        'Support team alerted! 🚨 Patience, help is coming! 🎯'
-      ];
-      
-      await message.reply(responses[Math.floor(Math.random() * responses.length)]);
-    }
-  }
-});
-
-// ==================== ANNOUNCEMENT COMMAND ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
-
-  const args = message.content.split(' ');
-  const command = args[0].toLowerCase();
-
-  // Announcement command
-  if (command === '!announce') {
-    const announcementText = args.slice(1).join(' ');
-    
-    if (!announcementText) {
-      await message.reply('❌ Usage: `!announce <message>`');
-      return;
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('📢 OFFICIAL ANNOUNCEMENT')
-      .setDescription(announcementText)
-      .setColor('#ff0000')
-      .setFooter({ text: `Announced by ${message.author.username}` })
-      .setTimestamp();
-
-    const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
-    await announceChannel.send({ 
-      content: '@everyone',
-      embeds: [embed] 
-    });
-
-    await message.reply('✅ Announcement posted!');
-  }
-
-  // Embed announcement with custom fields
-  if (command === '!announceembed') {
-    await message.reply(
-      '📝 **Custom Announcement Creator**\n\n' +
-      'Use: `!embedannounce <title> | <description> | <field1:value1> | <field2:value2>`\n\n' +
-      'Example:\n' +
-      '`!embedannounce New Update | We have exciting features! | Feature 1:Amazing stuff | Feature 2:More amazing`'
-    );
-  }
-});
-
-// ==================== ERROR HANDLING ====================
-client.on('error', err => console.error('❌ Client error:', err));
-process.on('unhandledRejection', err => {
-  console.error('❌ Unhandled rejection:', err);
-});
-process.on('uncaughtException', err => {
-  console.error('❌ Uncaught exception:', err);
-});
-
-// ==================== LOGIN ====================
-client.login(BOT_TOKEN)
-  .then(() => {
-    console.log('');
-    console.log('═══════════════════════════════════════════');
-    console.log('   🎮 OTO TOURNAMENT BOT - INITIALIZED     ');
-    console.log('═══════════════════════════════════════════');
-    console.log('');
-  })
-  .catch(err => {
-    console.error('❌ Login failed:', err);
-    process.exit(1);
-  });  // Add Staff
-  if (command === '!addstaff') {
-    const user = message.mentions.users.first();
-    if (!user) {
-      await message.reply('❌ Mention a user!');
-      return;
-    }
-
-    try {
-      const member = await message.guild.members.fetch(user.id);
-      await member.roles.add(CONFIG.STAFF_ROLE);
-      
-      const welcomeMessages = [
-        `Welcome to the team! 🎉 Tumhe hardwork karna hai!`,
-        `New staff member! 💪 Time to show dedication!`,
-        `Welcome aboard! 🚀 Let's make OTO better together!`,
-        `Great addition! 🌟 Ready to help the community?`
-      ];
-      
-      await message.reply(`✅ ${user.tag} is now staff!\n\n${welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]}`);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Remove Staff
-  if (command === '!removestaff') {
-    const user = message.mentions.users.first();
-    if (!user) {
-      await message.reply('❌ Mention a user!');
-      return;
-    }
-
-    try {
-      const member = await message.guild.members.fetch(user.id);
-      await member.roles.remove(CONFIG.STAFF_ROLE);
-      await message.reply(`✅ Removed staff role from ${user.tag}`);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
-    }
-  }
-
-  // Beat Our Player Challenge
-  if (command === '!beatplayer') {
-    const challengeId = `BEAT-${Date.now()}`;
-    
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('⚔️ BEAT OUR PLAYER CHALLENGE!')
-      .setDescription('Think you can beat our best player? Prove it!')
-      .setColor('#ff0000')
-      .addFields(
-        { name: '🏆 Prize', value: 'FREE Squad Entry + Bragging Rights', inline: true },
-        { name: '🎮 Game', value: 'Free Fire / Minecraft', inline: true },
-        { name: '📋 Challenge ID', value: challengeId, inline: true },
-        { name: '✅ How to Join', value: '1. Click JOIN button\n2. Complete 10 invites first\n3. Receive room details\n4. Beat our player to win!', inline: false }
-      )
-      .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
-      .setFooter({ text: 'Limited slots available!' })
-      .setTimestamp();
-
-    const row = new Discord.ActionRowBuilder()
-      .addComponents(
-        new Discord.ButtonBuilder()
-          .setCustomId(`join_challenge_${challengeId}`)
-          .setLabel('JOIN CHALLENGE')
-          .setEmoji('⚔️')
-          .setStyle(Discord.ButtonStyle.Danger)
-      );
-
-    const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
-    await announceChannel.send({ 
-      content: '@everyone\n\n⚔️ **SPECIAL CHALLENGE ALERT!** ⚔️',
-      embeds: [embed], 
-      components: [row] 
-    });
-
-    await message.reply('✅ Beat Our Player challenge posted!');
-  }
-});
-
-// ==================== SETUP PERSISTENT MESSAGES ====================
-async function setupPersistentMessages() {
-  try {
-    // Setup in How to Join channel
-    const howToJoinChannel = await client.channels.fetch(CONFIG.HOW_TO_JOIN);
-    
-    const guideEmbed = new Discord.EmbedBuilder()
-      .setTitle('📚 OTO Tournament Guide - Complete Walkthrough')
-      .setDescription('Welcome to OTO Tournaments! Here\'s everything you need to know:')
-      .setColor('#3498db')
-      .addFields(
-        { 
-          name: '🚀 Step 1: Complete Your Profile', 
-          value: 'When you first join, the bot will DM you.\nReply with:\n```\nName: Your Name\nGender: Male/Female\nState: Your State\nGame: Free Fire/Minecraft/PUBG\n```\n✅ You\'ll get PLAYER role automatically!',
-          inline: false 
-        },
-        { 
-          name: '🔗 Step 2: Invite Friends (FREE Entry)', 
-          value: `Invite **${CONFIG.MIN_INVITES} friends** to unlock FREE tournament entry!\n\n**How to invite:**\n1. Right-click server name\n2. Click "Invite People"\n3. Share your link\n4. When ${CONFIG.MIN_INVITES} friends join = FREE ENTRY! 🎉\n\n*Check invites with:* \`-i\` command`,
-          inline: false 
-        },
-        {
-          name: '🎮 Step 3: Join Tournament',
-          value: '1. Go to <#' + CONFIG.TOURNAMENT_SCHEDULE + '>\n2. Click **JOIN TOURNAMENT** button\n3. Follow ticket instructions\n4. For FREE tournaments: Auto-confirmed ✅\n5. For PAID tournaments: Upload payment proof 💳\n6. Wait for staff approval',
-          inline: false
-        },
-        {
-          name: '🎯 Step 4: Game Time!',
-          value: 'When tournament starts:\n• You\'ll receive ROOM ID & PASSWORD via DM 📩\n• Join within 5 minutes ⏰\n• Play and WIN! 🏆\n• Screenshots required 📸',
-          inline: false
-        },
-        {
-          name: '💡 Pro Tips',
-          value: '• Say "Hi" to the bot for instant help! 👋\n• Type `-i` to check your invites 📊\n• Create ticket if you need help 🎫\n• Follow all rules strictly 📋\n• Have fun and play fair! 🎮',
-          inline: false
-        }
-      )
-      .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
-      .setFooter({ text: 'Need help? Just say "Hi" or mention the bot!' })
-      .setTimestamp();
-
-    const row = new Discord.ActionRowBuilder()
-      .addComponents(
-        new Discord.ButtonBuilder()
-          .setCustomId('create_ticket')
-          .setLabel('Create Support Ticket')
-          .setEmoji('🎫')
-          .setStyle(Discord.ButtonStyle.Primary),
-        new Discord.ButtonBuilder()
-          .setLabel('Tournament Schedule')
-          .setStyle(Discord.ButtonStyle.Link)
-          .setURL(`https://discord.com/channels/${howToJoinChannel.guild.id}/${CONFIG.TOURNAMENT_SCHEDULE}`)
-      );
-
-    await howToJoinChannel.send({ embeds: [guideEmbed], components: [row] });
-
-    console.log('✅ Persistent messages setup complete!');
-  } catch (error) {
-    console.error('Setup error:', error);
-  }
-}
-
-// ==================== GENDER-BASED GREETINGS ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.GENERAL_CHAT) return;
-
-  const content = message.content.toLowerCase().trim();
-  const profile = dataManager.getProfile(message.author.id);
-
-  // Gender-based greetings
-  if (profile && (content === 'hi' || content === 'hello')) {
-    const name = profile.name;
-    const gender = profile.gender.toLowerCase();
-    
-    let response;
-    if (gender === 'female') {
-      const femaleGreetings = [
-        `Hello ${name}! 👋 Aaj tournament kheloge? 🎮`,
-        `Hi ${name}! 🌟 Ready for some gaming? 🏆`,
-        `Hey ${name}! 💫 Tournament join karoge? ⚡`
-      ];
-      response = femaleGreetings[Math.floor(Math.random() * femaleGreetings.length)];
-    } else {
-      const maleGreetings = [
-        `Hi ${name} bro! 👋 Aaj tournament kheloge? 🎮`,
-        `Hello ${name} bhai! 🔥 Game time! 🏆`,
-        `Hey ${name}! 💪 Ready to win? ⚡`
-      ];
-      response = maleGreetings[Math.floor(Math.random() * maleGreetings.length)];
-    }
-    
-    await message.reply(response);
-  }
-});
-
-// ==================== TOURNAMENT SLOT UPDATES ====================
-setInterval(async () => {
-  try {
-    for (const [tournamentId, tournament] of dataManager.tournaments.entries()) {
-      if (tournament.status !== 'registration') continue;
-
-      // Find tournament message and update slot count
-      const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
-      const messages = await scheduleChannel.messages.fetch({ limit: 50 });
-      
-      const tournamentMsg = messages.find(m => 
-        m.embeds[0]?.footer?.text?.includes('Click JOIN') && 
-        m.embeds[0]?.fields?.find(f => f.value === tournamentId)
-      );
-
-      if (tournamentMsg) {
-        const embed = tournamentMsg.embeds[0];
-        const slotField = embed.fields.find(f => f.name === '📊 Slots');
-        if (slotField) {
-          slotField.value = `${tournament.players.size}/${tournament.maxSlots}`;
-          await tournamentMsg.edit({ embeds: [embed] });
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Slot update error:', error);
-  }
-}, 30000); // Every 30 seconds
-
-// ==================== MOST PLAYED LEADERBOARD ====================
-setInterval(async () => {
-  try {
-    // Free Fire Most Played
-    const ffChannel = await client.channels.fetch(CONFIG.MOST_PLAYED);
-    
-    const ffPlayers = Array.from(dataManager.tournamentLeaderboard.freefire.entries())
-      .sort((a, b) => b[1].tournaments - a[1].tournaments)
-      .slice(0, 10);
-
-    const ffEmbed = new Discord.EmbedBuilder()
-      .setTitle('🎮 Most Active Free Fire Players')
-      .setDescription('Players with most tournament participation')
-      .setColor('#00ff00')
-      .setTimestamp();
-
-    let ffDesc = '';
-    for (let i = 0; i < ffPlayers.length; i++) {
-      const [userId, stats] = ffPlayers[i];
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-      ffDesc += `${medal} <@${userId}> - **${stats.tournaments}** tournaments (${stats.wins} wins)\n`;
-    }
-
-    ffEmbed.setDescription(ffDesc || 'No data yet!');
-
-    const messages = await ffChannel.messages.fetch({ limit: 1 });
-    if (messages.size > 0 && messages.first().author.id === client.user.id) {
-      await messages.first().edit({ embeds: [ffEmbed] });
-    } else {
-      await ffChannel.send({ embeds: [ffEmbed] });
-    }
-
-    // Minecraft Most Played
-    const mcPlayers = Array.from(dataManager.tournamentLeaderboard.minecraft.entries())
-      .sort((a, b) => b[1].tournaments - a[1].tournaments)
-      .slice(0, 10);
-
-    if (mcPlayers.length > 0) {
-      const mcEmbed = new Discord.EmbedBuilder()
-        .setTitle('⛏️ Most Active Minecraft Players')
-        .setDescription('Players with most tournament participation')
-        .setColor('#00ff00')
-        .setTimestamp();
-
-      let mcDesc = '';
-      for (let i = 0; i < mcPlayers.length; i++) {
-        const [userId, stats] = mcPlayers[i];
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-        mcDesc += `${medal} <@${userId}> - **${stats.tournaments}** tournaments (${stats.wins} wins)\n`;
-      }
-
-      mcEmbed.setDescription(mcDesc);
-      await ffChannel.send({ embeds: [mcEmbed] });
-    }
-
-  } catch (error) {
-    console.error('Most played leaderboard error:', error);
-  }
-}, 600000); // Every 10 minutes// ==================== OTO COMPLETE TOURNAMENT BOT ====================
 if (process.env.NODE_ENV !== 'production') {
   try { require('dotenv').config(); } catch (err) {}
 }
@@ -1793,36 +10,53 @@ const Discord = require('discord.js');
 const express = require('express');
 const moment = require('moment-timezone');
 
-const BOT_TOKEN = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN;
-const OWNER_ID = process.env.OWNER_ID || 'YOUR_DISCORD_ID';
-
 // ==================== CONFIGURATION ====================
 const CONFIG = {
-  // Channels
+  // Channel IDs
   ANNOUNCEMENT_CHANNEL: '1438484746165555243',
   TOURNAMENT_SCHEDULE: '1438482561679626303',
+  HOW_TO_JOIN: '1438482512296022017',
+  RULES_CHANNEL: '1438482342145687643',
+  BOT_COMMANDS: '1438483009950191676',
   GENERAL_CHAT: '1438482904018849835',
+  OPEN_TICKET: '1438485759891079180',
+  MATCH_REPORTS: '1438486113047150714',
+  LEADERBOARD_CHANNEL: '1438947356690223347',
   STAFF_TOOLS: '1438486059255336970',
   STAFF_CHAT: '1438486059255336970',
+  PAYMENT_PROOF: '1438486113047150714',
   INVITE_TRACKER: '1439216884774998107',
   MINECRAFT_CHANNEL: '1439223955960627421',
   MOST_PLAYED: '1439226024863993988',
+  PROFILE_CHANNEL: '1439542574066176020',
   
-  // Roles
+  // Role IDs
   STAFF_ROLE: '1438475461977047112',
   ADMIN_ROLE: '1438475461977047112',
   PLAYER_ROLE: '1438475461977047114',
   FOUNDER_ROLE: '1438475461977047115',
   
-  // Settings
+  // Bot Settings
   MIN_INVITES: 10,
   NO_REPLY_TIMEOUT: 120000, // 2 minutes
-  SPAM_INTERVAL: 120000, // 2 minutes
+  SPAM_INTERVAL: 180000, // 3 minutes for tournament spam
   TICKET_AUTO_CLOSE: 600000, // 10 minutes
+  SUPPORT_WAIT_TIME: 30000, // 30 seconds before auto-response
   
-  // Bad Words
-  BAD_WORDS: ['dm', 'mc', 'bc', 'maa ki chut', 'tmkc', 'bkl', 'lawde', 'chutiya', 'madarchod', 'bhenchod']
+  // Payment QR Code
+  PAYMENT_QR: 'https://i.ibb.co/jkBSmkM/qr.png',
+  UPI_ID: 'yourpayment@upi',
+  
+  // YouTube & Links
+  YOUTUBE_LINK: 'https://youtube.com/@OTOTournaments',
+  
+  // Bad Words List
+  BAD_WORDS: ['dm', 'mc', 'bc', 'maa ki chut', 'tmkc', 'bkl', 'lawde', 'chutiya', 
+              'madarchod', 'bhenchod', 'fuck', 'shit', 'bitch', 'asshole']
 };
+
+const BOT_TOKEN = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN;
+const OWNER_ID = process.env.OWNER_ID || 'YOUR_DISCORD_ID';
 
 // ==================== CLIENT SETUP ====================
 const client = new Discord.Client({
@@ -1834,17 +68,18 @@ const client = new Discord.Client({
     Discord.GatewayIntentBits.GuildInvites,
     Discord.GatewayIntentBits.DirectMessages,
     Discord.GatewayIntentBits.GuildMessageReactions,
+    Discord.GatewayIntentBits.GuildPresences
   ],
-  partials: [Discord.Partials.Channel, Discord.Partials.Message]
+  partials: [Discord.Partials.Channel, Discord.Partials.Message, Discord.Partials.User]
 });
 
 // Express Server
 const app = express();
 app.use(express.json());
-app.get('/', (req, res) => res.send('OTO Tournament Bot Running!'));
-app.listen(process.env.PORT || 3000);
+app.get('/', (req, res) => res.send('🎮 OTO Tournament Bot - Running Successfully!'));
+app.listen(process.env.PORT || 3000, () => console.log('🌐 Web server started'));
 
-// ==================== DATA MANAGER ====================
+// ==================== DATA MANAGER CLASS ====================
 class DataManager {
   constructor() {
     this.userProfiles = new Map();
@@ -1853,11 +88,17 @@ class DataManager {
     this.tournaments = new Map();
     this.tickets = new Map();
     this.warnings = new Map();
-    this.timeouts = new Map();
     this.lastMessages = new Map();
     this.noReplyTimers = new Map();
-    this.staffMembers = new Set();
-    this.tournamentLeaderboard = { freefire: new Map(), minecraft: new Map() };
+    this.messageCount = new Map(); // For activity tracking
+    this.tournamentLeaderboard = { 
+      freefire: new Map(), 
+      minecraft: new Map(),
+      pubg: new Map() 
+    };
+    this.lobbyChannels = new Map(); // Store lobby channels
+    this.beatPlayerChallenges = new Map(); // Beat our player challenges
+    this.staffTicketTimers = new Map(); // Support ticket auto-response
   }
 
   // Profile Management
@@ -1865,15 +106,17 @@ class DataManager {
     const profile = {
       id: userId,
       name: data.name || 'Unknown',
-      gender: data.gender || 'Not Set',
+      gender: data.gender?.toLowerCase() || 'male',
       state: data.state || 'Not Set',
       game: data.game || 'Not Set',
-      otoId: `OTO-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+      otoId: `OTO${Date.now().toString().slice(-8)}`,
       createdAt: new Date(),
       invites: 0,
       tournaments: 0,
       wins: 0,
-      verified: false
+      totalEarnings: 0,
+      verified: true,
+      activity: 0
     };
     this.userProfiles.set(userId, profile);
     return profile;
@@ -1887,10 +130,23 @@ class DataManager {
     return this.userProfiles.has(userId);
   }
 
-  // Invite Tracking
+  updateProfile(userId, updates) {
+    const profile = this.userProfiles.get(userId);
+    if (profile) {
+      Object.assign(profile, updates);
+      return profile;
+    }
+    return null;
+  }
+
+  // Invite System
   addInvite(userId) {
     const current = this.userInvites.get(userId) || 0;
     this.userInvites.set(userId, current + 1);
+    
+    const profile = this.getProfile(userId);
+    if (profile) profile.invites = current + 1;
+    
     return current + 1;
   }
 
@@ -1898,87 +154,223 @@ class DataManager {
     return this.userInvites.get(userId) || 0;
   }
 
-  // Moderation
+  // Warning System
   addWarning(userId, reason) {
     if (!this.warnings.has(userId)) {
       this.warnings.set(userId, []);
     }
-    this.warnings.get(userId).push({ reason, date: new Date() });
+    this.warnings.get(userId).push({ 
+      reason, 
+      date: new Date(),
+      id: `WARN-${Date.now()}`
+    });
     return this.warnings.get(userId).length;
   }
 
   getWarnings(userId) {
     return this.warnings.get(userId) || [];
   }
+
+  clearWarnings(userId) {
+    this.warnings.delete(userId);
+  }
+
+  // Activity Tracking
+  addActivity(userId) {
+    const count = this.messageCount.get(userId) || 0;
+    this.messageCount.set(userId, count + 1);
+    
+    const profile = this.getProfile(userId);
+    if (profile) profile.activity = count + 1;
+  }
+
+  getTopActive(limit = 10) {
+    return Array.from(this.messageCount.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit);
+  }
 }
 
 const dataManager = new DataManager();
 
-// ==================== GREETING SYSTEM ====================
-const GREETINGS = {
-  welcome: [
-    '🔥 {user} apna bhai aa gaya! Machaenge now! 🎮',
-    '⚡ {user} joined the arena! Tournament ready? 💪',
-    '🎯 {user} entered! Let\'s win together! 🏆',
-    '💫 Boss {user} aa gaye! Game on! 🎮',
-    '🌟 {user} welcome to OTO! Big wins ahead! 💰'
+// ==================== GREETING MESSAGES ====================
+const GREETING_MESSAGES = {
+  male: [
+    '🔥 {name} bhai aa gaya! Machayenge now! 🎮',
+    '⚡ Yo {name}! Tournament ready ho? 💪',
+    '🎯 {name} bro! Let\'s win together! 🏆',
+    '💫 {name} ka swagat hai! Game on! 🎮',
+    '🌟 {name} joined! Big wins incoming! 💰',
+    '🚀 {name} bhai! Tournament time! ⚡',
+    '🎮 Welcome {name}! Aaj khelenge! 🔥',
+    '💎 {name} entered the arena! Let\'s go! 🏆',
+    '⭐ {name} aa gaye! Taiyaar ho jao! 💪',
+    '🔰 {name} bro! Championship awaits! 🎯'
   ],
-  responses: {
-    'hi': ['Hey! 👋 Tournament join karo! 🎮', 'Hi bro! 🔥 Aaj kheloge?', 'Hello! ⚡ Game time!'],
-    'hello': ['Hello! 🎯 Ready to play? 🏆', 'Hey there! 🔥 Join tournament!', 'Hi! 💫 Let\'s game!'],
-    'bhai': ['Bhai! 🎮 Tournament hai aaj! 🔥', 'Kya haal bhai? ⚡ Game ready?', 'Bhai! 💯 Join karo!'],
-    'tournament': ['Check <#1438482561679626303>! 🎮', 'Tournament live hai! 🔥', 'Join now! ⚡']
-  }
+  female: [
+    '💫 {name} aa gayi! Welcome queen! 👑',
+    '🌟 Hello {name}! Ready to shine? ✨',
+    '🎀 {name} joined! Let\'s rock! 🎮',
+    '💖 Welcome {name}! Gaming time! 🎯',
+    '✨ {name} is here! Tournament time! 🏆',
+    '🌸 {name} ka swagat! Let\'s win! 💪',
+    '🎭 {name} entered! Game on! 🎮',
+    '💝 Hey {name}! Ready to dominate? 🔥',
+    '🦋 {name} welcome! Tournament awaits! ⚡',
+    '🌺 {name} aa gayi! Victory is near! 🏆'
+  ],
+  unknown: [
+    '🔥 New warrior entered! Welcome! 🎮',
+    '⚡ Fresh blood! Let\'s game! 💪',
+    '🎯 Welcome to OTO! Tournament time! 🏆',
+    '💫 New player! Ready to win? 🎮',
+    '🌟 Welcome! Big wins ahead! 💰'
+  ]
 };
 
 // ==================== AUTO RESPONSE SYSTEM ====================
 const AUTO_RESPONSES = {
-  tournament: [
-    'Tournament info: <#1438482561679626303> 🎮',
-    'Daily tournaments! Check schedule! 🔥',
-    'Multiple games available! Join now! ⚡'
-  ],
-  'free entry': [
-    `Invite ${CONFIG.MIN_INVITES} friends for FREE entry! 🎁`,
-    `${CONFIG.MIN_INVITES} invites = FREE tournament! 🔗`,
-    'Invite friends, play FREE! 💫'
-  ],
-  'how to join': [
-    'Simple: Invite 10 friends → Join tournament → Win! 🏆',
-    'Guide: <#1438482512296022017> 📚',
-    'Easy steps: Check pins! 📌'
-  ],
-  payment: [
-    'Payment help: Create ticket! 🎫',
-    'Use UPI/PayTM/PhonePe! 💳',
-    'Payment issues? Staff will help! 👨‍💼'
-  ]
+  greetings: {
+    patterns: ['hi', 'hello', 'hey', 'namaste', 'hola', 'sup', 'yo'],
+    male: [
+      'Hey bro! 👋 Tournament check karo! 🎮',
+      'Yo! Aaj kheloge? Tournament live hai! 🔥',
+      'Hi bhai! Custom challenge karoge? ⚡',
+      'Hello! Tournament join karo! 💪',
+      'Hey! Big prizes waiting! 🏆'
+    ],
+    female: [
+      'Hello! 👋 Tournament check karo! 🎮',
+      'Hi! Aaj kheloge? 🎯',
+      'Hey! Ready for gaming? ⚡',
+      'Hello dear! Tournament join karo! 💫',
+      'Hi! Big wins await! 🏆'
+    ],
+    default: [
+      'Hey! 👋 Check tournaments! 🎮',
+      'Hi! Ready to play? 🎯',
+      'Hello! Join tournament! 🏆',
+      'Hey! Gaming time! ⚡',
+      'Hi! Big prizes! 💰'
+    ]
+  },
+  
+  tournament: {
+    patterns: ['tournament', 'tourney', 'competition', 'match', 'game', 'khelna'],
+    responses: [
+      '🎮 **Active Tournaments:**\nCheck <#1438482561679626303> for schedule!\n💰 Win real money daily! 🏆',
+      '🔥 **Tournament Info:**\n• Free Fire tournaments daily\n• Minecraft build contests\n• Real cash prizes!\nJoin now: <#1438482561679626303>',
+      '⚡ **Gaming Time!**\nMultiple tournaments live!\n📅 Schedule: <#1438482561679626303>\n🎯 Register & Win! 💎',
+      '🏆 **Tournament Details:**\n• Daily competitions\n• Multiple games\n• Big prizes!\nCheck: <#1438482561679626303> 🎮',
+      '💪 **Ready to Win?**\nActive tournaments waiting!\n📍 Go to: <#1438482561679626303>\n🎯 Register now! ⚡'
+    ]
+  },
+
+  invite: {
+    patterns: ['invite', 'refer', 'friend', 'link', 'invite kaise'],
+    responses: [
+      '🔗 **Free Entry System:**\n✅ Invite 10 friends = FREE tournaments!\n📊 Check invites: `-i` command\n💎 Start inviting now!',
+      '💫 **Invite Benefits:**\n• 10 invites = FREE entry\n• Top inviters get rewards\n• Help grow community!\nType `-i` to check progress! 🎁',
+      '🎁 **Get FREE Entry:**\n1️⃣ Invite 10 friends\n2️⃣ They join server\n3️⃣ You get FREE tournaments!\nCommand: `-i` to track! 🔥',
+      '⚡ **Invitation System:**\nInvite friends → Get FREE entry!\nRequired: 10 invites\nCurrent: Use `-i` to check\nRewards waiting! 🏆',
+      '🚀 **Quick Invite Guide:**\n• Right-click server name\n• Click "Invite People"\n• Share link everywhere!\n• 10 joins = FREE entry! 🎮'
+    ]
+  },
+
+  payment: {
+    patterns: ['payment', 'pay', 'paisa', 'transaction', 'upi', 'paytm', 'phonepe'],
+    responses: [
+      '💳 **Payment Methods:**\n✅ UPI / PayTM / PhonePe / GPay\n📸 Send screenshot in ticket\n⏱️ Verification: 5-15 min\n🎫 Create ticket for help!',
+      '💰 **Payment Process:**\n1️⃣ Join tournament\n2️⃣ Upload payment proof\n3️⃣ Staff verifies (10 min)\n4️⃣ You\'re in!\nNeed help? Create ticket! 🎮',
+      '🔐 **Payment Info:**\n• UPI ID available in registration\n• Send screenshot\n• Quick verification\n• Play immediately!\nIssues? Open ticket! ⚡',
+      '📱 **How to Pay:**\nUse any UPI app → Pay → Screenshot → Upload in ticket → Get verified!\nStaff response: 5-10 minutes! 🏆',
+      '✨ **Payment Help:**\nAll UPI methods accepted!\n📸 Screenshot required\n⚡ Fast verification\n🎫 Ticket for issues! 💎'
+    ]
+  },
+
+  profile: {
+    patterns: ['profile', 'oto id', 'account', 'register', 'signup'],
+    responses: [
+      '👤 **Profile System:**\nType `-profile` to view!\nBot will DM for setup if new.\n🆔 Your OTO ID shows there!\nNeed changes? Create ticket! 🎮',
+      '🔐 **Profile Info:**\n• Check: `-profile` command\n• Update: Open ticket\n• OTO ID: Unique identifier\n• Shows all stats! ⚡',
+      '📋 **Your Profile:**\nCommand: `-profile`\nIncludes:\n• OTO ID\n• Stats\n• Tournaments\n• Wins & Earnings! 🏆',
+      '✨ **Profile Help:**\n`-profile` → View everything\nDM from bot → Setup\nTicket → Modify details\nAll stats tracked! 💪',
+      '🎯 **Account Details:**\nType `-profile` anytime!\n📊 See complete stats\n🎮 Tournament history\n🏆 Your achievements! 🔥'
+    ]
+  },
+
+  help: {
+    patterns: ['help', 'madad', 'support', 'kaise', 'how', 'guide'],
+    responses: [
+      '🆘 **Need Help?**\n📚 Guide: <#1438482512296022017>\n💬 Commands: `-help`\n🎫 Ticket: Personal support\n🤖 Mention bot for quick help!',
+      '💡 **Quick Help:**\n• `-i` → Check invites\n• `-profile` → Your stats\n• `-help` → All commands\n• Create ticket → Staff help\nWe\'re here for you! 🎮',
+      '🎯 **Getting Started:**\n1️⃣ Complete profile\n2️⃣ Invite 10 friends\n3️⃣ Join tournaments\n4️⃣ Win prizes!\nQuestions? Mention bot! ⚡',
+      '🔰 **Help Center:**\nCommands: `-help`\nGuide: Check pins 📌\nSupport: Create ticket 🎫\nStaff ready 24/7! 💪',
+      '⭐ **Support Options:**\n• Bot commands (type `-help`)\n• Complete guide available\n• Staff support via tickets\n• Mention bot anytime! 🏆'
+    ]
+  },
+
+  staff: {
+    patterns: ['staff', 'admin', 'moderator', 'help staff', 'support team'],
+    responses: [
+      '👨‍💼 **Staff Team:**\nOur team is working hard!\n⚡ Quick response guaranteed!\n🎫 Create ticket for personal help!\nPatience appreciated! 💪',
+      '🔔 **Staff Notified:**\nSupport team alerted!\n⏱️ Response time: 5-15 min\n🎫 Ticket = Faster help\nThank you for waiting! 🎮',
+      '💼 **Staff Status:**\nTeam members active!\n✅ They\'ll respond ASAP\n🎯 Average wait: 10 min\nCreate ticket for priority! ⚡',
+      '🎭 **Support Team:**\nStaff working on requests!\n📱 Quick response incoming\n🎫 Ticket = Better help\nWe\'re here for you! 🏆'
+    ]
+  }
 };
 
 // ==================== BOT MENTION RESPONSE ====================
 client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  
   if (message.mentions.has(client.user)) {
+    const profile = dataManager.getProfile(message.author.id);
+    const hasProfile = profile !== null;
+    
     const embed = new Discord.EmbedBuilder()
-      .setTitle('🤖 OTO Bot Help')
-      .setDescription('Hey! Need help? Here\'s what you can do:')
+      .setTitle('🤖 OTO Bot - Quick Help')
+      .setDescription(`Hey ${hasProfile ? profile.name : message.author.username}! 👋`)
       .setColor('#3498db')
       .addFields(
-        { name: '🎮 Join Tournament', value: 'Go to <#1438482561679626303>', inline: true },
-        { name: '📝 How to Join', value: 'Check <#1438482512296022017>', inline: true },
-        { name: '🎫 Need Help', value: 'Create a ticket!', inline: true }
-      );
-    
+        { 
+          name: '🎮 Tournaments', 
+          value: 'Active tournaments: <#1438482561679626303>', 
+          inline: true 
+        },
+        { 
+          name: '📚 How to Join', 
+          value: 'Complete guide: <#1438482512296022017>', 
+          inline: true 
+        },
+        { 
+          name: '🎫 Support', 
+          value: 'Need help? Create a ticket!', 
+          inline: true 
+        },
+        {
+          name: '⚡ Quick Commands',
+          value: '`-i` - Check invites\n`-profile` - Your profile\n`-help` - All commands',
+          inline: false
+        }
+      )
+      .setFooter({ text: 'OTO Tournaments - Play & Win!' })
+      .setTimestamp();
+
     await message.reply({ embeds: [embed] });
   }
 });
 
-// ==================== MEMBER JOIN/LEAVE ====================
+// ==================== MEMBER JOIN EVENT ====================
 client.on('guildMemberAdd', async (member) => {
   try {
     const guild = member.guild;
     
     // Track inviter
     let inviter = null;
+    let inviterCount = 0;
+    
     try {
       const newInvites = await guild.invites.fetch();
       const usedInvite = newInvites.find(inv => {
@@ -1989,60 +381,133 @@ client.on('guildMemberAdd', async (member) => {
       if (usedInvite?.inviter) {
         dataManager.inviteCache.set(usedInvite.code, usedInvite.uses);
         inviter = usedInvite.inviter;
-        const count = dataManager.addInvite(inviter.id);
+        inviterCount = dataManager.addInvite(inviter.id);
 
-        // Notify inviter
-        if (count === CONFIG.MIN_INVITES) {
-          try {
-            await inviter.send(
-              `🎉 **Congratulations!** 🎉\n\n` +
-              `You've completed **${CONFIG.MIN_INVITES} invites**!\n` +
-              `✅ **FREE ENTRY UNLOCKED!**\n\n` +
-              `You can now join FREE tournaments! 🎮\n` +
-              `Use the "Book Your Match" button when available! 🏆`
+        // Update invite leaderboard
+        await updateInviteLeaderboard();
+
+        // Check if inviter reached 10 invites
+        if (inviterCount === CONFIG.MIN_INVITES) {
+          const embed = new Discord.EmbedBuilder()
+            .setTitle('🎉 CONGRATULATIONS! 🎉')
+            .setDescription(`**You've unlocked FREE ENTRY!**`)
+            .setColor('#00ff00')
+            .addFields(
+              { 
+                name: '✅ Achievement Unlocked', 
+                value: `**${CONFIG.MIN_INVITES} Invites Completed!**`, 
+                inline: false 
+              },
+              { 
+                name: '🎁 Your Reward', 
+                value: '• FREE tournament entry forever!\n• Priority support\n• Special role coming soon!', 
+                inline: false 
+              },
+              {
+                name: '🎮 What\'s Next?',
+                value: 'Join any tournament with **FREE entry**!\nClick "Join Tournament" in <#1438482561679626303>',
+                inline: false
+              }
+            )
+            .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
+            .setFooter({ text: 'Thank you for growing our community! 💪' })
+            .setTimestamp();
+
+          const row = new Discord.ActionRowBuilder()
+            .addComponents(
+              new Discord.ButtonBuilder()
+                .setLabel('View Tournaments')
+                .setStyle(Discord.ButtonStyle.Link)
+                .setURL(`https://discord.com/channels/${guild.id}/${CONFIG.TOURNAMENT_SCHEDULE}`),
+              new Discord.ButtonBuilder()
+                .setCustomId('create_beat_player_ticket')
+                .setLabel('Beat Our Player')
+                .setEmoji('⚔️')
+                .setStyle(Discord.ButtonStyle.Danger)
             );
-          } catch (err) {}
+
+          try {
+            await inviter.send({ embeds: [embed], components: [row] });
+          } catch (err) {
+            console.log('Could not DM inviter');
+          }
+
+          // Announce in general
+          const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+          await channel.send(`🎉 <@${inviter.id}> just unlocked **FREE ENTRY** by inviting ${CONFIG.MIN_INVITES} friends! 🏆`);
         }
       }
 
-      // Update cache
+      // Update invite cache
       newInvites.forEach(inv => dataManager.inviteCache.set(inv.code, inv.uses));
     } catch (err) {
       console.log('Invite tracking error:', err.message);
     }
 
-    // Welcome message
+    // Send welcome message
     const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-    const welcomeMsg = GREETINGS.welcome[Math.floor(Math.random() * GREETINGS.welcome.length)]
-      .replace('{user}', `<@${member.id}>`);
     
-    let finalMsg = welcomeMsg;
+    // Random welcome message
+    const welcomeArray = GREETING_MESSAGES.unknown;
+    let welcomeMsg = welcomeArray[Math.floor(Math.random() * welcomeArray.length)]
+      .replace('{name}', `<@${member.id}>`);
+    
     if (inviter) {
-      finalMsg += `\n💫 **Invited by:** <@${inviter.id}> (${dataManager.getInvites(inviter.id)} invites)`;
+      welcomeMsg += `\n\n💫 **Invited by:** <@${inviter.id}> (${inviterCount} total invites)`;
     }
     
-    await channel.send(finalMsg);
+    welcomeMsg += `\n\n🎯 **Quick Start:**\n• Complete your profile (check DM)\n• Invite ${CONFIG.MIN_INVITES} friends for FREE entry\n• Join tournaments & win prizes!`;
 
-    // Send profile DM after 3 seconds
+    await channel.send(welcomeMsg);
+
+    // Update invite tracker
+    if (inviter) {
+      try {
+        const inviteChannel = await client.channels.fetch(CONFIG.INVITE_TRACKER);
+        await inviteChannel.send(
+          `📊 **New Member via Invite**\n` +
+          `👤 Member: ${member.user.tag}\n` +
+          `🔗 Invited by: <@${inviter.id}>\n` +
+          `📈 Inviter Total: ${inviterCount} invites`
+        );
+      } catch (err) {}
+    }
+
+    // Send profile setup DM after 5 seconds
     setTimeout(async () => {
       try {
         if (!dataManager.hasProfile(member.id)) {
           const embed = new Discord.EmbedBuilder()
             .setTitle('👋 Welcome to OTO Tournaments!')
-            .setDescription(`Hey ${member.user.username}! Let's set up your profile!`)
+            .setDescription(`Hey ${member.user.username}! Let's create your gaming profile!`)
             .setColor('#3498db')
             .addFields(
-              { name: '📝 Complete Profile', value: 'Reply with your details in this format:\n```\nName: Your Name\nGender: Male/Female\nState: Your State\nGame: Free Fire/Minecraft/PUBG```', inline: false },
-              { name: '🎮 Quick Start', value: `• Invite ${CONFIG.MIN_INVITES} friends for FREE entry\n• Check tournament schedule\n• Join and win prizes!`, inline: false }
+              { 
+                name: '📝 Complete Your Profile', 
+                value: 'Reply to this DM with your details in this format:\n```\nName: Your Name\nGender: Male/Female\nState: Your State\nGame: Free Fire/Minecraft/PUBG\n```', 
+                inline: false 
+              },
+              { 
+                name: '🎁 Benefits', 
+                value: '• Get PLAYER role\n• Track your stats\n• Unique OTO ID\n• Join tournaments\n• Win real money!', 
+                inline: false 
+              },
+              {
+                name: '🚀 Quick Start',
+                value: `• Invite ${CONFIG.MIN_INVITES} friends = FREE entry\n• Check <#${CONFIG.TOURNAMENT_SCHEDULE}>\n• Win big prizes daily!`,
+                inline: false
+              }
             )
-            .setFooter({ text: 'Reply to this message with your profile details!' });
+            .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
+            .setFooter({ text: 'Reply with your profile details to get started!' })
+            .setTimestamp();
 
           await member.send({ embeds: [embed] });
         }
       } catch (err) {
-        console.log('DM disabled for user');
+        console.log('Could not DM new member:', err.message);
       }
-    }, 3000);
+    }, 5000);
 
   } catch (error) {
     console.error('Member join error:', error);
@@ -2055,9 +520,8 @@ client.on('messageCreate', async (message) => {
 
   const content = message.content;
   
-  // Check if user needs profile
+  // Profile creation
   if (!dataManager.hasProfile(message.author.id)) {
-    // Parse profile data
     const nameMatch = content.match(/name:\s*(.+)/i);
     const genderMatch = content.match(/gender:\s*(male|female)/i);
     const stateMatch = content.match(/state:\s*(.+)/i);
@@ -2084,254 +548,797 @@ client.on('messageCreate', async (message) => {
 
       const embed = new Discord.EmbedBuilder()
         .setTitle('✅ Profile Created Successfully!')
-        .setDescription(`Welcome aboard, ${profile.name}! 🎉`)
+        .setDescription(`Welcome to OTO family, ${profile.name}! 🎉`)
         .setColor('#00ff00')
         .addFields(
-          { name: '🆔 OTO ID', value: profile.otoId, inline: true },
+          { name: '🆔 OTO ID', value: `\`${profile.otoId}\``, inline: true },
           { name: '🎮 Game', value: profile.game, inline: true },
           { name: '📍 State', value: profile.state, inline: true },
-          { name: '🎯 Next Steps', value: `• Invite ${CONFIG.MIN_INVITES} friends for FREE entry\n• Check #tournament-schedule\n• Join tournaments and win!`, inline: false }
+          { name: '👤 Gender', value: profile.gender === 'male' ? 'Male' : 'Female', inline: true },
+          { name: '🎯 Invites Needed', value: `${CONFIG.MIN_INVITES} for FREE entry`, inline: true },
+          { name: '✅ Status', value: 'Profile Active', inline: true },
+          { 
+            name: '🚀 Next Steps', 
+            value: `1️⃣ Invite friends: \`-i\` to track\n2️⃣ Join tournaments: Check server\n3️⃣ Win prizes: Play & earn!\n4️⃣ View profile: Type \`-profile\``, 
+            inline: false 
+          }
         )
-        .setFooter({ text: 'Happy Gaming! 🏆' });
+        .setThumbnail(message.author.displayAvatarURL())
+        .setFooter({ text: 'Your gaming journey starts now! 🏆' })
+        .setTimestamp();
 
       await message.reply({ embeds: [embed] });
 
+      // Post profile to profile channel
+      try {
+        const profileChannel = await client.channels.fetch(CONFIG.PROFILE_CHANNEL);
+        const publicEmbed = new Discord.EmbedBuilder()
+          .setTitle('🎮 New Player Registered!')
+          .setDescription(`**${profile.name}** joined OTO Tournaments!`)
+          .setColor('#3498db')
+          .addFields(
+            { name: '🆔 OTO ID', value: profile.otoId, inline: true },
+            { name: '🎮 Game', value: profile.game, inline: true },
+            { name: '📍 State', value: profile.state, inline: true }
+          )
+          .setThumbnail(message.author.displayAvatarURL())
+          .setFooter({ text: 'Welcome to the team!' })
+          .setTimestamp();
+
+        await profileChannel.send({ embeds: [publicEmbed] });
+      } catch (err) {}
+
       // Announce in general
       try {
-        const channel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-        await channel.send(`🎉 <@${message.author.id}> completed their profile! Welcome to OTO family! 🎮`);
+        const guilds = client.guilds.cache;
+        for (const guild of guilds.values()) {
+          const channel = await guild.channels.fetch(CONFIG.GENERAL_CHAT);
+          const gender = profile.gender === 'female' ? '👸' : '🤴';
+          await channel.send(
+            `${gender} **${profile.name}** completed their profile! 🎉\n` +
+            `🆔 OTO ID: \`${profile.otoId}\`\n` +
+            `🎮 Game: ${profile.game}\n` +
+            `Welcome to OTO family! 💪`
+          );
+        }
       } catch (err) {}
     } else {
       await message.reply(
-        '❌ Invalid format! Please use:\n```\nName: Your Name\nGender: Male/Female\nState: Your State\nGame: Free Fire/Minecraft/PUBG```'
-      );
+        '❌ **Invalid Format!**\n\n' +
+        'Please use this exact format:\n' +
+        '```\n' +
+        'Name: Your Name\n' +
+        'Gender: Male/Female\n' +
+        'State: Your State\n' +
+        'Game: Free Fire/Minecraft/PUBG\n' +
+        '```\n' +
+        'Copy and fill the format above!'
+        // ==================== PAYMENT APPROVAL SYSTEM ====================
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  // Approve Payment
+  if (interaction.customId.startsWith('approve_payment_')) {
+    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      return;
     }
+
+    const parts = interaction.customId.split('_');
+    const userId = parts[2];
+    const tournamentId = parts[3];
+    const ticketId = parts[4];
+    
+    const tournament = dataManager.tournaments.get(tournamentId);
+    if (!tournament) {
+      await interaction.reply({ content: '❌ Tournament not found!', ephemeral: true });
+      return;
+    }
+
+    const player = tournament.players.get(userId);
+    if (player) {
+      player.status = 'confirmed';
+      player.approvedBy = interaction.user.id;
+      player.approvedAt = new Date();
+      
+      tournament.confirmedPlayers.set(userId, player);
+      tournament.slotsFilled++;
+
+      // Update tournament slots
+      await updateTournamentSlots(tournament);
+
+      const embed = new Discord.EmbedBuilder()
+        .setTitle('✅ PAYMENT APPROVED!')
+        .setDescription(`<@${userId}> your registration is confirmed!`)
+        .setColor('#00ff00')
+        .addFields(
+          { name: '🎮 Tournament', value: tournament.title, inline: false },
+          { name: '📊 Your Slot', value: `#${tournament.slotsFilled}`, inline: true },
+          { name: '⏰ Time', value: tournament.time, inline: true },
+          { name: '✅ Status', value: 'CONFIRMED', inline: true },
+          {
+            name: '📋 Next Steps',
+            value: '• Stay in this ticket\n• Room details will be sent\n• Be ready 15 minutes before\n• Good luck! 🏆',
+            inline: false
+          }
+        )
+        .setFooter({ text: `Approved by ${interaction.user.username}` })
+        .setTimestamp();
+
+      await interaction.message.edit({ embeds: [embed], components: [] });
+      await interaction.reply(`✅ Payment approved! <@${userId}> is now confirmed for slot #${tournament.slotsFilled}!`);
+
+      // DM user
+      try {
+        const user = await client.users.fetch(userId);
+        await user.send({
+          content: `✅ **Payment Approved!**\n\nYour registration for **${tournament.title}** is confirmed!\n\nStay in your ticket for room details. Good luck! 🎮`
+        });
+      } catch (err) {}
+
+      // Check if tournament is full
+      if (tournament.slotsFilled >= tournament.maxSlots) {
+        const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+        await generalChannel.send(
+          `🚨 **${tournament.title} - SLOTS FULL!** 🚨\n\n` +
+          `All ${tournament.maxSlots} slots filled!\n` +
+          `Starting at ${tournament.time}\n` +
+          `📺 Live: ${CONFIG.YOUTUBE_LINK}`
+        );
+      }
+    }
+  }
+
+  // Reject Payment
+  if (interaction.customId.startsWith('reject_payment_')) {
+    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      return;
+    }
+
+    const parts = interaction.customId.split('_');
+    const userId = parts[2];
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('❌ Payment Rejected')
+      .setDescription(`<@${userId}>, your payment proof was rejected.`)
+      .setColor('#ff0000')
+      .addFields({
+        name: '🔄 What to do?',
+        value: 'Please upload a clear payment screenshot showing:\n• Transaction ID\n• Amount paid\n• Date & time\n• Payment method\n\nStaff will verify again!',
+        inline: false
+      })
+      .setFooter({ text: `Rejected by ${interaction.user.username}` })
+      .setTimestamp();
+
+    await interaction.message.edit({ embeds: [embed], components: [] });
+    await interaction.reply(`❌ Payment rejected for <@${userId}>. Asked to resubmit.`);
   }
 });
 
-// ==================== GENERAL CHAT - GREETINGS ====================
+// ==================== UPDATE TOURNAMENT SLOTS ====================
+async function updateTournamentSlots(tournament) {
+  try {
+    if (!tournament.scheduleMessageId) return;
+
+    const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
+    const message = await scheduleChannel.messages.fetch(tournament.scheduleMessageId);
+    
+    const embed = message.embeds[0];
+    if (embed) {
+      const slotField = embed.fields.find(f => f.name === '📊 Slots');
+      if (slotField) {
+        slotField.value = `${tournament.slotsFilled}/${tournament.maxSlots}`;
+        await message.edit({ embeds: [embed] });
+      }
+    }
+  } catch (error) {
+    console.error('Update slots error:', error);
+  }
+}
+
+// ==================== START TOURNAMENT & SEND ROOM DETAILS ====================
 client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.GENERAL_CHAT) return;
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
 
-  const content = message.content.toLowerCase().trim();
+  const args = message.content.split(' ');
+  const command = args[0].toLowerCase();
 
-  // Greeting responses
-  for (const [greeting, responses] of Object.entries(GREETINGS.responses)) {
-    if (content === greeting || content.includes(greeting)) {
-      const response = responses[Math.floor(Math.random() * responses.length)];
-      await message.reply(response);
+  if (command === '!startroom' || command === '!start') {
+    const tournamentId = args[1];
+    const roomId = args[2];
+    const password = args[3];
+
+    if (!tournamentId || !roomId || !password) {
+      await message.reply('❌ Usage: `!startroom <tournamentID> <roomID> <password>`');
       return;
     }
-  }
 
-  // Auto responses for keywords
-  for (const [keyword, responses] of Object.entries(AUTO_RESPONSES)) {
-    if (content.includes(keyword)) {
-      const response = responses[Math.floor(Math.random() * responses.length)];
-      await message.reply(response);
+    const tournament = dataManager.tournaments.get(tournamentId);
+    if (!tournament) {
+      await message.reply('❌ Tournament not found!');
       return;
     }
-  }
-});
 
-// ==================== NO REPLY TIMEOUT SYSTEM ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.GENERAL_CHAT) return;
+    tournament.status = 'live';
+    tournament.roomDetails = {
+      roomId,
+      password,
+      startedAt: new Date(),
+      startedBy: message.author.id
+    };
 
-  const userId = message.author.id;
-  
-  // Clear existing timer
-  if (dataManager.noReplyTimers.has(userId)) {
-    clearTimeout(dataManager.noReplyTimers.get(userId));
-  }
+    // Create lobby channel for all confirmed players
+    try {
+      const category = message.guild.channels.cache.get(CONFIG.STAFF_TOOLS)?.parent;
+      const lobbyChannel = await message.guild.channels.create({
+        name: `🎮-${tournament.title.toLowerCase().replace(/\s+/g, '-')}-lobby`,
+        type: Discord.ChannelType.GuildText,
+        parent: category,
+        permissionOverwrites: [
+          {
+            id: message.guild.id,
+            deny: [Discord.PermissionFlagsBits.ViewChannel]
+          },
+          {
+            id: CONFIG.STAFF_ROLE,
+            allow: [
+              Discord.PermissionFlagsBits.ViewChannel,
+              Discord.PermissionFlagsBits.SendMessages,
+              Discord.PermissionFlagsBits.ManageMessages
+            ]
+          },
+          {
+            id: CONFIG.ADMIN_ROLE,
+            allow: [
+              Discord.PermissionFlagsBits.ViewChannel,
+              Discord.PermissionFlagsBits.SendMessages,
+              Discord.PermissionFlagsBits.ManageMessages,
+              Discord.PermissionFlagsBits.ManageChannels
+            ]
+          }
+        ]
+      });
 
-  // Set new timer
-  const timer = setTimeout(async () => {
-    const lastMsg = dataManager.lastMessages.get(userId);
-    if (lastMsg && lastMsg.id === message.id) {
-      // Check if anyone replied
-      const replies = await message.channel.messages.fetch({ after: message.id, limit: 10 });
-      const hasReply = replies.some(m => 
-        m.reference?.messageId === message.id || 
-        m.content.includes(`<@${userId}>`)
-      );
+      tournament.lobbyChannelId = lobbyChannel.id;
+      dataManager.lobbyChannels.set(tournamentId, lobbyChannel.id);
 
-      if (!hasReply) {
-        const responses = [
-          `Hi <@${userId}>! 👋 Tournament check karna? Aaj kheloge? 🎮`,
-          `Hey <@${userId}>! 🔥 Custom challenge karoge? Tournament bhi hai! 🏆`,
-          `<@${userId}> bro! 💫 Tournaments live hain! Join karo! ⚡`
-        ];
+      // Add all confirmed players to lobby
+      for (const [userId] of tournament.confirmedPlayers) {
+        try {
+          const member = await message.guild.members.fetch(userId);
+          await lobbyChannel.permissionOverwrites.create(member, {
+            ViewChannel: true,
+            SendMessages: true,
+            ReadMessageHistory: true
+          });
+        } catch (err) {}
+      }
+
+      // Lobby welcome message
+      const lobbyEmbed = new Discord.EmbedBuilder()
+        .setTitle(`🎮 ${tournament.title} - TOURNAMENT LOBBY`)
+        .setDescription('**Welcome to the tournament lobby!**\n\nAll confirmed players are here!')
+        .setColor('#00ff00')
+        .addFields(
+          { name: '📊 Total Players', value: `${tournament.confirmedPlayers.size}`, inline: true },
+          { name: '⏰ Start Time', value: tournament.time, inline: true },
+          { name: '💰 Prize Pool', value: tournament.prize, inline: true },
+          {
+            name: '🔐 Room Details',
+            value: `**Room ID:** \`${roomId}\`\n**Password:** \`${password}\`\n\n⚠️ **DO NOT share these details!**`,
+            inline: false
+          },
+          {
+            name: '📋 Important Rules',
+            value: '• Join room within 5 minutes\n• Take screenshots of results\n• Follow all tournament rules\n• Be respectful to all players\n• Report issues immediately',
+            inline: false
+          },
+          {
+            name: '🏆 Prize Distribution',
+            value: `🥇 1st: ₹${tournament.prizeDistribution.first}\n🥈 2nd: ₹${tournament.prizeDistribution.second}\n🥉 3rd: ₹${tournament.prizeDistribution.third}`,
+            inline: false
+          }
+        )
+        .setImage(tournament.image)
+        .setFooter({ text: 'Good luck to all participants! 🎮' })
+        .setTimestamp();
+
+      await lobbyChannel.send({
+        content: Array.from(tournament.confirmedPlayers.keys()).map(id => `<@${id}>`).join(' '),
+        embeds: [lobbyEmbed]
+      });
+
+      // Send DM to all players
+      let sentCount = 0;
+      for (const [userId] of tournament.confirmedPlayers) {
+        try {
+          const user = await client.users.fetch(userId);
+          
+          const dmEmbed = new Discord.EmbedBuilder()
+            .setTitle(`🎮 ${tournament.title} - STARTING NOW!`)
+            .setDescription('**Tournament is LIVE! Join immediately!**')
+            .setColor('#ff0000')
+            .addFields(
+              { name: '🔐 Room ID', value: `\`\`\`${roomId}\`\`\``, inline: false },
+              { name: '🔑 Password', value: `\`\`\`${password}\`\`\``, inline: false },
+              { name: '⚠️ IMPORTANT', value: '• Join within 5 minutes\n• Take screenshots\n• Check lobby channel\n• Good luck! 🏆', inline: false }
+            )
+            .setFooter({ text: '🚫 DO NOT SHARE ROOM DETAILS!' })
+            .setTimestamp();
+
+          await user.send({ embeds: [dmEmbed] });
+          sentCount++;
+        } catch (err) {
+          console.log(`Could not DM user ${userId}`);
+        }
+      }
+
+      // Update tournament status in schedule
+      try {
+        const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
         
-        await message.reply(responses[Math.floor(Math.random() * responses.length)]);
-      }
-    }
-  }, CONFIG.NO_REPLY_TIMEOUT);
+        const liveEmbed = new Discord.EmbedBuilder()
+          .setTitle(`🔴 LIVE: ${tournament.title}`)
+          .setDescription('**Tournament is currently in progress!**')
+          .setColor('#ff0000')
+          .addFields(
+            { name: '👥 Players', value: `${tournament.confirmedPlayers.size}`, inline: true },
+            { name: '💰 Prize', value: tournament.prize, inline: true },
+            { name: '📺 Watch', value: `[YouTube](${CONFIG.YOUTUBE_LINK})`, inline: true }
+          )
+          .setThumbnail(tournament.image)
+          .setFooter({ text: 'Tournament in progress...' })
+          .setTimestamp();
 
-  dataManager.noReplyTimers.set(userId, timer);
-  dataManager.lastMessages.set(userId, message);
-});
+        await scheduleChannel.send({ embeds: [liveEmbed] });
+      } catch (err) {}
 
-// ==================== BAD WORD FILTER ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-
-  const content = message.content.toLowerCase();
-  const hasBadWord = CONFIG.BAD_WORDS.some(word => content.includes(word));
-
-  if (hasBadWord) {
-    try {
-      await message.delete();
-      
-      const warnings = dataManager.addWarning(message.author.id, 'Bad language');
-      
-      if (warnings >= 3) {
-        await message.member.timeout(600000, 'Multiple warnings for bad language');
-        await message.channel.send(
-          `⚠️ <@${message.author.id}> has been timed out for 10 minutes due to repeated use of inappropriate language!`
-        );
-      } else {
-        await message.channel.send(
-          `⚠️ <@${message.author.id}> Warning ${warnings}/3: Please avoid using inappropriate language! Next warning will result in timeout.`
-        );
-      }
-    } catch (err) {
-      console.error('Moderation error:', err);
-    }
-  }
-});
-
-// ==================== SPAM DETECTION ====================
-const messageTimestamps = new Map();
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
-
-  const userId = message.author.id;
-  const now = Date.now();
-  
-  if (!messageTimestamps.has(userId)) {
-    messageTimestamps.set(userId, []);
-  }
-
-  const timestamps = messageTimestamps.get(userId);
-  timestamps.push(now);
-
-  // Keep only last 5 messages
-  const recentMessages = timestamps.filter(t => now - t < 5000);
-  messageTimestamps.set(userId, recentMessages);
-
-  // Check for spam (5 messages in 5 seconds)
-  if (recentMessages.length >= 5) {
-    try {
-      await message.member.timeout(300000, 'Spamming');
-      await message.channel.send(
-        `⚠️ <@${userId}> has been timed out for 5 minutes for spamming!`
+      // Announce in general
+      const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+      await generalChannel.send(
+        `🔴 **TOURNAMENT LIVE!** 🔴\n\n` +
+        `**${tournament.title}** just started!\n\n` +
+        `👥 ${tournament.confirmedPlayers.size} players competing\n` +
+        `💰 Prize pool: ${tournament.prize}\n` +
+        `📺 Watch live: ${CONFIG.YOUTUBE_LINK}`
       );
-      messageTimestamps.delete(userId);
-    } catch (err) {
-      console.error('Timeout error:', err);
+
+      await message.reply(
+        `✅ **Tournament Started!**\n\n` +
+        `📊 Room details sent to ${sentCount} players\n` +
+        `🎮 Lobby: ${lobbyChannel}\n` +
+        `🔴 Status: LIVE`
+      );
+
+    } catch (error) {
+      console.error('Start tournament error:', error);
+      await message.reply('❌ Failed to start tournament!');
     }
+  }
+
+  // Declare Winners
+  if (command === '!winners' || command === '!declare') {
+    const tournamentId = args[1];
+    const tournament = dataManager.tournaments.get(tournamentId);
+
+    if (!tournament) {
+      await message.reply('❌ Tournament not found!');
+      return;
+    }
+
+    const winners = message.mentions.users;
+    if (winners.size === 0) {
+      await message.reply('❌ Usage: `!winners <tournamentID> @first @second @third`');
+      return;
+    }
+
+    const winnerArray = Array.from(winners.values()).slice(0, 3);
+    tournament.status = 'completed';
+    tournament.winners = winnerArray;
+    tournament.endedAt = new Date();
+
+    const prizes = [
+      tournament.prizeDistribution.first,
+      tournament.prizeDistribution.second,
+      tournament.prizeDistribution.third
+    ];
+
+    // Winner announcement embed
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`🏆 ${tournament.title} - RESULTS`)
+      .setDescription('**🎉 Tournament Completed! Congratulations to all winners! 🎉**')
+      .setColor('#ffd700')
+      .setImage('https://i.ibb.co/jkBSmkM/qr.png');
+
+    winnerArray.forEach((winner, index) => {
+      const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+      const position = index + 1;
+      const prize = prizes[index];
+
+      embed.addFields({
+        name: `${medal} ${position}${position === 1 ? 'st' : position === 2 ? 'nd' : 'rd'} Place`,
+        value: `${winner}\n💰 Prize: ₹${prize}`,
+        inline: true
+      });
+
+      // Update user profile
+      const profile = dataManager.getProfile(winner.id);
+      if (profile) {
+        profile.tournaments++;
+        profile.totalEarnings += prize;
+        if (position === 1) profile.wins++;
+      }
+
+      // Update game leaderboard
+      const game = tournament.game.toLowerCase().replace(/\s+/g, '');
+      const leaderboard = game.includes('fire') ? dataManager.tournamentLeaderboard.freefire :
+                          game.includes('minecraft') ? dataManager.tournamentLeaderboard.minecraft :
+                          game.includes('pubg') ? dataManager.tournamentLeaderboard.pubg :
+                          dataManager.tournamentLeaderboard.freefire;
+
+      const stats = leaderboard.get(winner.id) || { wins: 0, tournaments: 0, totalEarnings: 0 };
+      stats.tournaments++;
+      if (position === 1) stats.wins++;
+      stats.totalEarnings += prize;
+      leaderboard.set(winner.id, stats);
+    });
+
+    embed.addFields({
+      name: '📊 Tournament Stats',
+      value: `👥 Total Players: ${tournament.confirmedPlayers.size}\n💰 Prize Pool: ${tournament.prize}\n🎮 Game: ${tournament.game}\n🗺️ Map: ${tournament.map}`,
+      inline: false
+    });
+
+    // Post to announcements
+    const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
+    await announceChannel.send({
+      content: '@everyone\n\n🎉 **TOURNAMENT RESULTS!** 🎉',
+      embeds: [embed]
+    });
+
+    // Post to lobby if exists
+    if (tournament.lobbyChannelId) {
+      try {
+        const lobbyChannel = await client.channels.fetch(tournament.lobbyChannelId);
+        await lobbyChannel.send({
+          content: '🏆 **RESULTS ANNOUNCED!**',
+          embeds: [embed]
+        });
+      } catch (err) {}
+    }
+
+    // DM winners
+    for (let i = 0; i < winnerArray.length; i++) {
+      const winner = winnerArray[i];
+      const position = i + 1;
+      const prize = prizes[i];
+
+      try {
+        const winnerEmbed = new Discord.EmbedBuilder()
+          .setTitle(`🎉 CONGRATULATIONS! 🎉`)
+          .setDescription(`You won **${position}${position === 1 ? 'st' : position === 2 ? 'nd' : 'rd'} Place** in ${tournament.title}!`)
+          .setColor('#ffd700')
+          .addFields(
+            { name: '🏆 Position', value: `${position}${position === 1 ? 'st' : position === 2 ? 'nd' : 'rd'}`, inline: true },
+            { name: '💰 Prize', value: `₹${prize}`, inline: true },
+            { name: '🎮 Tournament', value: tournament.title, inline: false },
+            {
+              name: '💳 Prize Collection',
+              value: 'Your prize will be transferred within 24 hours!\nCheck with staff if not received.',
+              inline: false
+            }
+          )
+          .setThumbnail(winner.displayAvatarURL())
+          .setImage('https://i.ibb.co/jkBSmkM/qr.png')
+          .setFooter({ text: 'Thank you for playing! 🎮' })
+          .setTimestamp();
+
+        await winner.send({ embeds: [winnerEmbed] });
+      } catch (err) {}
+    }
+
+    await message.reply('✅ Winners announced successfully!');
+  }
+
+  // End/Delete Tournament
+  if (command === '!endtournament' || command === '!deletetournament') {
+    const tournamentId = args[1];
+    
+    if (!tournamentId) {
+      await message.reply('❌ Usage: `!endtournament <tournamentID>`');
+      return;
+    }
+
+    const tournament = dataManager.tournaments.get(tournamentId);
+    if (!tournament) {
+      await message.reply('❌ Tournament not found!');
+      return;
+    }
+
+    // Delete lobby channel if exists
+    if (tournament.lobbyChannelId) {
+      try {
+        const lobbyChannel = await message.guild.channels.fetch(tournament.lobbyChannelId);
+        await lobbyChannel.delete();
+      } catch (err) {}
+    }
+
+    // Close all registration tickets
+    for (const [userId, player] of tournament.players) {
+      if (player.ticketChannelId) {
+        try {
+          const ticketChannel = await message.guild.channels.fetch(player.ticketChannelId);
+          await ticketChannel.delete();
+        } catch (err) {}
+      }
+    }
+
+    dataManager.tournaments.delete(tournamentId);
+    await message.reply(`✅ Tournament ${tournamentId} ended and deleted!`);
+  }
+
+  // List Tournaments
+  if (command === '!tournaments' || command === '!list') {
+    const active = Array.from(dataManager.tournaments.values());
+
+    if (active.length === 0) {
+      await message.reply('📊 No active tournaments!');
+      return;
+    }
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🎮 Active Tournaments')
+      .setDescription(`Total: ${active.length} tournament${active.length > 1 ? 's' : ''}`)
+      .setColor('#3498db')
+      .setTimestamp();
+
+    active.forEach(t => {
+      const statusEmoji = t.status === 'draft' ? '📝' :
+                         t.status === 'registration' ? '🟢' :
+                         t.status === 'live' ? '🔴' : '✅';
+
+      embed.addFields({
+        name: `${statusEmoji} ${t.title}`,
+        value: `**ID:** \`${t.id}\`\n**Game:** ${t.game} | **Mode:** ${t.mode}\n**Prize:** ${t.prize} | **Entry:** ${t.entry}\n**Slots:** ${t.slotsFilled}/${t.maxSlots} | **Status:** ${t.status.toUpperCase()}`,
+        inline: false
+      });
+    });
+
+    await message.reply({ embeds: [embed] });
   }
 });
 
-// ==================== ADVANCED TICKET SYSTEM ====================
+// ==================== LEADERBOARD COMMANDS ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  const args = message.content.split(' ');
+  const command = args[0].toLowerCase();
+
+  if (command === '!leaderboard' || command === '!lb') {
+    const game = args[1]?.toLowerCase() || 'freefire';
+    
+    const leaderboard = game.includes('fire') ? dataManager.tournamentLeaderboard.freefire :
+                        game.includes('minecraft') ? dataManager.tournamentLeaderboard.minecraft :
+                        game.includes('pubg') ? dataManager.tournamentLeaderboard.pubg :
+                        dataManager.tournamentLeaderboard.freefire;
+
+    const sorted = Array.from(leaderboard.entries())
+      .sort((a, b) => b[1].wins - a[1].wins || b[1].totalEarnings - a[1].totalEarnings)
+      .slice(0, 10);
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`🏆 ${game.toUpperCase()} Tournament Leaderboard`)
+      .setDescription('**Top 10 Players - Most Wins**')
+      .setColor('#ffd700')
+      .setTimestamp();
+
+    let description = '';
+    for (let i = 0; i < sorted.length; i++) {
+      const [userId, stats] = sorted[i];
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
+      
+      try {
+        const user = await client.users.fetch(userId);
+        description += `${medal} ${user.username}\n`;
+        description += `   🏆 Wins: ${stats.wins} | 🎮 Tournaments: ${stats.tournaments} | 💰 Earned: ₹${stats.totalEarnings}\n\n`;
+      } catch (err) {
+        description += `${medal} Unknown User\n`;
+        description += `   🏆 Wins: ${stats.wins} | 🎮 Tournaments: ${stats.tournaments} | 💰 Earned: ₹${stats.totalEarnings}\n\n`;
+      }
+    }
+
+    embed.setDescription(description || 'No data yet!');
+
+    // Post to leaderboard channel
+    const leaderboardChannel = await client.channels.fetch(CONFIG.LEADERBOARD_CHANNEL);
+    await leaderboardChannel.send({ embeds: [embed] });
+    await message.reply('✅ Leaderboard posted!');
+  }
+});
+
+// ==================== AUTO-UPDATE INVITE LEADERBOARD ====================
+async function updateInviteLeaderboard() {
+  try {
+    const inviteChannel = await client.channels.fetch(CONFIG.INVITE_TRACKER);
+    
+    const topInviters = Array.from(dataManager.userInvites.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🔗 Top Inviters - Leaderboard')
+      .setDescription('**Invite friends to climb the ranks!**')
+      .setColor('#f1c40f')
+      .setFooter({ text: `Total invites tracked: ${Array.from(dataManager.userInvites.values()).reduce((a, b) => a + b, 0)}` })
+      .setTimestamp();
+
+    let description = '';
+    for (let i = 0; i < topInviters.length; i++) {
+      const [userId, count] = topInviters[i];
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
+      
+      description += `${medal} <@${userId}> - **${count}** invite${count > 1 ? 's' : ''}\n`;
+    }
+
+    embed.setDescription(description || 'No invites yet! Be the first to invite friends!');
+
+    const messages = await inviteChannel.messages.fetch({ limit: 1 });
+    if (messages.size > 0 && messages.first().author.id === client.user.id && messages.first().embeds[0]?.title?.includes('Top Inviters')) {
+      await messages.first().edit({ embeds: [embed] });
+    } else {
+      await inviteChannel.send({ embeds: [embed] });
+    }
+  } catch (error) {
+    console.error('Invite leaderboard error:', error);
+  }
+}
+
+// Update invite leaderboard every 5 minutes
+setInterval(updateInviteLeaderboard, 300000);
+
+// ==================== MOST ACTIVE PLAYERS ====================
+async function updateActivityLeaderboard() {
+  try {
+    const mostPlayedChannel = await client.channels.fetch(CONFIG.MOST_PLAYED);
+    
+    const topActive = dataManager.getTopActive(10);
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('📊 Most Active Players')
+      .setDescription('**Top contributors to our community!**')
+      .setColor('#9b59b6')
+      .setFooter({ text: 'Activity measured by messages sent' })
+      .setTimestamp();
+
+    let description = '';
+    for (let i = 0; i < topActive.length; i++) {
+      const [userId, count] = topActive[i];
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
+      
+      description += `${medal} <@${userId}> - **${count}** message${count > 1 ? 's' : ''}\n`;
+    }
+
+    embed.setDescription(description || 'No activity tracked yet!');
+
+    await mostPlayedChannel.send({ embeds: [embed] });
+  } catch (error) {
+    console.error('Activity leaderboard error:', error);
+  }
+}
+
+// Update activity leaderboard every 10 minutes
+setInterval(updateActivityLeaderboard, 600000);
+
+// Continue to Part 3 for Support Tickets, Beat Player, Staff Commands...
+    // ==================== SUPPORT TICKET SYSTEM ====================
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton() && !interaction.isStringSelectMenu()) return;
 
-  // Create Ticket with Category Selection
-  if (interaction.customId === 'create_ticket') {
-    try {
-      const row = new Discord.ActionRowBuilder()
-        .addComponents(
-          new Discord.StringSelectMenuBuilder()
-            .setCustomId('ticket_category')
-            .setPlaceholder('Select ticket category')
-            .addOptions([
-              {
-                label: '💳 Payment Issue',
-                description: 'Payment not verified, transaction problems',
-                value: 'payment',
-                emoji: '💳'
-              },
-              {
-                label: '🎮 Tournament Issue',
-                description: 'Registration, room details, gameplay issues',
-                value: 'tournament',
-                emoji: '🎮'
-              },
-              {
-                label: '🔧 Technical Support',
-                description: 'Bot issues, commands not working',
-                value: 'technical',
-                emoji: '🔧'
-              },
-              {
-                label: '👤 Profile/Account',
-                description: 'Profile issues, account problems',
-                value: 'profile',
-                emoji: '👤'
-              },
-              {
-                label: '📢 Report User',
-                description: 'Report rule violations, cheating',
-                value: 'report',
-                emoji: '📢'
-              },
-              {
-                label: '❓ General Help',
-                description: 'Other questions and support',
-                value: 'general',
-                emoji: '❓'
-              }
-            ])
-        );
+  // Create Support Ticket
+  if (interaction.customId === 'create_support_ticket') {
+    const row = new Discord.ActionRowBuilder()
+      .addComponents(
+        new Discord.StringSelectMenuBuilder()
+          .setCustomId('support_category')
+          .setPlaceholder('Select issue category')
+          .addOptions([
+            {
+              label: '💳 Payment Issue',
+              description: 'Payment not verified, transaction problems',
+              value: 'payment',
+              emoji: '💳'
+            },
+            {
+              label: '🎮 Tournament Issue',
+              description: 'Registration, room details, gameplay',
+              value: 'tournament',
+              emoji: '🎮'
+            },
+            {
+              label: '🔧 Technical Support',
+              description: 'Bot issues, commands not working',
+              value: 'technical',
+              emoji: '🔧'
+            },
+            {
+              label: '👤 Profile/Account',
+              description: 'Profile changes, account problems',
+              value: 'profile',
+              emoji: '👤'
+            },
+            {
+              label: '🚨 Report User',
+              description: 'Rule violations, cheating',
+              value: 'report',
+              emoji: '🚨'
+            },
+            {
+              label: '❓ General Help',
+              description: 'Other questions and support',
+              value: 'general',
+              emoji: '❓'
+            }
+          ])
+      );
 
-      await interaction.reply({ 
-        content: '🎫 **Create Support Ticket**\n\nPlease select the category that best matches your issue:',
-        components: [row],
-        ephemeral: true 
-      });
-
-    } catch (error) {
-      console.error('Ticket creation error:', error);
-      await interaction.reply({ 
-        content: '❌ Failed to create ticket. Please try again!', 
-        ephemeral: true 
-      });
-    }
+    await interaction.reply({
+      content: '🎫 **Create Support Ticket**\n\nSelect the category that matches your issue:',
+      components: [row],
+      ephemeral: true
+    });
   }
 
-  // Ticket Category Selected
-  if (interaction.customId === 'ticket_category') {
+  // Support Category Selected
+  if (interaction.customId === 'support_category') {
     const category = interaction.values[0];
-    const categoryEmojis = {
-      payment: '💳',
-      tournament: '🎮',
-      technical: '🔧',
-      profile: '👤',
-      report: '📢',
-      general: '❓'
+    
+    const categoryInfo = {
+      payment: {
+        emoji: '💳',
+        name: 'Payment Issue',
+        description: 'Please provide:\n• Transaction screenshot\n• Amount paid\n• Payment method\n• Tournament name'
+      },
+      tournament: {
+        emoji: '🎮',
+        name: 'Tournament Issue',
+        description: 'Please provide:\n• Tournament name/ID\n• Issue description\n• Screenshots if applicable'
+      },
+      technical: {
+        emoji: '🔧',
+        name: 'Technical Support',
+        description: 'Please describe:\n• What\'s not working\n• Command you tried\n• Error messages'
+      },
+      profile: {
+        emoji: '👤',
+        name: 'Profile/Account',
+        description: 'Please provide:\n• What needs changing\n• Your OTO ID\n• Current vs desired info'
+      },
+      report: {
+        emoji: '🚨',
+        name: 'Report User',
+        description: 'Please provide:\n• Username to report\n• Rule violation\n• Evidence (screenshots)\n• When it happened'
+      },
+      general: {
+        emoji: '❓',
+        name: 'General Help',
+        description: 'Please describe your question or issue in detail.'
+      }
     };
 
-    const categoryNames = {
-      payment: 'Payment Issue',
-      tournament: 'Tournament Issue',
-      technical: 'Technical Support',
-      profile: 'Profile/Account',
-      report: 'Report User',
-      general: 'General Help'
-    };
+    const info = categoryInfo[category];
 
     try {
-      const ticketId = `ticket-${Date.now()}`;
-      const ticketCategory = interaction.guild.channels.cache.get(CONFIG.STAFF_TOOLS)?.parent;
+      const ticketId = `SUPPORT${Date.now().toString().slice(-8)}`;
+      const categoryChannel = interaction.guild.channels.cache.get(CONFIG.STAFF_TOOLS)?.parent;
       
-      // Create ticket channel
       const ticketChannel = await interaction.guild.channels.create({
-        name: `${categoryEmojis[category]}-${interaction.user.username}-${ticketId.slice(-6)}`,
+        name: `${info.emoji}-${interaction.user.username}-${ticketId.slice(-5)}`,
         type: Discord.ChannelType.GuildText,
-        parent: ticketCategory,
+        parent: categoryChannel,
         permissionOverwrites: [
           {
             id: interaction.guild.id,
@@ -2351,12 +1358,215 @@ client.on('interactionCreate', async (interaction) => {
             allow: [
               Discord.PermissionFlagsBits.ViewChannel,
               Discord.PermissionFlagsBits.SendMessages,
-              Discord.PermissionFlagsBits.ManageMessages,
-              Discord.PermissionFlagsBits.ManageChannels
+              Discord.PermissionFlagsBits.ManageMessages
+            ]
+          }
+        ]
+      });
+
+      // Store ticket
+      dataManager.tickets.set(ticketId, {
+        id: ticketId,
+        type: 'support',
+        category: category,
+        userId: interaction.user.id,
+        channelId: ticketChannel.id,
+        createdAt: new Date(),
+        status: 'open'
+      });
+
+      const embed = new Discord.EmbedBuilder()
+        .setTitle(`${info.emoji} ${info.name}`)
+        .setDescription(`Welcome <@${interaction.user.id}>!\n\n${info.description}\n\n**Our staff will respond shortly!**`)
+        .setColor('#3498db')
+        .addFields(
+          { name: '⏱️ Response Time', value: 'Usually 5-15 minutes', inline: true },
+          { name: '🆔 Ticket ID', value: `\`${ticketId}\``, inline: true },
+          { name: '📂 Category', value: info.name, inline: true }
+        )
+        .setFooter({ text: 'Please be patient and respectful' })
+        .setTimestamp();
+
+      const row = new Discord.ActionRowBuilder()
+        .addComponents(
+          new Discord.ButtonBuilder()
+            .setCustomId(`close_support_${ticketId}`)
+            .setLabel('Close Ticket')
+            .setEmoji('🔒')
+            .setStyle(Discord.ButtonStyle.Danger),
+          new Discord.ButtonBuilder()
+            .setCustomId(`solved_support_${ticketId}`)
+            .setLabel('Mark Solved')
+            .setEmoji('✅')
+            .setStyle(Discord.ButtonStyle.Success)
+        );
+
+      await ticketChannel.send({
+        content: `<@${interaction.user.id}> <@&${CONFIG.STAFF_ROLE}>`,
+        embeds: [embed],
+        components: [row]
+      });
+
+      // Auto-response timer
+      const timer = setTimeout(async () => {
+        try {
+          const messages = await ticketChannel.messages.fetch({ limit: 10 });
+          const staffReplied = messages.some(m => 
+            m.member?.roles.cache.has(CONFIG.STAFF_ROLE) && 
+            m.author.id !== client.user.id &&
+            m.createdTimestamp > Date.now() - CONFIG.SUPPORT_WAIT_TIME
+          );
+
+          if (!staffReplied) {
+            await ticketChannel.send(
+              `⏳ **Please wait!**\n\nOur staff team is currently busy.\n` +
+              `Your ticket is in queue and will be answered soon!\n\n` +
+              `Average wait time: 10-15 minutes\n` +
+              `Thank you for your patience! 🙏`
+            );
+          }
+        } catch (err) {}
+      }, CONFIG.SUPPORT_WAIT_TIME);
+
+      dataManager.staffTicketTimers.set(ticketId, timer);
+
+      // Notify staff
+      const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT);
+      await staffChannel.send(
+        `🎫 **New Support Ticket**\n` +
+        `Category: ${info.name}\n` +
+        `User: ${interaction.user.tag}\n` +
+        `Ticket: ${ticketChannel}\n` +
+        `ID: \`${ticketId}\``
+      );
+
+      await interaction.update({
+        content: `✅ Support ticket created!\n\nGo to ${ticketChannel} and describe your issue.`,
+        components: []
+      });
+
+    } catch (error) {
+      console.error('Support ticket error:', error);
+      await interaction.update({
+        content: '❌ Failed to create ticket. Please try again!',
+        components: []
+      });
+    }
+  }
+
+  // Close Support Ticket
+  if (interaction.customId.startsWith('close_support_')) {
+    const ticketId = interaction.customId.replace('close_support_', '');
+    const ticket = dataManager.tickets.get(ticketId);
+
+    if (!ticket) {
+      await interaction.reply({ content: '❌ Ticket not found!', ephemeral: true });
+      return;
+    }
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('🔒 Closing Ticket')
+      .setDescription('This ticket will be deleted in **10 seconds**.\n\nClick "Reopen" to cancel.')
+      .setColor('#ff0000')
+      .setTimestamp();
+
+    const row = new Discord.ActionRowBuilder()
+      .addComponents(
+        new Discord.ButtonBuilder()
+          .setCustomId(`reopen_support_${ticketId}`)
+          .setLabel('Reopen Ticket')
+          .setEmoji('🔓')
+          .setStyle(Discord.ButtonStyle.Success)
+      );
+
+    await interaction.reply({ embeds: [embed], components: [row] });
+
+    setTimeout(async () => {
+      try {
+        dataManager.tickets.delete(ticketId);
+        await interaction.channel.delete();
+      } catch (err) {}
+    }, 10000);
+  }
+
+  // Reopen Ticket
+  if (interaction.customId.startsWith('reopen_support_')) {
+    await interaction.update({
+      content: '✅ Ticket reopened! Staff will continue to assist you.',
+      embeds: [],
+      components: []
+    });
+  }
+
+  // Mark Solved
+  if (interaction.customId.startsWith('solved_support_')) {
+    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+      return;
+    }
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('✅ Issue Resolved')
+      .setDescription('This issue has been marked as solved!\n\nIf you need further help, please let us know.')
+      .setColor('#00ff00')
+      .setFooter({ text: `Marked by ${interaction.user.username}` })
+      .setTimestamp();
+
+    await interaction.reply({ embeds: [embed] });
+  }
+});
+
+// Staff message detection - clear auto-response timer
+client.on('messageCreate', async (message) => {
+  if (message.author.bot) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  // Check if in support ticket
+  const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === message.channel.id);
+  if (ticket && dataManager.staffTicketTimers.has(ticket.id)) {
+    clearTimeout(dataManager.staffTicketTimers.get(ticket.id));
+    dataManager.staffTicketTimers.delete(ticket.id);
+  }
+});
+
+// ==================== BEAT OUR PLAYER CHALLENGE ====================
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isButton()) return;
+
+  if (interaction.customId === 'create_beat_player_ticket') {
+    const invites = dataManager.getInvites(interaction.user.id);
+    
+    if (invites < CONFIG.MIN_INVITES) {
+      await interaction.reply({
+        content: `❌ **Beat Our Player Requirements:**\n\nYou need **${CONFIG.MIN_INVITES} invites** to participate!\n\n**Your invites:** ${invites}/${CONFIG.MIN_INVITES}\n**Needed:** ${CONFIG.MIN_INVITES - invites} more\n\nInvite friends to unlock this challenge!`,
+        ephemeral: true
+      });
+      return;
+    }
+
+    try {
+      const challengeId = `BEAT${Date.now().toString().slice(-8)}`;
+      const category = interaction.guild.channels.cache.get(CONFIG.STAFF_TOOLS)?.parent;
+      
+      const challengeChannel = await interaction.guild.channels.create({
+        name: `⚔️-${interaction.user.username}-challenge`,
+        type: Discord.ChannelType.GuildText,
+        parent: category,
+        permissionOverwrites: [
+          {
+            id: interaction.guild.id,
+            deny: [Discord.PermissionFlagsBits.ViewChannel]
+          },
+          {
+            id: interaction.user.id,
+            allow: [
+              Discord.PermissionFlagsBits.ViewChannel,
+              Discord.PermissionFlagsBits.SendMessages,
+              Discord.PermissionFlagsBits.ReadMessageHistory
             ]
           },
           {
-            id: CONFIG.ADMIN_ROLE,
+            id: CONFIG.STAFF_ROLE,
             allow: [
               Discord.PermissionFlagsBits.ViewChannel,
               Discord.PermissionFlagsBits.SendMessages,
@@ -2367,978 +1577,342 @@ client.on('interactionCreate', async (interaction) => {
         ]
       });
 
-      // Store ticket
-      dataManager.tickets.set(ticketId, {
-        id: ticketId,
+      // Store challenge
+      dataManager.beatPlayerChallenges.set(challengeId, {
+        id: challengeId,
         userId: interaction.user.id,
-        channelId: ticketChannel.id,
-        category: category,
+        channelId: challengeChannel.id,
         createdAt: new Date(),
-        status: 'open',
-        closeTimer: null,
-        messages: []
+        attempts: 0,
+        maxAttempts: 2,
+        status: 'pending'
       });
 
-      // Category-specific information
-      const categoryInfo = {
-        payment: '💳 **Payment Issue Ticket**\n\nPlease provide:\n• Transaction ID/Screenshot\n• Amount paid\n• Payment method used\n• Date and time of payment',
-        tournament: '🎮 **Tournament Issue Ticket**\n\nPlease provide:\n• Tournament ID or name\n• Description of your issue\n• Screenshots if applicable',
-        technical: '🔧 **Technical Support Ticket**\n\nPlease describe:\n• What command/feature isn\'t working\n• Any error messages\n• What you were trying to do',
-        profile: '👤 **Profile/Account Ticket**\n\nPlease describe:\n• Your account issue\n• What needs to be fixed\n• Your OTO ID (if applicable)',
-        report: '📢 **User Report Ticket**\n\nPlease provide:\n• Username of reported user\n• Rule violation details\n• Evidence (screenshots/videos)\n• When it happened',
-        general: '❓ **General Help Ticket**\n\nPlease describe your question or issue in detail.'
-      };
-
-      // Ticket embed
       const embed = new Discord.EmbedBuilder()
-        .setTitle(`${categoryEmojis[category]} ${categoryNames[category]}`)
-        .setDescription(`Welcome <@${interaction.user.id}>!\n\n${categoryInfo[category]}\n\n**Our staff will respond shortly!**`)
-        .setColor('#3498db')
+        .setTitle('⚔️ BEAT OUR PLAYER CHALLENGE')
+        .setDescription(`<@${interaction.user.id}> Welcome to the ultimate challenge!`)
+        .setColor('#ff0000')
         .addFields(
-          { name: '⏱️ Average Response Time', value: '5-10 minutes', inline: true },
-          { name: '📋 Ticket ID', value: `\`${ticketId}\``, inline: true },
-          { name: '📂 Category', value: categoryNames[category], inline: true },
-          { name: '⚠️ Important', value: '• Be clear and detailed\n• Provide screenshots\n• Be patient and respectful\n• Wait for staff response', inline: false }
+          { name: '🎯 Challenge', value: 'Beat our best player in 1v1', inline: true },
+          { name: '🎁 Reward', value: 'FREE Squad Entry', inline: true },
+          { name: '🔢 Attempts', value: '2 chances', inline: true },
+          {
+            name: '📋 Rules',
+            value: '• Best of 2 matches\n• Need to win 2-0 or 2-1\n• Fair play required\n• Screenshots mandatory',
+            inline: false
+          },
+          {
+            name: '🏆 Prize',
+            value: 'If you WIN:\n✅ FREE entry to next Squad tournament\n✅ Special winner role\n✅ Bragging rights!',
+            inline: false
+          },
+          {
+            name: '⏳ Next Steps',
+            value: 'Staff will:\n1. Assign our best player\n2. Create private room\n3. Send details here\n4. Watch the match live!',
+            inline: false
+          }
         )
-        .setFooter({ text: 'Use buttons below to manage this ticket' })
+        .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
+        .setFooter({ text: 'Good luck! You\'ll need it! 🔥' })
         .setTimestamp();
 
-      const row1 = new Discord.ActionRowBuilder()
-        .addComponents(
-          new Discord.ButtonBuilder()
-            .setCustomId('close_ticket')
-            .setLabel('Close Ticket')
-            .setEmoji('🔒')
-            .setStyle(Discord.ButtonStyle.Danger),
-          new Discord.ButtonBuilder()
-            .setCustomId('ticket_solved')
-            .setLabel('Mark as Solved')
-            .setEmoji('✅')
-            .setStyle(Discord.ButtonStyle.Success),
-          new Discord.ButtonBuilder()
-            .setCustomId('delete_ticket')
-            .setLabel('Delete Ticket')
-            .setEmoji('🗑️')
-            .setStyle(Discord.ButtonStyle.Danger)
-        );
-
-      const row2 = new Discord.ActionRowBuilder()
-        .addComponents(
-          new Discord.ButtonBuilder()
-            .setCustomId('claim_ticket')
-            .setLabel('Claim Ticket')
-            .setEmoji('👋')
-            .setStyle(Discord.ButtonStyle.Primary),
-          new Discord.ButtonBuilder()
-            .setCustomId('add_user_ticket')
-            .setLabel('Add User')
-            .setEmoji('➕')
-            .setStyle(Discord.ButtonStyle.Secondary),
-          new Discord.ButtonBuilder()
-            .setCustomId('ticket_transcript')
-            .setLabel('Save Transcript')
-            .setEmoji('💾')
-            .setStyle(Discord.ButtonStyle.Secondary)
-        );
-
-      await ticketChannel.send({ 
+      await challengeChannel.send({
         content: `<@${interaction.user.id}> <@&${CONFIG.STAFF_ROLE}>`,
-        embeds: [embed], 
-        components: [row1, row2] 
+        embeds: [embed]
       });
 
-      // Notify in staff chat
-      const staffChat = await interaction.client.channels.fetch(CONFIG.STAFF_CHAT);
-      const staffEmbed = new Discord.EmbedBuilder()
-        .setTitle('🎫 New Ticket Created')
-        .setDescription(`**Category:** ${categoryNames[category]}\n**User:** <@${interaction.user.id}>\n**Channel:** ${ticketChannel}`)
-        .setColor('#ffaa00')
-        .setTimestamp();
-      
-      await staffChat.send({ embeds: [staffEmbed] });
+      // Notify staff
+      const staffChannel = await client.channels.fetch(CONFIG.STAFF_CHAT);
+      await staffChannel.send(
+        `⚔️ **New Beat Our Player Challenge**\n` +
+        `Player: ${interaction.user.tag}\n` +
+        `Challenge: ${challengeChannel}\n` +
+        `ID: \`${challengeId}\`\n\n` +
+        `Assign our best player and create the match!`
+      );
 
-      await interaction.update({ 
-        content: `✅ Ticket created successfully!\n\nGo to ${ticketChannel} and describe your issue.`, 
-        components: []
+      await interaction.reply({
+        content: `✅ Challenge accepted!\n\n${challengeChannel} - Wait for staff to setup the match!`,
+        ephemeral: true
       });
 
     } catch (error) {
-      console.error('Ticket channel creation error:', error);
-      await interaction.update({ 
-        content: '❌ Failed to create ticket channel. Please contact an administrator!', 
-        components: []
-      });
-    }
-  }
-
-  // Close Ticket Button
-  if (interaction.customId === 'close_ticket') {
-    const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === interaction.channel.id);
-    
-    if (!ticket) {
-      await interaction.reply({ content: '❌ Ticket not found!', ephemeral: true });
-      return;
-    }
-
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE) && ticket.userId !== interaction.user.id) {
-      await interaction.reply({ content: '❌ Only staff or ticket owner can close!', ephemeral: true });
-      return;
-    }
-
-    ticket.status = 'closing';
-    
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('🔒 Ticket Closing')
-      .setDescription('This ticket will be deleted in **10 seconds**.\n\nClick "Reopen" to cancel.')
-      .setColor('#ff0000')
-      .setTimestamp();
-
-    const row = new Discord.ActionRowBuilder()
-      .addComponents(
-        new Discord.ButtonBuilder()
-          .setCustomId('reopen_ticket')
-          .setLabel('Reopen Ticket')
-          .setEmoji('🔓')
-          .setStyle(Discord.ButtonStyle.Success)
-      );
-
-    await interaction.reply({ embeds: [embed], components: [row] });
-    
-    ticket.closeTimer = setTimeout(async () => {
-      try {
-        dataManager.tickets.delete(ticket.id);
-        await interaction.channel.delete();
-      } catch (err) {
-        console.error('Channel delete error:', err);
-      }
-    }, 10000);
-  }
-
-  // Reopen Ticket
-  if (interaction.customId === 'reopen_ticket') {
-    const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === interaction.channel.id);
-    
-    if (ticket && ticket.closeTimer) {
-      clearTimeout(ticket.closeTimer);
-      ticket.status = 'open';
-      ticket.closeTimer = null;
-
-      await interaction.update({ 
-        content: '✅ Ticket reopened!',
-        embeds: [],
-        components: []
-      });
-    }
-  }
-
-  // Delete Ticket Immediately
-  if (interaction.customId === 'delete_ticket') {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === interaction.channel.id);
-    
-    await interaction.reply('🗑️ Deleting ticket immediately...');
-    
-    setTimeout(async () => {
-      try {
-        if (ticket) dataManager.tickets.delete(ticket.id);
-        await interaction.channel.delete();
-      } catch (err) {
-        console.error('Delete error:', err);
-      }
-    }, 2000);
-  }
-
-  // Mark as Solved
-  if (interaction.customId === 'ticket_solved') {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('✅ Ticket Solved')
-      .setDescription('This ticket has been marked as solved!\n\nIf your issue is resolved, you can close the ticket.\nIf you need further help, please let us know.')
-      .setColor('#00ff00')
-      .setTimestamp();
-
-    await interaction.reply({ embeds: [embed] });
-  }
-
-  // Claim Ticket
-  if (interaction.customId === 'claim_ticket') {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === interaction.channel.id);
-    
-    if (ticket) {
-      ticket.claimedBy = interaction.user.id;
-      
+      console.error('Beat player error:', error);
       await interaction.reply({
-        content: `✅ Ticket claimed by <@${interaction.user.id}>! They will handle this issue.`,
-        allowedMentions: { parse: [] }
+        content: '❌ Failed to create challenge. Please try again!',
+        ephemeral: true
       });
     }
-  }
-
-  // Add User to Ticket
-  if (interaction.customId === 'add_user_ticket') {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    await interaction.reply({ 
-      content: '👤 **Add User to Ticket**\n\nMention the user in chat to add them to this ticket.',
-      ephemeral: true 
-    });
-  }
-
-  // Save Transcript
-  if (interaction.customId === 'ticket_transcript') {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    try {
-      const messages = await interaction.channel.messages.fetch({ limit: 100 });
-      const transcript = messages.reverse().map(m => 
-        `[${m.createdAt.toISOString()}] ${m.author.tag}: ${m.content}`
-      ).join('\n');
-
-      const ticket = Array.from(dataManager.tickets.values()).find(t => t.channelId === interaction.channel.id);
-      
-      // Send to staff chat
-      const staffChat = await interaction.client.channels.fetch(CONFIG.STAFF_CHAT);
-      await staffChat.send({
-        content: `📝 **Ticket Transcript** - ID: ${ticket?.id || 'Unknown'}`,
-        files: [{
-          attachment: Buffer.from(transcript),
-          name: `ticket-${ticket?.id || Date.now()}.txt`
-        }]
-      });
-
-      await interaction.reply({ content: '✅ Transcript saved to staff chat!', ephemeral: true });
-    } catch (err) {
-      console.error('Transcript error:', err);
-      await interaction.reply({ content: '❌ Failed to save transcript!', ephemeral: true });
-    }
-  }
-
-  // Tournament Join Button
-  if (interaction.customId.startsWith('join_tournament_')) {
-    const tournamentId = interaction.customId.replace('join_tournament_', '');
-    const tournament = dataManager.tournaments.get(tournamentId);
-    
-    if (!tournament) {
-      await interaction.reply({ 
-        content: '❌ Tournament not found!', 
-        ephemeral: true 
-      });
-      return;
-    }
-
-    // Check if user has profile
-    if (!dataManager.hasProfile(interaction.user.id)) {
-      await interaction.reply({ 
-        content: '❌ Please complete your profile first! Check your DMs.', 
-        ephemeral: true 
-      });
-      return;
-    }
-
-    // Check invites for free tournaments
-    if (tournament.entry === 'Free') {
-      const invites = dataManager.getInvites(interaction.user.id);
-      if (invites < CONFIG.MIN_INVITES) {
-        await interaction.reply({ 
-          content: `❌ You need ${CONFIG.MIN_INVITES} invites for FREE entry! You have ${invites}.`, 
-          ephemeral: true 
-        });
-        return;
-      }
-    }
-
-    // Check if already registered
-    if (tournament.players.has(interaction.user.id)) {
-      await interaction.reply({ 
-        content: '❌ You are already registered!', 
-        ephemeral: true 
-      });
-      return;
-    }
-
-    // Check slots
-    if (tournament.players.size >= tournament.maxSlots) {
-      await interaction.reply({ 
-        content: '❌ Tournament is full!', 
-        ephemeral: true 
-      });
-      return;
-    }
-
-    // Create registration ticket
-    const category = interaction.guild.channels.cache.get(CONFIG.STAFF_TOOLS)?.parent;
-    const regChannel = await interaction.guild.channels.create({
-      name: `reg-${interaction.user.username}-${tournamentId.slice(-6)}`,
-      type: Discord.ChannelType.GuildText,
-      parent: category,
-      permissionOverwrites: [
-        {
-          id: interaction.guild.id,
-          deny: [Discord.PermissionFlagsBits.ViewChannel]
-        },
-        {
-          id: interaction.user.id,
-          allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages]
-        },
-        {
-          id: CONFIG.STAFF_ROLE,
-          allow: [Discord.PermissionFlagsBits.ViewChannel, Discord.PermissionFlagsBits.SendMessages]
-        }
-      ]
-    });
-
-    // Registration embed
-    const regEmbed = new Discord.EmbedBuilder()
-      .setTitle(`🎮 Tournament Registration - ${tournament.title}`)
-      .setDescription(`Welcome <@${interaction.user.id}>!`)
-      .setColor('#00ff00')
-      .addFields(
-        { name: '🏆 Prize Pool', value: tournament.prize, inline: true },
-        { name: '💰 Entry Fee', value: tournament.entry, inline: true },
-        { name: '📊 Slots', value: `${tournament.players.size + 1}/${tournament.maxSlots}`, inline: true }
-      );
-
-    if (tournament.entry === 'Free') {
-      regEmbed.addFields({ 
-        name: '✅ Registration Confirmed', 
-        value: 'You are registered! Wait for room details.', 
-        inline: false 
-      });
-      
-      tournament.players.set(interaction.user.id, {
-        userId: interaction.user.id,
-        username: interaction.user.username,
-        status: 'confirmed',
-        registeredAt: new Date()
-      });
-      
-      await regChannel.send({ embeds: [regEmbed] });
-      
-    } else {
-      regEmbed.addFields({ 
-        name: '💳 Payment Required', 
-        value: `Please send payment screenshot.\n**Amount:** ${tournament.entry}\n**UPI:** yourupi@okaxis\n\nStaff will verify and confirm your slot!`, 
-        inline: false 
-      });
-
-      const approveRow = new Discord.ActionRowBuilder()
-        .addComponents(
-          new Discord.ButtonBuilder()
-            .setCustomId(`approve_payment_${interaction.user.id}_${tournamentId}`)
-            .setLabel('Approve Payment')
-            .setEmoji('✅')
-            .setStyle(Discord.ButtonStyle.Success),
-          new Discord.ButtonBuilder()
-            .setCustomId(`reject_payment_${interaction.user.id}_${tournamentId}`)
-            .setLabel('Reject Payment')
-            .setEmoji('❌')
-            .setStyle(Discord.ButtonStyle.Danger)
-        );
-
-      await regChannel.send({ 
-        content: `<@${interaction.user.id}> <@&${CONFIG.STAFF_ROLE}>`,
-        embeds: [regEmbed], 
-        components: [approveRow] 
-      });
-    }
-
-    await interaction.reply({ 
-      content: `✅ Registration started! Go to ${regChannel}`, 
-      ephemeral: true 
-    });
-  }
-
-  // Approve Payment
-  if (interaction.customId.startsWith('approve_payment_')) {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    const parts = interaction.customId.split('_');
-    const userId = parts[2];
-    const tournamentId = parts[3];
-    const tournament = dataManager.tournaments.get(tournamentId);
-
-    if (tournament) {
-      tournament.players.set(userId, {
-        userId,
-        status: 'confirmed',
-        approvedBy: interaction.user.id,
-        approvedAt: new Date()
-      });
-
-      await interaction.reply(`✅ Payment approved! <@${userId}> is now registered!`);
-      
-      // Update slot count
-      await interaction.message.edit({
-        embeds: [interaction.message.embeds[0].setColor('#00ff00')],
-        components: []
-      });
-    }
-  }
-
-  // Reject Payment
-  if (interaction.customId.startsWith('reject_payment_')) {
-    if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
-      return;
-    }
-
-    const parts = interaction.customId.split('_');
-    const userId = parts[2];
-
-    await interaction.reply(`❌ Payment rejected for <@${userId}>. Please resubmit correct proof.`);
-    await interaction.message.edit({
-      embeds: [interaction.message.embeds[0].setColor('#ff0000')],
-      components: []
-    });
   }
 });
 
-// ==================== STAFF COMMANDS ====================
+// ==================== STAFF MANAGEMENT COMMANDS ====================
 client.on('messageCreate', async (message) => {
   if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+  if (!message.member.roles.cache.has(CONFIG.ADMIN_ROLE)) return;
 
   const args = message.content.split(' ');
   const command = args[0].toLowerCase();
 
-  // Create Tournament Command
-  if (command === '!createtournament' || command === '!ct') {
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('🎮 Create Tournament')
-      .setDescription('Select tournament template:')
-      .setColor('#3498db');
+  // Add Staff
+  if (command === '!addstaff') {
+    const user = message.mentions.users.first();
+    
+    if (!user) {
+      await message.reply('❌ Usage: `!addstaff @user`');
+      return;
+    }
 
-    const row = new Discord.ActionRowBuilder()
-      .addComponents(
-        new Discord.StringSelectMenuBuilder()
-          .setCustomId('tournament_template')
-          .setPlaceholder('Select Template')
-          .addOptions([
-            {
-              label: 'Free Fire Solo - ₹500 (Free Entry)',
-              description: '50 slots, 7:00 PM IST',
-              value: 'ff_solo_free'
-            },
-            {
-              label: 'Free Fire Solo - ₹1000 (₹20 Entry)',
-              description: '50 slots, 8:00 PM IST',
-              value: 'ff_solo_20'
-            },
-            {
-              label: 'Minecraft Build Contest - ₹1000',
-              description: '30 slots, Free Entry',
-              value: 'mc_build_free'
-            },
-            {
-              label: 'Custom Tournament',
-              description: 'Create with custom settings',
-              value: 'custom'
-            }
-          ])
-      );
+    try {
+      const member = await message.guild.members.fetch(user.id);
+      await member.roles.add(CONFIG.STAFF_ROLE);
+      
+      const welcomeMessages = [
+        'Welcome to the team! 💪 Tumhe hardwork karna hai!',
+        'New staff! 🌟 Show your dedication!',
+        'Welcome aboard! 🚀 Let\'s make OTO better!',
+        'Great addition! ⚡ Ready to help?',
+        'Welcome! 🎯 Time to shine!',
+        'New team member! 🔥 Give your best!',
+        'Join the family! 💎 Work hard!',
+        'Welcome warrior! ⚔️ Dedication needed!',
+        'Staff team! 🏆 Prove yourself!',
+        'Welcome hero! 🦸 Make us proud!'
+      ];
 
-    await message.reply({ embeds: [embed], components: [row] });
+      const welcomeMsg = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+
+      const embed = new Discord.EmbedBuilder()
+        .setTitle('👨‍💼 New Staff Member!')
+        .setDescription(`${user} joined the staff team!`)
+        .setColor('#00ff00')
+        .addFields(
+          { name: '💬 Message', value: welcomeMsg, inline: false },
+          { name: '📋 Responsibilities', value: '• Help users\n• Verify payments\n• Manage tournaments\n• Maintain rules\n• Be active!', inline: false }
+        )
+        .setThumbnail(user.displayAvatarURL())
+        .setTimestamp();
+
+      await message.channel.send({ embeds: [embed] });
+
+      // DM welcome message
+      try {
+        await user.send(
+          `🎉 **Congratulations!**\n\n` +
+          `You've been added to the OTO Staff Team!\n\n` +
+          `${welcomeMsg}\n\n` +
+          `**Your Duties:**\n` +
+          `• Help users in tickets\n` +
+          `• Verify tournament payments\n` +
+          `• Manage matches & tournaments\n` +
+          `• Keep server safe & fun\n\n` +
+          `Good luck! 💪`
+        );
+      } catch (err) {}
+
+    } catch (error) {
+      await message.reply(`❌ Failed: ${error.message}`);
+    }
   }
 
-  // Ban command
+  // Remove Staff
+  if (command === '!removestaff') {
+    const user = message.mentions.users.first();
+    
+    if (!user) {
+      await message.reply('❌ Usage: `!removestaff @user`');
+      return;
+    }
+
+    try {
+      const member = await message.guild.members.fetch(user.id);
+      await member.roles.remove(CONFIG.STAFF_ROLE);
+      await message.reply(`✅ Removed staff role from ${user.tag}`);
+    } catch (error) {
+      await message.reply(`❌ Failed: ${error.message}`);
+    }
+  }
+
+  // Ban Command
   if (command === '!ban') {
     const user = message.mentions.users.first();
     const reason = args.slice(2).join(' ') || 'No reason provided';
     
     if (!user) {
-      await message.reply('❌ Please mention a user to ban!');
+      await message.reply('❌ Usage: `!ban @user <reason>`');
       return;
     }
 
     try {
       const member = await message.guild.members.fetch(user.id);
       await member.ban({ reason });
-      await message.reply(`✅ Banned ${user.tag} for: ${reason}`);
-    } catch (err) {
-      await message.reply(`❌ Failed to ban user: ${err.message}`);
+      
+      const embed = new Discord.EmbedBuilder()
+        .setTitle('🔨 User Banned')
+        .setDescription(`**User:** ${user.tag}\n**Reason:** ${reason}\n**By:** ${message.author.tag}`)
+        .setColor('#ff0000')
+        .setTimestamp();
+      
+      await message.reply({ embeds: [embed] });
+    } catch (error) {
+      await message.reply(`❌ Failed: ${error.message}`);
     }
   }
 
-  // Timeout command
+  // Timeout Command
   if (command === '!timeout') {
     const user = message.mentions.users.first();
-    const duration = parseInt(args[2]) * 60000 || 600000;
+    const duration = parseInt(args[2]) || 10;
     const reason = args.slice(3).join(' ') || 'No reason provided';
     
     if (!user) {
-      await message.reply('❌ Please mention a user!');
+      await message.reply('❌ Usage: `!timeout @user <minutes> <reason>`');
       return;
     }
 
     try {
       const member = await message.guild.members.fetch(user.id);
-      await member.timeout(duration, reason);
-      await message.reply(`✅ Timed out ${user.tag} for ${args[2] || 10} minutes`);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
+      await member.timeout(duration * 60000, reason);
+      await message.reply(`✅ ${user.tag} timed out for ${duration} minutes`);
+    } catch (error) {
+      await message.reply(`❌ Failed: ${error.message}`);
     }
   }
 
-  // Remove timeout
+  // Untimeout Command
   if (command === '!untimeout') {
     const user = message.mentions.users.first();
     
     if (!user) {
-      await message.reply('❌ Please mention a user!');
+      await message.reply('❌ Usage: `!untimeout @user`');
       return;
     }
 
     try {
       const member = await message.guild.members.fetch(user.id);
       await member.timeout(null);
-      await message.reply(`✅ Removed timeout from ${user.tag}`);
-    } catch (err) {
-      await message.reply(`❌ Failed: ${err.message}`);
+      await message.reply(`✅ Timeout removed from ${user.tag}`);
+    } catch (error) {
+      await message.reply(`❌ Failed: ${error.message}`);
     }
   }
 
-// ==================== TOURNAMENT CREATION WITH SELECT MENU ====================
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isStringSelectMenu()) return;
-
-  if (interaction.customId === 'tournament_template') {
-    const template = interaction.values[0];
+  // Announcement Command
+  if (command === '!announce') {
+    const announcement = args.slice(1).join(' ');
     
-    let tournamentData = {};
-    
-    switch(template) {
-      case 'ff_solo_free':
-        tournamentData = {
-          title: 'Free Fire Solo Tournament',
-          game: 'Free Fire',
-          type: 'Solo',
-          prize: '₹500',
-          entry: 'Free',
-          maxSlots: 50,
-          time: '7:00 PM IST',
-          image: 'https://i.ibb.co/8XQkZhJ/freefire.png'
-        };
-        break;
-      case 'ff_solo_20':
-        tournamentData = {
-          title: 'Free Fire Solo Tournament',
-          game: 'Free Fire',
-          type: 'Solo',
-          prize: '₹1000',
-          entry: '₹20',
-          maxSlots: 50,
-          time: '8:00 PM IST',
-          image: 'https://i.ibb.co/8XQkZhJ/freefire.png'
-        };
-        break;
-      case 'mc_build_free':
-        tournamentData = {
-          title: 'Minecraft Building Contest',
-          game: 'Minecraft',
-          type: 'Solo',
-          prize: '₹1000',
-          entry: 'Free',
-          maxSlots: 30,
-          time: '8:00 PM IST',
-          image: 'https://i.ibb.co/VgTY8Lq/minecraft.png'
-        };
-        break;
-      case 'custom':
-        await interaction.reply({ 
-          content: '🎮 **Custom Tournament Creation**\n\nUse: `!ct <title> <game> <prize> <entry> <slots> <time>`\nExample: `!ct "PUBG Squad" PUBG ₹2000 ₹50 100 9PM`', 
-          ephemeral: true 
-        });
-        return;
-    }
-
-    // Create tournament
-    const tournamentId = `T-${Date.now()}`;
-    const tournament = {
-      id: tournamentId,
-      ...tournamentData,
-      createdBy: interaction.user.id,
-      createdAt: new Date(),
-      status: 'registration',
-      players: new Map(),
-      roomDetails: null
-    };
-
-    dataManager.tournaments.set(tournamentId, tournament);
-
-    // Post in Tournament Schedule
-    const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`🏆 ${tournament.title}`)
-      .setDescription(`**${tournament.game}** Tournament - ${tournament.type} Mode`)
-      .setColor('#00ff00')
-      .addFields(
-        { name: '💰 Prize Pool', value: tournament.prize, inline: true },
-        { name: '🎫 Entry Fee', value: tournament.entry, inline: true },
-        { name: '📊 Slots', value: `0/${tournament.maxSlots}`, inline: true },
-        { name: '⏰ Time', value: tournament.time, inline: true },
-        { name: '📋 Tournament ID', value: tournamentId, inline: true },
-        { name: '✅ Status', value: '🟢 Registration Open', inline: true }
-      )
-      .setImage(tournament.image)
-      .setFooter({ text: 'Click JOIN to register!' })
-      .setTimestamp();
-
-    const row = new Discord.ActionRowBuilder()
-      .addComponents(
-        new Discord.ButtonBuilder()
-          .setCustomId(`join_tournament_${tournamentId}`)
-          .setLabel('JOIN TOURNAMENT')
-          .setEmoji('🎮')
-          .setStyle(Discord.ButtonStyle.Success)
-      );
-
-    const scheduleMsg = await scheduleChannel.send({ embeds: [embed], components: [row] });
-
-    // Post in General Chat (spam every 2 minutes)
-    const spamTournament = async () => {
-      try {
-        const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
-        await generalChannel.send({ 
-          content: `🚨 **NEW TOURNAMENT ALERT!** 🚨\n\n${tournament.title} is now OPEN!\n\nCheck <#${CONFIG.TOURNAMENT_SCHEDULE}> to JOIN! 🎮`,
-          embeds: [embed.setColor('#ff0000')],
-          components: [row]
-        });
-      } catch (err) {
-        console.error('Spam error:', err);
-      }
-    };
-
-    // Spam 3 times (0, 2min, 4min)
-    spamTournament();
-    setTimeout(spamTournament, CONFIG.SPAM_INTERVAL);
-    setTimeout(spamTournament, CONFIG.SPAM_INTERVAL * 2);
-
-    // Also post to Minecraft channel if Minecraft tournament
-    if (tournament.game === 'Minecraft') {
-      try {
-        const mcChannel = await client.channels.fetch(CONFIG.MINECRAFT_CHANNEL);
-        await mcChannel.send({ embeds: [embed], components: [row] });
-      } catch (err) {}
-    }
-
-    await interaction.reply({ 
-      content: `✅ Tournament created successfully!\n\n**ID:** ${tournamentId}\n**Posted to:** #tournament-schedule, #general-chat${tournament.game === 'Minecraft' ? ', #minecraft' : ''}`, 
-      ephemeral: true 
-    });
-  }
-});
-
-// ==================== TOURNAMENT MANAGEMENT COMMANDS ====================
-client.on('messageCreate', async (message) => {
-  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
-  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
-
-  const args = message.content.split(' ');
-  const command = args[0].toLowerCase();
-
-  // Start Tournament & Send Room Details
-  if (command === '!startroom') {
-    const tournamentId = args[1];
-    const roomId = args[2];
-    const password = args[3];
-
-    if (!tournamentId || !roomId || !password) {
-      await message.reply('❌ Usage: `!startroom <tournamentID> <roomID> <password>`');
+    if (!announcement) {
+      await message.reply('❌ Usage: `!announce <message>`');
       return;
     }
 
-    const tournament = dataManager.tournaments.get(tournamentId);
-    if (!tournament) {
-      await message.reply('❌ Tournament not found!');
-      return;
-    }
-
-    tournament.status = 'live';
-    tournament.roomDetails = { roomId, password, startedAt: new Date() };
-
-    // Send room details to all registered players
-    for (const [userId, playerData] of tournament.players.entries()) {
-      try {
-        const user = await client.users.fetch(userId);
-        
-        const embed = new Discord.EmbedBuilder()
-          .setTitle(`🎮 ${tournament.title} - ROOM DETAILS`)
-          .setDescription('**Tournament is LIVE! Join now!**')
-          .setColor('#00ff00')
-          .addFields(
-            { name: '🔑 Room ID', value: `\`\`\`${roomId}\`\`\``, inline: false },
-            { name: '🔒 Password', value: `\`\`\`${password}\`\`\``, inline: false },
-            { name: '⚠️ Important', value: '• Join within 5 minutes\n• Screenshots required\n• Follow all rules\n• Good luck!', inline: false }
-          )
-          .setFooter({ text: '⚠️ DO NOT SHARE THESE DETAILS!' })
-          .setTimestamp();
-
-        await user.send({ embeds: [embed] });
-      } catch (err) {
-        console.log(`Could not DM user ${userId}`);
-      }
-    }
-
-    // Update tournament message
-    const scheduleChannel = await client.channels.fetch(CONFIG.TOURNAMENT_SCHEDULE);
     const embed = new Discord.EmbedBuilder()
-      .setTitle(`🎮 ${tournament.title} - LIVE NOW!`)
-      .setDescription(`**${tournament.game}** Tournament - In Progress`)
+      .setTitle('📢 OFFICIAL ANNOUNCEMENT')
+      .setDescription(announcement)
       .setColor('#ff0000')
-      .addFields(
-        { name: '💰 Prize Pool', value: tournament.prize, inline: true },
-        { name: '👥 Players', value: `${tournament.players.size}`, inline: true },
-        { name: '✅ Status', value: '🔴 LIVE', inline: true }
-      )
-      .setImage(tournament.image)
-      .setFooter({ text: 'Tournament in progress!' })
+      .setFooter({ text: `By ${message.author.username}` })
       .setTimestamp();
 
-    await scheduleChannel.send({ embeds: [embed] });
-    await message.reply(`✅ Room details sent to ${tournament.players.size} players!`);
-  }
-
-  // End Tournament & Declare Winners
-  if (command === '!endtournament') {
-    const tournamentId = args[1];
-    const tournament = dataManager.tournaments.get(tournamentId);
-
-    if (!tournament) {
-      await message.reply('❌ Tournament not found!');
-      return;
-    }
-
-    await message.reply('Please mention winners in order:\n`!winners <tournamentID> @first @second @third`');
-  }
-
-  // Declare Winners
-  if (command === '!winners') {
-    const tournamentId = args[1];
-    const tournament = dataManager.tournaments.get(tournamentId);
-
-    if (!tournament) {
-      await message.reply('❌ Tournament not found!');
-      return;
-    }
-
-    const winners = message.mentions.users.map((user, index) => ({
-      position: index + 1,
-      user: user
-    }));
-
-    if (winners.length === 0) {
-      await message.reply('❌ Please mention at least one winner!');
-      return;
-    }
-
-    tournament.status = 'completed';
-    tournament.winners = winners;
-    tournament.endedAt = new Date();
-
-    // Calculate prizes
-    const totalPrize = parseInt(tournament.prize.replace(/[^0-9]/g, ''));
-    const prizeDistribution = {
-      1: totalPrize * 0.5,  // 50%
-      2: totalPrize * 0.3,  // 30%
-      3: totalPrize * 0.2   // 20%
-    };
-
-    // Winner announcement embed
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`🏆 ${tournament.title} - RESULTS`)
-      .setDescription('**Tournament Completed! Congratulations to all winners!**')
-      .setColor('#ffd700')
-      .setImage('https://i.ibb.co/jkBSmkM/qr.png');
-
-    winners.forEach(winner => {
-      const prize = prizeDistribution[winner.position] || 0;
-      const medal = winner.position === 1 ? '🥇' : winner.position === 2 ? '🥈' : '🥉';
-      embed.addFields({
-        name: `${medal} Position ${winner.position}`,
-        value: `${winner.user}\n💰 Prize: ₹${prize.toFixed(0)}`,
-        inline: true
-      });
-
-      // Update user stats
-      const profile = dataManager.getProfile(winner.user.id);
-      if (profile) {
-        profile.tournaments++;
-        if (winner.position === 1) profile.wins++;
-      }
-    });
-
-    embed.addFields({
-      name: '📊 Tournament Stats',
-      value: `Total Players: ${tournament.players.size}\nPrize Pool: ${tournament.prize}\nGame: ${tournament.game}`,
-      inline: false
-    });
-
-    // Post to announcements
     const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
-    await announceChannel.send({ 
-      content: '@everyone\n\n🎉 **TOURNAMENT RESULTS ANNOUNCED!** 🎉',
-      embeds: [embed] 
+    await announceChannel.send({
+      content: '@everyone',
+      embeds: [embed]
     });
 
-    // Update leaderboard
-    winners.forEach(winner => {
-      const game = tournament.game.toLowerCase().replace(' ', '');
-      const leaderboard = game === 'freefire' ? dataManager.tournamentLeaderboard.freefire : 
-                          game === 'minecraft' ? dataManager.tournamentLeaderboard.minecraft :
-                          dataManager.tournamentLeaderboard.freefire;
-      
-      const current = leaderboard.get(winner.user.id) || { wins: 0, tournaments: 0, totalPrize: 0 };
-      current.tournaments++;
-      if (winner.position === 1) current.wins++;
-      current.totalPrize += prizeDistribution[winner.position] || 0;
-      leaderboard.set(winner.user.id, current);
-    });
-
-    await message.reply('✅ Winners announced successfully!');
-  }
-
-  // Show Tournament Leaderboard
-  if (command === '!leaderboard') {
-    const game = args[1]?.toLowerCase() || 'freefire';
-    const leaderboard = game === 'freefire' ? dataManager.tournamentLeaderboard.freefire :
-                        game === 'minecraft' ? dataManager.tournamentLeaderboard.minecraft :
-                        dataManager.tournamentLeaderboard.freefire;
-
-    const sorted = Array.from(leaderboard.entries())
-      .sort((a, b) => b[1].wins - a[1].wins)
-      .slice(0, 10);
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle(`🏆 ${game.toUpperCase()} Tournament Leaderboard`)
-      .setDescription('Top 10 Players')
-      .setColor('#ffd700');
-
-    let description = '';
-    for (let i = 0; i < sorted.length; i++) {
-      const [userId, stats] = sorted[i];
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-      description += `${medal} <@${userId}>\n`;
-      description += `   Wins: ${stats.wins} | Tournaments: ${stats.tournaments} | Earned: ₹${stats.totalPrize.toFixed(0)}\n\n`;
-    }
-
-    embed.setDescription(description || 'No data yet!');
-
-    // Post to leaderboard channel
-    const leaderboardChannel = await client.channels.fetch(CONFIG.LEADERBOARD_CHANNEL);
-    await leaderboardChannel.send({ embeds: [embed] });
-    await message.reply('✅ Leaderboard posted!');
-  }
-
-  // Delete Tournament
-  if (command === '!deletetournament') {
-    const tournamentId = args[1];
-    
-    if (!tournamentId) {
-      await message.reply('❌ Usage: `!deletetournament <tournamentID>`');
-      return;
-    }
-
-    if (dataManager.tournaments.delete(tournamentId)) {
-      await message.reply(`✅ Tournament ${tournamentId} deleted!`);
-    } else {
-      await message.reply('❌ Tournament not found!');
-    }
-  }
-
-  // List Active Tournaments
-  if (command === '!tournaments') {
-    const active = Array.from(dataManager.tournaments.values());
-    
-    if (active.length === 0) {
-      await message.reply('No active tournaments!');
-      return;
-    }
-
-    const embed = new Discord.EmbedBuilder()
-      .setTitle('🎮 Active Tournaments')
-      .setColor('#3498db');
-
-    active.forEach(t => {
-      embed.addFields({
-        name: `${t.title} (${t.id})`,
-        value: `Game: ${t.game} | Prize: ${t.prize} | Players: ${t.players.size}/${t.maxSlots} | Status: ${t.status}`,
-        inline: false
-      });
-    });
-
-    await message.reply({ embeds: [embed] });
+    await message.reply('✅ Announcement posted!');
   }
 });
 
-// ==================== INVITE TRACKER ====================
-setInterval(async () => {
-  try {
-    for (const guild of client.guilds.cache.values()) {
-      const inviteChannel = await client.channels.fetch(CONFIG.INVITE_TRACKER);
-      
-      // Get top inviters
-      const invites = Array.from(dataManager.userInvites.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-
-      const embed = new Discord.EmbedBuilder()
-        .setTitle('📊 Top Inviters - Leaderboard')
-        .setDescription('Invite friends to climb the leaderboard!')
-        .setColor('#f1c40f')
-        .setTimestamp();
-
-      let description = '';
-      for (let i = 0; i < invites.length; i++) {
-        const [userId, count] = invites[i];
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `**${i + 1}.**`;
-        description += `${medal} <@${userId}> - **${count}** invites\n`;
-      }
-
-      embed.setDescription(description || 'No invites yet!');
-
-      const messages = await inviteChannel.messages.fetch({ limit: 1 });
-      if (messages.size > 0 && messages.first().author.id === client.user.id) {
-        await messages.first().edit({ embeds: [embed] });
-      } else {
-        await inviteChannel.send({ embeds: [embed] });
-      }
-    }
-  } catch (err) {
-    console.error('Leaderboard update error:', err);
-  }
-}, 300000); // Every 5 minutes
-
-// ==================== BOT READY ====================
+// ==================== BOT READY EVENT ====================
 client.once('ready', async () => {
-  console.log(`✅ ${client.user.tag} is online!`);
-  console.log(`📊 Serving ${client.guilds.cache.size} servers`);
-  console.log(`👥 Monitoring ${client.users.cache.size} users`);
+  console.clear();
+  console.log('╔═══════════════════════════════════════════════════════╗');
+  console.log('║        🎮 OTO TOURNAMENT BOT - FULLY LOADED          ║');
+  console.log('╚═══════════════════════════════════════════════════════╝');
+  console.log('');
+  console.log(`✅ Bot: ${client.user.tag}`);
+  console.log(`✅ Servers: ${client.guilds.cache.size}`);
+  console.log(`✅ Users: ${client.users.cache.size}`);
+  console.log('');
+  console.log('🎯 ========== CORE FEATURES ==========');
+  console.log('   ✅ Profile System (DM-based with gender detection)');
+  console.log('   ✅ Invite Tracking (10 invites = FREE entry)');
+  console.log('   ✅ Welcome Messages (50+ variations)');
+  console.log('   ✅ Enhanced Auto-Responses (Context-aware)');
+  console.log('   ✅ No Reply System (2-min auto-response)');
+  console.log('   ✅ Bad Word Filter (Auto-delete + warnings)');
+  console.log('   ✅ Spam Detection (Auto-timeout)');
+  console.log('');
+  console.log('🎫 ========== TICKET SYSTEM ==========');
+  console.log('   ✅ Support tickets (6 categories)');
+  console.log('   ✅ Registration tickets (Tournament)');
+  console.log('   ✅ Auto-close with reopen option');
+  console.log('   ✅ Staff auto-response (30 sec)');
+  console.log('   ✅ Payment verification');
+  console.log('');
+  console.log('🏆 ========== TOURNAMENT SYSTEM ==========');
+  console.log('   ✅ Template-based creation');
+  console.log('   ✅ Draft → Registration → Live → Completed');
+  console.log('   ✅ Auto slot updates');
+  console.log('   ✅ Private lobby channels');
+  console.log('   ✅ Room details distribution (DM + Lobby)');
+  console.log('   ✅ Winner declaration');
+  console.log('   ✅ Prize distribution tracking');
+  console.log('   ✅ Multiple game support');
+  console.log('');
+  console.log('📊 ========== LEADERBOARDS ==========');
+  console.log('   ✅ Invite leaderboard (auto-update)');
+  console.log('   ✅ Tournament leaderboard (per game)');
+  console.log('   ✅ Most active players');
+  console.log('   ✅ Top earners tracking');
+  console.log('');
+  console.log('⚔️ ========== SPECIAL FEATURES ==========');
+  console.log('   ✅ Beat Our Player Challenge');
+  console.log('   ✅ 10 invites = FREE tournament access');
+  console.log('   ✅ Gender-based greetings');
+  console.log('   ✅ Profile display channel');
+  console.log('   ✅ Activity tracking');
+  console.log('');
+  console.log('🛡️ ========== MODERATION ==========');
+  console.log('   ✅ Bad word auto-delete');
+  console.log('   ✅ 3-strike warning system');
+  console.log('   ✅ Auto-timeout after warnings');
+  console.log('   ✅ Spam detection (5 msgs/5 sec)');
+  console.log('   ✅ Staff protection');
+  console.log('');
+  console.log('📋 ========== COMMANDS ==========');
+  console.log('');
+  console.log('   👥 USER COMMANDS:');
+  console.log('      -i          Check invites');
+  console.log('      -profile    View profile');
+  console.log('      -help       Bot help');
+  console.log('      Hi/Hello    Greeting responses');
+  console.log('');
+  console.log('   🎮 TOURNAMENT (Staff):');
+  console.log('      !ct                Create tournament');
+  console.log('      !startroom         Send room details');
+  console.log('      !winners           Declare winners');
+  console.log('      !endtournament     End tournament');
+  console.log('      !tournaments       List active');
+  console.log('      !leaderboard       Show leaderboard');
+  console.log('');
+  console.log('   👨‍💼 STAFF MANAGEMENT:');
+  console.log('      !addstaff          Add staff role');
+  console.log('      !removestaff       Remove staff');
+  console.log('      !ban               Ban user');
+  console.log('      !timeout           Timeout user');
+  console.log('      !untimeout         Remove timeout');
+  console.log('      !announce          Post announcement');
+  console.log('');
+  console.log('╔═══════════════════════════════════════════════════════╗');
+  console.log('║        ✅ ALL SYSTEMS OPERATIONAL!                    ║');
+  console.log('║        🚀 OTO TOURNAMENT BOT IS LIVE!                ║');
+  console.log('╚═══════════════════════════════════════════════════════╝');
+  console.log('');
 
-  // Set status
+  // Set dynamic status
   client.user.setPresence({
-    activities: [{ name: '🏆 OTO Tournaments | Say Hi!', type: Discord.ActivityType.Playing }],
+    activities: [{ name: '🎮 OTO Tournaments | Type -help', type: Discord.ActivityType.Playing }],
     status: 'online'
   });
 
@@ -3351,22 +1925,425 @@ client.once('ready', async () => {
           dataManager.inviteCache.set(inv.code, inv.uses);
         }
       });
+      console.log(`✅ Loaded ${invites.size} invites for: ${guild.name}`);
     } catch (err) {
-      console.log('Could not fetch invites for', guild.name);
+      console.log(`⚠️ Could not fetch invites for ${guild.name}`);
     }
   }
 
-  console.log('✅ All systems operational!');
+  console.log('');
+  console.log('🎯 Bot is ready to manage tournaments!');
+  console.log('💡 All features working perfectly!');
+  console.log('');
+
+  // Send existing member profiles to profile channel
+  setTimeout(async () => {
+    try {
+      // Send persistent help message to How to Join
+      const howToJoinChannel = await client.channels.fetch(CONFIG.HOW_TO_JOIN);
+      
+      const helpEmbed = new Discord.EmbedBuilder()
+        .setTitle('🎮 OTO Tournament Guide')
+        .setDescription('**Complete guide to join and win!**')
+        .setColor('#3498db')
+        .addFields(
+          { name: '1️⃣ Create Profile', value: 'Check DMs from bot\nReply with your details', inline: false },
+          { name: '2️⃣ Invite Friends', value: `Invite ${CONFIG.MIN_INVITES} friends = FREE entry!\nType \`-i\` to track`, inline: false },
+          { name: '3️⃣ Join Tournament', value: 'Go to <#' + CONFIG.TOURNAMENT_SCHEDULE + '>\nClick JOIN button', inline: false },
+          { name: '4️⃣ Win Prizes', value: 'Play fair, win big! 🏆\nGet paid instantly! 💰', inline: false }
+        )
+        .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
+        .setFooter({ text: 'Need help? Create a support ticket!' });
+
+      const row = new Discord.ActionRowBuilder()
+        .addComponents(
+          new Discord.ButtonBuilder()
+            .setCustomId('create_support_ticket')
+            .setLabel('Create Support Ticket')
+            .setEmoji('🎫')
+            .setStyle(Discord.ButtonStyle.Primary),
+          new Discord.ButtonBuilder()
+            .setLabel('View Tournaments')
+            .setStyle(Discord.ButtonStyle.Link)
+            .setURL(`https://discord.com/channels/${howToJoinChannel.guild.id}/${CONFIG.TOURNAMENT_SCHEDULE}`)
+        );
+
+      await howToJoinChannel.send({ embeds: [helpEmbed], components: [row] });
+      console.log('✅ Help message posted to How to Join channel');
+
+    } catch (err) {
+      console.log('⚠️ Could not post help message:', err.message);
+    }
+  }, 5000);
+});
+
+// Rotating status messages
+const statuses = [
+  '🎮 OTO Tournaments | Type -help',
+  '🏆 Join tournaments & win!',
+  '💰 Real money prizes daily!',
+  '🔥 Invite 10 = FREE entry!',
+  '⚡ Active tournaments now!',
+  '🎯 Free Fire & Minecraft!',
+  '💎 Big prizes waiting!',
+  '👥 Growing gaming community!'
+];
+
+let statusIndex = 0;
+setInterval(() => {
+  client.user.setPresence({
+    activities: [{ name: statuses[statusIndex], type: Discord.ActivityType.Playing }],
+    status: 'online'
+  });
+  statusIndex = (statusIndex + 1) % statuses.length;
+}, 300000); // Change every 5 minutes
+
+// ==================== SEND EXISTING PROFILES TO PROFILE CHANNEL ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.ADMIN_ROLE)) return;
+
+  if (message.content.toLowerCase() === '!syncprofiles') {
+    const profileChannel = await client.channels.fetch(CONFIG.PROFILE_CHANNEL);
+    let count = 0;
+
+    for (const [userId, profile] of dataManager.userProfiles) {
+      try {
+        const user = await client.users.fetch(userId);
+        const invites = dataManager.getInvites(userId);
+
+        const embed = new Discord.EmbedBuilder()
+          .setTitle('👤 Player Profile')
+          .setDescription(`**${profile.name}**`)
+          .setColor('#3498db')
+          .addFields(
+            { name: '🆔 OTO ID', value: `\`${profile.otoId}\``, inline: true },
+            { name: '🎮 Game', value: profile.game, inline: true },
+            { name: '📍 State', value: profile.state, inline: true },
+            { name: '🔗 Invites', value: `${invites}`, inline: true },
+            { name: '🏆 Tournaments', value: `${profile.tournaments}`, inline: true },
+            { name: '🥇 Wins', value: `${profile.wins}`, inline: true },
+            { name: '💰 Earnings', value: `₹${profile.totalEarnings}`, inline: true },
+            { name: '📊 Activity', value: `${profile.activity} msgs`, inline: true },
+            { name: '✅ Status', value: invites >= CONFIG.MIN_INVITES ? 'FREE Entry' : 'Paid Entry', inline: true }
+          )
+          .setThumbnail(user.displayAvatarURL())
+          .setFooter({ text: `Joined: ${profile.createdAt.toLocaleDateString()}` })
+          .setTimestamp();
+
+        await profileChannel.send({ embeds: [embed] });
+        count++;
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limit protection
+      } catch (err) {
+        console.log(`Could not sync profile for ${userId}`);
+      }
+    }
+
+    await message.reply(`✅ Synced ${count} profiles to profile channel!`);
+  }
+});
+
+// ==================== MANUAL TOURNAMENT CREATION ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  if (message.content.toLowerCase().startsWith('!tournament ')) {
+    const parts = message.content.slice(12).split('|').map(s => s.trim());
+    
+    if (parts.length < 7) {
+      await message.reply(
+        '❌ **Manual Tournament Creation**\n\n' +
+        'Format: `!tournament <title> | <game> | <mode> | <prize> | <entry> | <slots> | <time> | [map]`\n\n' +
+        'Example:\n' +
+        '```!tournament PUBG Championship | PUBG | Squad | ₹5000 | ₹100 | 25 | 10:00 PM | Erangel```'
+      );
+      return;
+    }
+
+    const [title, game, mode, prize, entry, slots, time, map] = parts;
+    const tournamentId = `TOUR${Date.now().toString().slice(-10)}`;
+
+    // Calculate prize distribution (50%, 30%, 20%)
+    const totalPrize = parseInt(prize.replace(/[^0-9]/g, ''));
+    const prizeDistribution = {
+      first: Math.floor(totalPrize * 0.5),
+      second: Math.floor(totalPrize * 0.3),
+      third: Math.floor(totalPrize * 0.2)
+    };
+
+    const tournament = {
+      id: tournamentId,
+      title: title,
+      game: game,
+      mode: mode,
+      prize: prize,
+      prizeDistribution: prizeDistribution,
+      entry: entry,
+      maxSlots: parseInt(slots),
+      time: time,
+      map: map || 'TBA',
+      image: game.toLowerCase().includes('fire') ? 'https://i.ibb.co/8XQkZhJ/freefire.png' :
+             game.toLowerCase().includes('minecraft') ? 'https://i.ibb.co/VgTY8Lq/minecraft.png' :
+             'https://i.ibb.co/8XQkZhJ/freefire.png',
+      createdBy: message.author.id,
+      createdAt: new Date(),
+      status: 'draft',
+      players: new Map(),
+      confirmedPlayers: new Map(),
+      roomDetails: null,
+      lobbyChannelId: null,
+      slotsFilled: 0
+    };
+
+    dataManager.tournaments.set(tournamentId, tournament);
+
+    const confirmEmbed = new Discord.EmbedBuilder()
+      .setTitle('✅ Custom Tournament Created - DRAFT')
+      .setDescription(`**${tournament.title}** is ready!`)
+      .setColor('#ffaa00')
+      .addFields(
+        { name: '🆔 ID', value: `\`${tournamentId}\``, inline: true },
+        { name: '🎮 Game', value: tournament.game, inline: true },
+        { name: '🎯 Mode', value: tournament.mode, inline: true },
+        { name: '💰 Prize', value: tournament.prize, inline: true },
+        { name: '🎫 Entry', value: tournament.entry, inline: true },
+        { name: '📊 Slots', value: `${tournament.maxSlots}`, inline: true },
+        { name: '⏰ Time', value: tournament.time, inline: true },
+        { name: '🗺️ Map', value: tournament.map, inline: true },
+        { name: '📈 Status', value: '📝 Draft', inline: true },
+        {
+          name: '🏆 Prize Distribution',
+          value: `🥇 1st: ₹${tournament.prizeDistribution.first}\n🥈 2nd: ₹${tournament.prizeDistribution.second}\n🥉 3rd: ₹${tournament.prizeDistribution.third}`,
+          inline: false
+        }
+      )
+      .setFooter({ text: 'Use buttons to publish or delete' })
+      .setTimestamp();
+
+    const row = new Discord.ActionRowBuilder()
+      .addComponents(
+        new Discord.ButtonBuilder()
+          .setCustomId(`publish_tournament_${tournamentId}`)
+          .setLabel('Publish Tournament')
+          .setEmoji('🚀')
+          .setStyle(Discord.ButtonStyle.Success),
+        new Discord.ButtonBuilder()
+          .setCustomId(`delete_tournament_${tournamentId}`)
+          .setLabel('Delete')
+          .setEmoji('🗑️')
+          .setStyle(Discord.ButtonStyle.Danger)
+      );
+
+    await message.reply({ embeds: [confirmEmbed], components: [row] });
+  }
+});
+
+// ==================== CLEAR WARNINGS COMMAND ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  const args = message.content.split(' ');
+  const command = args[0].toLowerCase();
+
+  if (command === '!clearwarnings') {
+    const user = message.mentions.users.first();
+    
+    if (!user) {
+      await message.reply('❌ Usage: `!clearwarnings @user`');
+      return;
+    }
+
+    dataManager.clearWarnings(user.id);
+    await message.reply(`✅ All warnings cleared for ${user.tag}!`);
+  }
+
+  if (command === '!warnings') {
+    const user = message.mentions.users.first();
+    
+    if (!user) {
+      await message.reply('❌ Usage: `!warnings @user`');
+      return;
+    }
+
+    const warnings = dataManager.getWarnings(user.id);
+    
+    if (warnings.length === 0) {
+      await message.reply(`✅ ${user.tag} has no warnings!`);
+      return;
+    }
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle(`⚠️ Warnings for ${user.tag}`)
+      .setDescription(`Total: **${warnings.length}** warning${warnings.length > 1 ? 's' : ''}`)
+      .setColor('#ffaa00')
+      .setThumbnail(user.displayAvatarURL());
+
+    warnings.forEach((warn, index) => {
+      embed.addFields({
+        name: `Warning ${index + 1} - ${warn.id}`,
+        value: `**Reason:** ${warn.reason}\n**Date:** <t:${Math.floor(warn.date.getTime()/1000)}:R>`,
+        inline: false
+      });
+    });
+
+    await message.reply({ embeds: [embed] });
+  }
+});
+
+// ==================== BEAT OUR PLAYER COMMAND (Staff) ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  if (message.content.toLowerCase() === '!beatplayer') {
+    const challengeId = `BEAT${Date.now().toString().slice(-8)}`;
+    
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('⚔️ BEAT OUR PLAYER - SPECIAL CHALLENGE!')
+      .setDescription('**Think you can defeat our best player? Prove it!**')
+      .setColor('#ff0000')
+      .addFields(
+        { name: '🎯 Challenge', value: 'Beat our champion in 1v1', inline: true },
+        { name: '🎁 Reward', value: 'FREE Squad Entry', inline: true },
+        { name: '🔢 Attempts', value: '2 chances', inline: true },
+        { name: '📋 Requirements', value: `✅ ${CONFIG.MIN_INVITES} invites completed\n✅ Active profile\n✅ Good standing`, inline: false },
+        { name: '🏆 If You Win', value: '• FREE entry to next Squad tournament\n• Special winner role\n• Hall of fame mention\n• Bragging rights forever!', inline: false },
+        { name: '⚔️ Rules', value: '• Best of 2 matches (need 2-0 or 2-1)\n• Fair play required\n• Screenshots mandatory\n• No exploits/cheats\n• Respectful behavior', inline: false }
+      )
+      .setImage('https://i.ibb.co/8XQkZhJ/freefire.png')
+      .setFooter({ text: 'Click button to accept challenge!' })
+      .setTimestamp();
+
+    const row = new Discord.ActionRowBuilder()
+      .addComponents(
+        new Discord.ButtonBuilder()
+          .setCustomId('create_beat_player_ticket')
+          .setLabel('ACCEPT CHALLENGE')
+          .setEmoji('⚔️')
+          .setStyle(Discord.ButtonStyle.Danger)
+      );
+
+    const announceChannel = await client.channels.fetch(CONFIG.ANNOUNCEMENT_CHANNEL);
+    await announceChannel.send({
+      content: '@everyone\n\n⚔️ **SPECIAL CHALLENGE ALERT!** ⚔️',
+      embeds: [embed],
+      components: [row]
+    });
+
+    const generalChannel = await client.channels.fetch(CONFIG.GENERAL_CHAT);
+    await generalChannel.send({
+      content: '⚔️ **BEAT OUR PLAYER CHALLENGE!** ⚔️\n\nCheck announcements to participate!',
+      embeds: [embed],
+      components: [row]
+    });
+
+    await message.reply('✅ Beat Our Player challenge posted!');
+  }
+});
+
+// ==================== QUICK STATS COMMAND ====================
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || message.channel.id !== CONFIG.STAFF_TOOLS) return;
+  if (!message.member.roles.cache.has(CONFIG.STAFF_ROLE)) return;
+
+  if (message.content.toLowerCase() === '!stats') {
+    const totalProfiles = dataManager.userProfiles.size;
+    const totalInvites = Array.from(dataManager.userInvites.values()).reduce((a, b) => a + b, 0);
+    const freeEntryUsers = Array.from(dataManager.userInvites.values()).filter(i => i >= CONFIG.MIN_INVITES).length;
+    const activeTournaments = dataManager.tournaments.size;
+    const totalTickets = dataManager.tickets.size;
+
+    const embed = new Discord.EmbedBuilder()
+      .setTitle('📊 OTO Bot Statistics')
+      .setDescription('**Current server statistics**')
+      .setColor('#3498db')
+      .addFields(
+        { name: '👥 Total Profiles', value: `${totalProfiles}`, inline: true },
+        { name: '🔗 Total Invites', value: `${totalInvites}`, inline: true },
+        { name: '🎁 FREE Entry Users', value: `${freeEntryUsers}`, inline: true },
+        { name: '🎮 Active Tournaments', value: `${activeTournaments}`, inline: true },
+        { name: '🎫 Open Tickets', value: `${totalTickets}`, inline: true },
+        { name: '📊 Server Members', value: `${message.guild.memberCount}`, inline: true }
+      )
+      .setFooter({ text: 'OTO Tournaments - Live Statistics' })
+      .setTimestamp();
+
+    await message.reply({ embeds: [embed] });
+  }
 });
 
 // ==================== ERROR HANDLING ====================
-client.on('error', err => console.error('Client error:', err));
-process.on('unhandledRejection', err => console.error('Unhandled rejection:', err));
+client.on('error', err => {
+  console.error('╔═══════════════════════════════════════╗');
+  console.error('║         ❌ CLIENT ERROR               ║');
+  console.error('╚═══════════════════════════════════════╝');
+  console.error(err);
+});
+
+client.on('warn', warn => {
+  console.warn('⚠️ WARNING:', warn);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('╔═══════════════════════════════════════╗');
+  console.error('║      ❌ UNHANDLED REJECTION           ║');
+  console.error('╚═══════════════════════════════════════╝');
+  console.error(err);
+});
+
+process.on('uncaughtException', err => {
+  console.error('╔═══════════════════════════════════════╗');
+  console.error('║      ❌ UNCAUGHT EXCEPTION            ║');
+  console.error('╚═══════════════════════════════════════╝');
+  console.error(err);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('');
+  console.log('🛑 Shutting down gracefully...');
+  client.destroy();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('');
+  console.log('🛑 Received SIGTERM, shutting down...');
+  client.destroy();
+  process.exit(0);
+});
 
 // ==================== LOGIN ====================
 client.login(BOT_TOKEN)
-  .then(() => console.log('🚀 Bot logged in successfully!'))
+  .then(() => {
+    console.log('');
+    console.log('╔═══════════════════════════════════════════════════════╗');
+    console.log('║         ✅ BOT LOGIN SUCCESSFUL!                      ║');
+    console.log('╚═══════════════════════════════════════════════════════╝');
+    console.log('');
+  })
   .catch(err => {
-    console.error('❌ Login failed:', err);
+    console.error('');
+    console.error('╔═══════════════════════════════════════════════════════╗');
+    console.error('║         ❌ LOGIN FAILED!                              ║');
+    console.error('╚═══════════════════════════════════════════════════════╝');
+    console.error('');
+    console.error('Error:', err.message);
+    console.error('');
+    console.error('Please check:');
+    console.error('1. BOT_TOKEN is correct in .env file');
+    console.error('2. Bot has proper permissions');
+    console.error('3. Internet connection is stable');
+    console.error('4. Discord API is operational');
+    console.error('');
     process.exit(1);
   });
+
+// ==================== EXPORTS ====================
+module.exports = {
+  client,
+  dataManager,
+  CONFIG
+};
