@@ -1,9 +1,0 @@
-# OTO Tournament Bot Requirements
-# Install with: pip install -r requirements.txt
-
-discord.py==2.3.2
-python-dotenv==1.0.0
-Pillow==10.1.0
-qrcode==7.4.2
-aiohttp==3.9.1
-asyncio==3.4.3
