@@ -191,6 +191,15 @@ const dataManager = new DataManager();
 // ==================== INTERACTION HANDLER (BUTTONS & SELECTS) ====================
 client.on('interactionCreate', async (interaction) => {
   try {
+    // Defer reply immediately to prevent timeout
+    if (!interaction.replied && !interaction.deferred) {
+      if (interaction.isButton()) {
+        await interaction.deferUpdate().catch(() => {});
+      } else {
+        await interaction.deferReply({ ephemeral: true }).catch(() => {});
+      }
+    }
+
     // Handle Select Menus
     if (interaction.isStringSelectMenu()) {
       
@@ -217,9 +226,10 @@ client.on('interactionCreate', async (interaction) => {
                 ])
             );
 
-          await interaction.update({
+          await interaction.editReply({
             content: `✅ Mode selected: **${mode}**\n\n📍 Now select the map:`,
-            components: [mapRow]
+            components: [mapRow],
+            embeds: []
           });
         }
         return;
@@ -228,7 +238,8 @@ client.on('interactionCreate', async (interaction) => {
       // Tournament Creation - Map Selection
       if (interaction.customId === 'tournament_map') {
         const map = interaction.values[0];
-        const tournamentId = interaction.message.embeds[0].footer.text.split('ID: ')[1];
+        const tournamentId = interaction.message.embeds[0]?.footer?.text?.split('ID: ')[1] || 
+                           Array.from(dataManager.tournaments.keys()).pop();
         const tournament = dataManager.tournaments.get(tournamentId);
         
         if (tournament) {
@@ -267,7 +278,7 @@ client.on('interactionCreate', async (interaction) => {
                 .setStyle(Discord.ButtonStyle.Danger)
             );
 
-          await interaction.update({ content: null, embeds: [embed], components: [row] });
+          await interaction.editReply({ content: null, embeds: [embed], components: [row] });
         }
         return;
       }
@@ -357,16 +368,18 @@ client.on('interactionCreate', async (interaction) => {
             components: [row]
           });
 
-          await interaction.update({
+          await interaction.editReply({
             content: `✅ Ticket created! Go to ${ticketChannel}`,
-            components: []
+            components: [],
+            embeds: []
           });
 
         } catch (error) {
           console.error('Ticket creation error:', error);
-          await interaction.update({
+          await interaction.editReply({
             content: '❌ Failed to create ticket. Please try again!',
-            components: []
+            components: [],
+            embeds: []
           });
         }
         return;
@@ -379,36 +392,11 @@ client.on('interactionCreate', async (interaction) => {
       // Create Tournament Button
       if (interaction.customId === 'create_tournament') {
         if (!interaction.member.roles.cache.has(CONFIG.STAFF_ROLE)) {
-          await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
+          await interaction.editReply({ content: '❌ Staff only!' });
           return;
         }
 
-        await interaction.reply({
-          content: '🎮 **Creating Free Fire Tournament**\n\nSelect game mode:',
-          components: [
-            new Discord.ActionRowBuilder().addComponents(
-              new Discord.StringSelectMenuBuilder()
-                .setCustomId('tournament_mode')
-                .setPlaceholder('Select Mode')
-                .addOptions([
-                  { label: 'Solo', value: 'Solo', emoji: '👤' },
-                  { label: 'Duo', value: 'Duo', emoji: '👥' },
-                  { label: 'Squad', value: 'Squad', emoji: '👨‍👩‍👦‍👦' },
-                  { label: 'Clash Squad', value: 'Clash Squad', emoji: '⚔️' }
-                ])
-            )
-          ],
-          embeds: [
-            new Discord.EmbedBuilder()
-              .setTitle('🔥 Free Fire Tournament')
-              .setDescription('**Default Settings:**\n💰 Prize: ₹500\n🎫 Entry: ₹50\n📊 Slots: 12\n⏰ Time: 8:00 PM')
-              .setColor('#ff6600')
-              .setFooter({ text: `ID: TOUR${Date.now().toString().slice(-10)}` })
-          ],
-          ephemeral: true
-        });
-
-        // Create tournament object
+        // Create tournament object FIRST
         const tournamentId = `TOUR${Date.now().toString().slice(-10)}`;
         dataManager.tournaments.set(tournamentId, {
           id: tournamentId,
@@ -428,6 +416,30 @@ client.on('interactionCreate', async (interaction) => {
           players: new Map(),
           confirmedPlayers: new Map(),
           slotsFilled: 0
+        });
+
+        await interaction.editReply({
+          content: '🎮 **Creating Free Fire Tournament**\n\nSelect game mode:',
+          components: [
+            new Discord.ActionRowBuilder().addComponents(
+              new Discord.StringSelectMenuBuilder()
+                .setCustomId('tournament_mode')
+                .setPlaceholder('Select Mode')
+                .addOptions([
+                  { label: 'Solo', value: 'Solo', emoji: '👤' },
+                  { label: 'Duo', value: 'Duo', emoji: '👥' },
+                  { label: 'Squad', value: 'Squad', emoji: '👨‍👩‍👦‍👦' },
+                  { label: 'Clash Squad', value: 'Clash Squad', emoji: '⚔️' }
+                ])
+            )
+          ],
+          embeds: [
+            new Discord.EmbedBuilder()
+              .setTitle('🔥 Free Fire Tournament')
+              .setDescription('**Default Settings:**\n💰 Prize: ₹500\n🎫 Entry: ₹50\n📊 Slots: 12\n⏰ Time: 8:00 PM')
+              .setColor('#ff6600')
+              .setFooter({ text: `ID: ${tournamentId}` })
+          ]
         });
         return;
       }
@@ -1593,4 +1605,5 @@ client.login(BOT_TOKEN)
     process.exit(1);
   });
 
+module.exports = { client, dataManager, CONFIG };
 module.exports = { client, dataManager, CONFIG };
