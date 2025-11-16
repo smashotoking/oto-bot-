@@ -612,7 +612,7 @@ client.on('messageCreate', async (message) => {
         'State: Your State\n' +
         'Game: Free Fire/Minecraft/PUBG\n' +
         '```\n' +
-        'Copy and fill the format above!'
+      
         // ==================== PAYMENT APPROVAL SYSTEM ====================
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
