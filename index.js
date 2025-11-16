@@ -603,7 +603,7 @@ client.on('messageCreate', async (message) => {
         }
       } catch (err) {}
     } else {
-      await message.reply(
+     await message.reply(
         '❌ **Invalid Format!**\n\n' +
         'Please use this exact format:\n' +
         '```\n' +
@@ -612,8 +612,13 @@ client.on('messageCreate', async (message) => {
         'State: Your State\n' +
         'Game: Free Fire/Minecraft/PUBG\n' +
         '```\n' +
-      
-        // ==================== PAYMENT APPROVAL SYSTEM ====================
+        'Copy and fill the format above!'
+      );
+    }
+  }
+});
+
+// ==================== PAYMENT APPROVAL SYSTEM ====================
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 
