@@ -72,7 +72,7 @@ const client = new Discord.Client({
   ],
   partials: [Discord.Partials.Channel, Discord.Partials.Message, Discord.Partials.User]
 });
-
+client.setMaxListeners(20);
 // Express Server
 const app = express();
 app.use(express.json());
