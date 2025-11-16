@@ -238,7 +238,7 @@ client.on('messageCreate', async (message) => {
                 )
                 .setFooter({ text: '3 warnings = Automatic timeout' });
 
-            const warning Msg = await message.channel.send({ embeds: [warnEmbed] });
+            const warningMsg = await message.channel.send({ embeds: [warnEmbed] });
 
             if (warnings >= 3) {
                 const member = message.guild.members.cache.get(userId);
