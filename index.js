@@ -295,36 +295,37 @@ client.once('ready', async () => {
         guildInvites.set(guild.id, new Map(invites.map(invite => [invite.code, invite.uses])));
     });
 
+    // Register slash commands
+    registerCommands();
+
     // Auto-response check every 2 minutes
     setInterval(checkInactiveMessages, 120000);
 
     // Spam tournament announcements
     setInterval(spamTournamentAnnouncement, 120000);
 
-    // Register slash commands
-    registerCommands();
-});
+    // Start health check server for Render
+    const PORT = process.env.PORT || 3000;
+    const server = http.createServer((req, res) => {
+        if (req.url === '/health' || req.url === '/') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'online',
+                bot: client.user ? client.user.tag : 'Not ready',
+                uptime: Math.floor(process.uptime()),
+                guilds: client.guilds.cache.size,
+                users: client.users.cache.size,
+                ping: `${client.ws.ping}ms`
+            }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('OTO Bot - Not Found');
+        }
+    });
 
-// Health Check Server for Render
-const PORT = process.env.PORT || 3000;
-const server = http.createServer((req, res) => {
-    if (req.url === '/health' || req.url === '/') {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            status: 'online',
-            bot: client.user ? client.user.tag : 'Not ready',
-            uptime: process.uptime(),
-            guilds: client.guilds.cache.size,
-            users: client.users.cache.size
-        }));
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not Found');
-    }
-});
-
-server.listen(PORT, () => {
-    console.log(`🌐 Health check server running on port ${PORT}`);
+    server.listen(PORT, () => {
+        console.log(`🌐 Health check server running on port ${PORT}`);
+    });
 });
 
 // Member Join Event
@@ -1283,10 +1284,6 @@ async function registerCommands() {
     }
 }
 
-// When bot is ready, register commands
-client.once('clientReady', () => {
-    console.log('Bot is fully ready!');
-});
 
 // Handle process termination
 process.on('SIGINT', () => {
