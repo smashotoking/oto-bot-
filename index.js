@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, ButtonStyle, TextInputStyle, ChannelType } = require('discord.js');
+const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -299,6 +300,31 @@ client.once('ready', async () => {
 
     // Spam tournament announcements
     setInterval(spamTournamentAnnouncement, 120000);
+
+    // Register slash commands
+    registerCommands();
+});
+
+// Health Check Server for Render
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+    if (req.url === '/health' || req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            status: 'online',
+            bot: client.user ? client.user.tag : 'Not ready',
+            uptime: process.uptime(),
+            guilds: client.guilds.cache.size,
+            users: client.users.cache.size
+        }));
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not Found');
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`🌐 Health check server running on port ${PORT}`);
 });
 
 // Member Join Event
@@ -1258,8 +1284,8 @@ async function registerCommands() {
 }
 
 // When bot is ready, register commands
-client.once('ready', () => {
-    registerCommands();
+client.once('clientReady', () => {
+    console.log('Bot is fully ready!');
 });
 
 // Handle process termination
