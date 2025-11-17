@@ -1271,4 +1271,16 @@ process.on('SIGINT', () => {
 });
 
 // Login to Discord
-client.login('YOUR_BOT_TOKEN_HERE');
+// Bot token should be set in environment variable: DISCORD_BOT_TOKEN
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+if (!TOKEN) {
+    console.error('❌ ERROR: DISCORD_BOT_TOKEN environment variable is not set!');
+    console.error('Please set your bot token in Render environment variables.');
+    process.exit(1);
+}
+
+client.login(TOKEN).catch(error => {
+    console.error('❌ Failed to login:', error);
+    process.exit(1);
+});
