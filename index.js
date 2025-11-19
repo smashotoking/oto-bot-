@@ -1206,7 +1206,7 @@ process.on('SIGTERM', shutdown);
     });
 
     // Attach ready event
-    client.login(BOT_TOKEN).catch((e) => {
+    client.login(DISCORD_BOT_TOKEN).catch((e) => {
       console.error('Login failed', e);
       process.exit(1);
     });
