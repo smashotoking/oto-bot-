@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, Collection, PermissionsBitField, ChannelType, Events, Partials, StringSelectMenuBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, Collection, PermissionsBitField, ChannelType, Events, Partials, StringSelectMenuBuilder, SlashCommandBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
@@ -41,7 +41,8 @@ const CHANNELS = {
   STAFF_TOOLS: '1438486059255336970',
   MINECRAFT: '1439223955960627421',
   MOST_PLAYER_LEADERBOARD: '1439226024863993988',
-  WELCOME: '1438482904018849835'
+  WELCOME: '1438482904018849835',
+  SUPPORT: '1438486059255336970'
 };
 
 // Role IDs
@@ -50,7 +51,9 @@ const ROLES = {
   ADMIN: '1438475461977047112',
   STAFF: '1438475461977047112',
   PLAYER: '1439542574066176021',
-  FOUNDER: '1438443937588183110'
+  FOUNDER: '1438443937588183110',
+  PREMIUM: '1439542574066176022',
+  VERIFIED: '1439542574066176023'
 };
 
 // Bot Configuration
@@ -62,7 +65,10 @@ const CONFIG = {
   AUTO_RESPONSE_DELAY: 120000, // 2 minutes
   BACKUP_INTERVAL: 300000, // 5 minutes
   LEADERBOARD_UPDATE_INTERVAL: 600000, // 10 minutes
-  INVITE_REWARD_THRESHOLDS: [5, 10, 15, 20, 30, 50, 100]
+  INVITE_REWARD_THRESHOLDS: [5, 10, 15, 20, 30, 50, 100],
+  DAILY_REWARD_AMOUNT: 50,
+  WEEKLY_REWARD_AMOUNT: 200,
+  MONTHLY_REWARD_AMOUNT: 500
 };
 
 // Data Storage
@@ -94,6 +100,8 @@ class DataManager {
         weekly: {},
         monthly: {}
       },
+      'rewards.json': {},
+      'economy.json': {},
       'config.json': CONFIG
     };
 
@@ -195,189 +203,317 @@ class ProfileSystem {
   }
 
   async startProfileCreation(interaction) {
-    const member = interaction.member;
-    
-    const nameEmbed = new EmbedBuilder()
-      .setTitle('📝 Profile Creation - Step 1/4')
-      .setDescription('**What\'s your name?**\n\nPlease type your real name below:')
-      .setColor(0x0099FF)
-      .setFooter({ text: 'Profile completion unlocks tournament access!' });
+    try {
+      const member = interaction.member || interaction.user;
+      
+      const nameEmbed = new EmbedBuilder()
+        .setTitle('📝 Profile Creation - Step 1/4')
+        .setDescription('**What\'s your name?**\n\nPlease type your real name below:')
+        .setColor(0x0099FF)
+        .setFooter({ text: 'Profile completion unlocks tournament access!' });
 
-    await interaction.reply({ embeds: [nameEmbed], ephemeral: true });
-    
-    this.profileStates.set(member.id, {
-      step: 1,
-      data: { startedAt: Date.now() }
-    });
-
-    const filter = m => m.author.id === member.id && m.channel.type === ChannelType.DM;
-    const collector = interaction.channel.createMessageCollector({ filter, time: 300000 });
-
-    collector.on('collect', async (message) => {
-      const name = message.content.trim();
-      if (name.length < 2 || name.length > 20) {
-        await message.reply('❌ Please enter a valid name (2-20 characters):');
-        return;
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({ embeds: [nameEmbed], components: [] });
+      } else {
+        await interaction.reply({ embeds: [nameEmbed], ephemeral: true });
       }
+      
+      this.profileStates.set(member.id, {
+        step: 1,
+        data: { startedAt: Date.now() },
+        interaction: interaction
+      });
 
-      this.profileStates.get(member.id).data.name = name;
-      await this.askGender(member);
-      collector.stop();
-    });
+      // Create a message collector for name input
+      const filter = m => m.author.id === member.id;
+      const collector = interaction.channel.createMessageCollector({ 
+        filter, 
+        time: 300000,
+        max: 1
+      });
+
+      collector.on('collect', async (message) => {
+        const name = message.content.trim();
+        if (name.length < 2 || name.length > 20) {
+          await message.reply('❌ Please enter a valid name (2-20 characters):');
+          collector.resetTimer();
+          return;
+        }
+
+        this.profileStates.get(member.id).data.name = name;
+        await message.reply('✅ Name saved! Moving to next step...');
+        await this.askGender(member);
+        collector.stop();
+      });
+
+      collector.on('end', (collected, reason) => {
+        if (reason === 'time') {
+          interaction.followUp({ 
+            content: '❌ Profile creation timed out. Please start again.', 
+            ephemeral: true 
+          });
+          this.profileStates.delete(member.id);
+        }
+      });
+
+    } catch (error) {
+      console.error('Error starting profile creation:', error);
+      if (!interaction.replied) {
+        await interaction.reply({ 
+          content: '❌ An error occurred. Please try again.', 
+          ephemeral: true 
+        });
+      }
+    }
   }
 
   async askGender(member) {
-    const genderEmbed = new EmbedBuilder()
-      .setTitle('📝 Profile Creation - Step 2/4')
-      .setDescription('**Select your gender:**')
-      .setColor(0x0099FF);
+    try {
+      const genderEmbed = new EmbedBuilder()
+        .setTitle('📝 Profile Creation - Step 2/4')
+        .setDescription('**Select your gender:**')
+        .setColor(0x0099FF);
 
-    const genderButtons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('gender_male')
-        .setLabel('👨 Male')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('gender_female')
-        .setLabel('👩 Female')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('gender_other')
-        .setLabel('⚧️ Other')
-        .setStyle(ButtonStyle.Secondary)
-    );
+      const genderButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`gender_male_${member.id}`)
+          .setLabel('👨 Male')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(`gender_female_${member.id}`)
+          .setLabel('👩 Female')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(`gender_other_${member.id}`)
+          .setLabel('⚧️ Other')
+          .setStyle(ButtonStyle.Secondary)
+      );
 
-    await member.send({ embeds: [genderEmbed], components: [genderButtons] });
-    this.profileStates.get(member.id).step = 2;
+      await member.send({ embeds: [genderEmbed], components: [genderButtons] });
+      this.profileStates.get(member.id).step = 2;
+
+    } catch (error) {
+      console.error('Error asking gender:', error);
+    }
   }
 
-  async askState(member) {
-    const stateEmbed = new EmbedBuilder()
-      .setTitle('📝 Profile Creation - Step 3/4')
-      .setDescription('**Which state are you from?**\n\nPlease type your state name below:')
-      .setColor(0x0099FF);
+  async handleGenderSelection(interaction) {
+    try {
+      const customId = interaction.customId;
+      const userId = customId.split('_')[2];
+      const gender = customId.split('_')[1];
 
-    await member.send({ embeds: [stateEmbed] });
-    this.profileStates.get(member.id).step = 3;
-
-    const filter = m => m.author.id === member.id && m.channel.type === ChannelType.DM;
-    const collector = member.dmChannel.createMessageCollector({ filter, time: 300000 });
-
-    collector.on('collect', async (message) => {
-      const state = message.content.trim();
-      if (state.length < 2 || state.length > 30) {
-        await message.reply('❌ Please enter a valid state name:');
+      if (interaction.user.id !== userId) {
+        await interaction.reply({ 
+          content: '❌ This is not your profile creation!', 
+          ephemeral: true 
+        });
         return;
       }
 
-      this.profileStates.get(member.id).data.state = state;
-      await this.askGame(member);
-      collector.stop();
-    });
-  }
+      this.profileStates.get(userId).data.gender = gender;
+      
+      await interaction.update({ 
+        content: `✅ Gender selected: ${gender === 'male' ? '👨 Male' : gender === 'female' ? '👩 Female' : '⚧️ Other'}`,
+        embeds: [],
+        components: [] 
+      });
 
-  async askGame(member) {
-    const gameEmbed = new EmbedBuilder()
-      .setTitle('📝 Profile Creation - Step 4/4')
-      .setDescription('**Select your primary game:**')
-      .setColor(0x0099FF);
+      await this.askState(interaction.user);
 
-    const gameButtons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('game_freefire')
-        .setLabel('🔥 Free Fire')
-        .setStyle(ButtonStyle.Danger),
-      new ButtonBuilder()
-        .setCustomId('game_minecraft')
-        .setLabel('⛏️ Minecraft')
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId('game_both')
-        .setLabel('🎮 Both')
-        .setStyle(ButtonStyle.Primary)
-    );
-
-    await member.send({ embeds: [gameEmbed], components: [gameButtons] });
-    this.profileStates.get(member.id).step = 4;
-  }
-
-  async completeProfile(member, gameChoice) {
-    const state = this.profileStates.get(member.id);
-    if (!state) return;
-
-    const profileData = {
-      userId: member.id,
-      otoId: this.generateOTOId(),
-      name: state.data.name,
-      gender: state.data.gender,
-      state: state.data.state,
-      game: gameChoice,
-      level: 1,
-      badges: ['🎯 New Player'],
-      stats: {
-        tournamentsPlayed: 0,
-        wins: 0,
-        earnings: 0,
-        invites: 0,
-        joinDate: Date.now()
-      },
-      verification: 0,
-      createdAt: Date.now(),
-      completed: true
-    };
-
-    this.profiles[member.id] = profileData;
-    dataManager.writeData('profiles.json', this.profiles);
-
-    this.profileStates.delete(member.id);
-    this.pendingProfiles.delete(member.id);
-
-    try {
-      const playerRole = member.guild.roles.cache.get(ROLES.PLAYER);
-      if (playerRole) {
-        await member.roles.add(playerRole);
-      }
     } catch (error) {
-      console.error('Failed to assign player role:', error);
+      console.error('Error handling gender selection:', error);
     }
-
-    await this.sendCompletionMessage(member, profileData);
-    await this.postProfileShowcase(member, profileData);
-    await this.sendWelcomeAnnouncement(member, profileData);
   }
 
-  async sendCompletionMessage(member, profileData) {
-    const completionEmbed = new EmbedBuilder()
-      .setTitle('✅ Profile Created Successfully!')
-      .setDescription(`**Welcome to OTO Tournaments, ${profileData.name}!**`)
-      .setColor(0x00FF00)
-      .addFields(
-        { name: '🎯 Your OTO ID', value: `\`${profileData.otoId}\``, inline: true },
-        { name: '👤 Name', value: profileData.name, inline: true },
-        { name: '🌍 State', value: profileData.state, inline: true },
-        { name: '🎮 Primary Game', value: this.getGameName(profileData.game), inline: true },
-        { name: '⭐ Level', value: '1', inline: true },
-        { name: '🏆 Badges', value: profileData.badges.join(', '), inline: true }
-      )
-      .setFooter({ text: 'You can now access all channels and join tournaments!' })
-      .setTimestamp();
+  async askState(user) {
+    try {
+      const stateEmbed = new EmbedBuilder()
+        .setTitle('📝 Profile Creation - Step 3/4')
+        .setDescription('**Which state are you from?**\n\nPlease type your state name below:')
+        .setColor(0x0099FF);
 
-    const actionButtons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('view_profile')
-        .setLabel('👤 View Profile')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('join_tournament')
-        .setLabel('🎮 Join Tournament')
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setLabel('📖 Rules')
-        .setURL('https://discord.com/channels/1438443937536479245/1438484746165555243')
-        .setStyle(ButtonStyle.Link)
-    );
+      await user.send({ embeds: [stateEmbed] });
+      this.profileStates.get(user.id).step = 3;
 
-    await member.send({ embeds: [completionEmbed], components: [actionButtons] });
+      const filter = m => m.author.id === user.id;
+      const collector = user.dmChannel.createMessageCollector({ 
+        filter, 
+        time: 300000,
+        max: 1 
+      });
+
+      collector.on('collect', async (message) => {
+        const state = message.content.trim();
+        if (state.length < 2 || state.length > 30) {
+          await message.reply('❌ Please enter a valid state name:');
+          collector.resetTimer();
+          return;
+        }
+
+        this.profileStates.get(user.id).data.state = state;
+        await message.reply('✅ State saved! Moving to next step...');
+        await this.askGame(user);
+        collector.stop();
+      });
+
+    } catch (error) {
+      console.error('Error asking state:', error);
+    }
+  }
+
+  async askGame(user) {
+    try {
+      const gameEmbed = new EmbedBuilder()
+        .setTitle('📝 Profile Creation - Step 4/4')
+        .setDescription('**Select your primary game:**')
+        .setColor(0x0099FF);
+
+      const gameButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`game_freefire_${user.id}`)
+          .setLabel('🔥 Free Fire')
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId(`game_minecraft_${user.id}`)
+          .setLabel('⛏️ Minecraft')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`game_both_${user.id}`)
+          .setLabel('🎮 Both')
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      await user.send({ embeds: [gameEmbed], components: [gameButtons] });
+      this.profileStates.get(user.id).step = 4;
+
+    } catch (error) {
+      console.error('Error asking game:', error);
+    }
+  }
+
+  async handleGameSelection(interaction) {
+    try {
+      const customId = interaction.customId;
+      const userId = customId.split('_')[2];
+      const gameChoice = customId.split('_')[1];
+
+      if (interaction.user.id !== userId) {
+        await interaction.reply({ 
+          content: '❌ This is not your profile creation!', 
+          ephemeral: true 
+        });
+        return;
+      }
+
+      await this.completeProfile(interaction.user, gameChoice);
+      await interaction.update({ 
+        content: '✅ Game selected! Completing your profile...',
+        embeds: [],
+        components: [] 
+      });
+
+    } catch (error) {
+      console.error('Error handling game selection:', error);
+    }
+  }
+
+  async completeProfile(user, gameChoice) {
+    try {
+      const state = this.profileStates.get(user.id);
+      if (!state) return;
+
+      const profileData = {
+        userId: user.id,
+        otoId: this.generateOTOId(),
+        name: state.data.name,
+        gender: state.data.gender,
+        state: state.data.state,
+        game: gameChoice,
+        level: 1,
+        xp: 0,
+        badges: ['🎯 New Player'],
+        stats: {
+          tournamentsPlayed: 0,
+          wins: 0,
+          earnings: 0,
+          invites: 0,
+          joinDate: Date.now(),
+          totalPlayTime: 0,
+          bestStreak: 0,
+          currentStreak: 0
+        },
+        verification: 0,
+        createdAt: Date.now(),
+        completed: true,
+        lastDailyReward: null,
+        lastWeeklyReward: null,
+        lastMonthlyReward: null
+      };
+
+      this.profiles[user.id] = profileData;
+      dataManager.writeData('profiles.json', this.profiles);
+
+      this.profileStates.delete(user.id);
+      this.pendingProfiles.delete(user.id);
+
+      const guild = client.guilds.cache.first();
+      const member = await guild.members.fetch(user.id);
+      
+      try {
+        const playerRole = guild.roles.cache.get(ROLES.PLAYER);
+        if (playerRole) {
+          await member.roles.add(playerRole);
+        }
+      } catch (error) {
+        console.error('Failed to assign player role:', error);
+      }
+
+      await this.sendCompletionMessage(user, profileData);
+      await this.postProfileShowcase(member, profileData);
+      await this.sendWelcomeAnnouncement(member, profileData);
+
+    } catch (error) {
+      console.error('Error completing profile:', error);
+    }
+  }
+
+  async sendCompletionMessage(user, profileData) {
+    try {
+      const completionEmbed = new EmbedBuilder()
+        .setTitle('✅ Profile Created Successfully!')
+        .setDescription(`**Welcome to OTO Tournaments, ${profileData.name}!**`)
+        .setColor(0x00FF00)
+        .addFields(
+          { name: '🎯 Your OTO ID', value: `\`${profileData.otoId}\``, inline: true },
+          { name: '👤 Name', value: profileData.name, inline: true },
+          { name: '🌍 State', value: profileData.state, inline: true },
+          { name: '🎮 Primary Game', value: this.getGameName(profileData.game), inline: true },
+          { name: '⭐ Level', value: '1', inline: true },
+          { name: '🏆 Badges', value: profileData.badges.join(', '), inline: true }
+        )
+        .setFooter({ text: 'You can now access all channels and join tournaments!' })
+        .setTimestamp();
+
+      const actionButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('view_profile')
+          .setLabel('👤 View Profile')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('join_tournament')
+          .setLabel('🎮 Join Tournament')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setLabel('📖 Rules')
+          .setURL('https://discord.com/channels/1438443937536479245/1438484746165555243')
+          .setStyle(ButtonStyle.Link)
+      );
+
+      await user.send({ embeds: [completionEmbed], components: [actionButtons] });
+    } catch (error) {
+      console.error('Error sending completion message:', error);
+    }
   }
 
   async postProfileShowcase(member, profileData) {
@@ -472,6 +608,53 @@ class ProfileSystem {
       }
     } catch (error) {
       console.error('Error forcing profile completion:', error);
+    }
+  }
+
+  async addXP(userId, xpAmount) {
+    const profile = this.getProfile(userId);
+    if (!profile) return;
+
+    profile.xp += xpAmount;
+    
+    // Level up calculation (1000 XP per level)
+    const newLevel = Math.floor(profile.xp / 1000) + 1;
+    if (newLevel > profile.level) {
+      profile.level = newLevel;
+      
+      // Add badges based on level
+      if (newLevel >= 5 && !profile.badges.includes('🌟 Rising Star')) {
+        profile.badges.push('🌟 Rising Star');
+      }
+      if (newLevel >= 10 && !profile.badges.includes('💎 Pro Player')) {
+        profile.badges.push('💎 Pro Player');
+      }
+      if (newLevel >= 20 && !profile.badges.includes('👑 Elite Gamer')) {
+        profile.badges.push('👑 Elite Gamer');
+      }
+      
+      this.updateProfile(userId, profile);
+      
+      // Notify user about level up
+      try {
+        const user = await client.users.fetch(userId);
+        const levelUpEmbed = new EmbedBuilder()
+          .setTitle('🎉 Level Up!')
+          .setDescription(`**Congratulations! You've reached Level ${newLevel}!**`)
+          .setColor(0xFFD700)
+          .addFields(
+            { name: '⭐ New Level', value: newLevel.toString(), inline: true },
+            { name: '📊 Total XP', value: profile.xp.toString(), inline: true },
+            { name: '🎖️ New Badges', value: profile.badges.slice(-1)[0] || 'None', inline: true }
+          )
+          .setFooter({ text: 'Keep playing to earn more rewards!' });
+        
+        await user.send({ embeds: [levelUpEmbed] });
+      } catch (error) {
+        console.error('Failed to send level up notification:', error);
+      }
+    } else {
+      this.updateProfile(userId, profile);
     }
   }
 }
@@ -588,6 +771,10 @@ class InviteSystem {
       dataManager.writeData('invites.json', this.invites);
       await this.checkRewardMilestones(inviterId);
       this.updateInviteLeaderboards();
+      
+      // Add XP for successful invite
+      await profileSystem.addXP(inviterId, 100);
+      
       return true;
     }
 
@@ -650,6 +837,10 @@ class InviteSystem {
           });
           break;
       }
+      
+      // Add XP for reaching milestone
+      await profileSystem.addXP(inviterId, threshold * 50);
+      
     } catch (error) {
       console.error('Failed to give reward:', error);
     }
@@ -737,6 +928,196 @@ class InviteSystem {
     } catch (error) {
       console.error('Failed to post invite leaderboard:', error);
     }
+  }
+}
+
+// Economy System
+class EconomySystem {
+  constructor() {
+    this.economy = dataManager.readData('economy.json');
+    this.rewards = dataManager.readData('rewards.json');
+  }
+
+  async giveDailyReward(userId) {
+    const profile = profileSystem.getProfile(userId);
+    if (!profile) return false;
+
+    const now = Date.now();
+    const lastDaily = profile.lastDailyReward;
+    
+    if (lastDaily && this.isSameDay(now, lastDaily)) {
+      return false; // Already claimed today
+    }
+
+    const rewardAmount = CONFIG.DAILY_REWARD_AMOUNT;
+    
+    profileSystem.updateProfile(userId, {
+      lastDailyReward: now,
+      'stats.earnings': (profile.stats.earnings || 0) + rewardAmount
+    });
+
+    await profileSystem.addXP(userId, 50);
+
+    try {
+      const user = await client.users.fetch(userId);
+      const rewardEmbed = new EmbedBuilder()
+        .setTitle('🎁 Daily Reward Claimed!')
+        .setDescription(`**You received ₹${rewardAmount} as your daily reward!**`)
+        .setColor(0x00FF00)
+        .addFields(
+          { name: '💰 Amount', value: `₹${rewardAmount}`, inline: true },
+          { name: '⭐ XP Earned', value: '50', inline: true },
+          { name: '📅 Next Reward', value: '<t:' + Math.floor((now + 24 * 60 * 60 * 1000) / 1000) + ':R>', inline: true }
+        )
+        .setFooter({ text: 'Come back tomorrow for more rewards!' });
+
+      await user.send({ embeds: [rewardEmbed] });
+    } catch (error) {
+      console.error('Failed to send daily reward notification:', error);
+    }
+
+    return true;
+  }
+
+  async giveWeeklyReward(userId) {
+    const profile = profileSystem.getProfile(userId);
+    if (!profile) return false;
+
+    const now = Date.now();
+    const lastWeekly = profile.lastWeeklyReward;
+    
+    if (lastWeekly && this.isSameWeek(now, lastWeekly)) {
+      return false; // Already claimed this week
+    }
+
+    const rewardAmount = CONFIG.WEEKLY_REWARD_AMOUNT;
+    
+    profileSystem.updateProfile(userId, {
+      lastWeeklyReward: now,
+      'stats.earnings': (profile.stats.earnings || 0) + rewardAmount
+    });
+
+    await profileSystem.addXP(userId, 200);
+
+    try {
+      const user = await client.users.fetch(userId);
+      const rewardEmbed = new EmbedBuilder()
+        .setTitle('🏆 Weekly Reward Claimed!')
+        .setDescription(`**You received ₹${rewardAmount} as your weekly reward!**`)
+        .setColor(0xFFD700)
+        .addFields(
+          { name: '💰 Amount', value: `₹${rewardAmount}`, inline: true },
+          { name: '⭐ XP Earned', value: '200', inline: true },
+          { name: '📅 Next Reward', value: '<t:' + Math.floor((now + 7 * 24 * 60 * 60 * 1000) / 1000) + ':R>', inline: true }
+        )
+        .setFooter({ text: 'Great job staying active this week!' });
+
+      await user.send({ embeds: [rewardEmbed] });
+    } catch (error) {
+      console.error('Failed to send weekly reward notification:', error);
+    }
+
+    return true;
+  }
+
+  async giveMonthlyReward(userId) {
+    const profile = profileSystem.getProfile(userId);
+    if (!profile) return false;
+
+    const now = Date.now();
+    const lastMonthly = profile.lastMonthlyReward;
+    
+    if (lastMonthly && this.isSameMonth(now, lastMonthly)) {
+      return false; // Already claimed this month
+    }
+
+    const rewardAmount = CONFIG.MONTHLY_REWARD_AMOUNT;
+    
+    profileSystem.updateProfile(userId, {
+      lastMonthlyReward: now,
+      'stats.earnings': (profile.stats.earnings || 0) + rewardAmount
+    });
+
+    await profileSystem.addXP(userId, 500);
+
+    try {
+      const user = await client.users.fetch(userId);
+      const rewardEmbed = new EmbedBuilder()
+        .setTitle('🎊 Monthly Reward Claimed!')
+        .setDescription(`**You received ₹${rewardAmount} as your monthly reward!**`)
+        .setColor(0x9B59B6)
+        .addFields(
+          { name: '💰 Amount', value: `₹${rewardAmount}`, inline: true },
+          { name: '⭐ XP Earned', value: '500', inline: true },
+          { name: '📅 Next Reward', value: '<t:' + Math.floor((now + 30 * 24 * 60 * 60 * 1000) / 1000) + ':R>', inline: true }
+        )
+        .setFooter({ text: 'Thank you for being a loyal member!' });
+
+      await user.send({ embeds: [rewardEmbed] });
+    } catch (error) {
+      console.error('Failed to send monthly reward notification:', error);
+    }
+
+    return true;
+  }
+
+  isSameDay(timestamp1, timestamp2) {
+    const date1 = new Date(timestamp1);
+    const date2 = new Date(timestamp2);
+    return date1.getDate() === date2.getDate() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  }
+
+  isSameWeek(timestamp1, timestamp2) {
+    const date1 = new Date(timestamp1);
+    const date2 = new Date(timestamp2);
+    const startOfWeek1 = new Date(date1.setDate(date1.getDate() - date1.getDay()));
+    const startOfWeek2 = new Date(date2.setDate(date2.getDate() - date2.getDay()));
+    return startOfWeek1.getTime() === startOfWeek2.getTime();
+  }
+
+  isSameMonth(timestamp1, timestamp2) {
+    const date1 = new Date(timestamp1);
+    const date2 = new Date(timestamp2);
+    return date1.getMonth() === date2.getMonth() &&
+           date1.getFullYear() === date2.getFullYear();
+  }
+
+  async addMoney(userId, amount, reason = '') {
+    const profile = profileSystem.getProfile(userId);
+    if (!profile) return false;
+
+    profileSystem.updateProfile(userId, {
+      'stats.earnings': (profile.stats.earnings || 0) + amount
+    });
+
+    if (reason) {
+      try {
+        const user = await client.users.fetch(userId);
+        const moneyEmbed = new EmbedBuilder()
+          .setTitle('💰 Money Added!')
+          .setDescription(`**You received ₹${amount}**`)
+          .setColor(0x00FF00)
+          .addFields(
+            { name: '💸 Amount', value: `₹${amount}`, inline: true },
+            { name: '📝 Reason', value: reason, inline: true },
+            { name: '🏦 Total Balance', value: `₹${(profile.stats.earnings || 0) + amount}`, inline: true }
+          )
+          .setFooter({ text: 'Keep up the great work!' });
+
+        await user.send({ embeds: [moneyEmbed] });
+      } catch (error) {
+        console.error('Failed to send money notification:', error);
+      }
+    }
+
+    return true;
+  }
+
+  getBalance(userId) {
+    const profile = profileSystem.getProfile(userId);
+    return profile ? (profile.stats.earnings || 0) : 0;
   }
 }
 
@@ -1202,13 +1583,14 @@ class TournamentSystem {
 
       await user.send({ embeds: [ignEmbed] });
 
-      const filter = m => m.author.id === user.id && m.channel.type === ChannelType.DM;
+      const filter = m => m.author.id === user.id;
       const collector = user.dmChannel.createMessageCollector({ filter, time: 300000 });
 
       collector.on('collect', async (message) => {
         const ign = message.content.trim();
         if (ign.length < 2 || ign.length > 20) {
           await message.reply('❌ Please enter a valid IGN (2-20 characters):');
+          collector.resetTimer();
           return;
         }
 
@@ -1541,6 +1923,7 @@ class ModerationSystem {
 
   async checkMessage(message) {
     if (message.author.bot) return;
+    if (!message.member) return; // Fix for null permissions
     if (message.member.permissions.has(PermissionsBitField.Flags.Administrator)) return;
 
     const content = message.content.toLowerCase();
@@ -1632,6 +2015,7 @@ class ModerationSystem {
     
     try {
       await message.delete();
+
       await this.addWarning(userId, `Used inappropriate language (Level ${level})`, message.content);
 
       switch (level) {
@@ -2541,6 +2925,7 @@ const autoResponseSystem = new AutoResponseSystem();
 const leaderboardSystem = new LeaderboardSystem();
 const analyticsSystem = new AnalyticsSystem();
 const channelManagementSystem = new ChannelManagementSystem();
+const economySystem = new EconomySystem();
 
 // Command Handling
 client.commands = new Collection();
@@ -2571,6 +2956,7 @@ const commands = {
         .addFields(
           { name: '🎯 OTO ID', value: profile.otoId, inline: true },
           { name: '⭐ Level', value: profile.level.toString(), inline: true },
+          { name: '📊 XP', value: `${profile.xp}/${profile.level * 1000}`, inline: true },
           { name: '🌍 State', value: profile.state, inline: true },
           { name: '🎮 Primary Game', value: profileSystem.getGameName(profile.game), inline: true },
           { name: '🏆 Tournaments Played', value: profile.stats.tournamentsPlayed.toString(), inline: true },
@@ -2773,6 +3159,122 @@ const commands = {
     }
   },
 
+  daily: {
+    execute: async (interaction) => {
+      const userId = interaction.user.id;
+      const profile = profileSystem.getProfile(userId);
+
+      if (!profile || !profile.completed) {
+        await interaction.reply({
+          content: 'You need to complete your profile first!',
+          ephemeral: true
+        });
+        return;
+      }
+
+      const claimed = await economySystem.giveDailyReward(userId);
+      
+      if (claimed) {
+        await interaction.reply({
+          content: '✅ Daily reward claimed! Check your DMs for details.',
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({
+          content: '❌ You have already claimed your daily reward today!',
+          ephemeral: true
+        });
+      }
+    }
+  },
+
+  weekly: {
+    execute: async (interaction) => {
+      const userId = interaction.user.id;
+      const profile = profileSystem.getProfile(userId);
+
+      if (!profile || !profile.completed) {
+        await interaction.reply({
+          content: 'You need to complete your profile first!',
+          ephemeral: true
+        });
+        return;
+      }
+
+      const claimed = await economySystem.giveWeeklyReward(userId);
+      
+      if (claimed) {
+        await interaction.reply({
+          content: '✅ Weekly reward claimed! Check your DMs for details.',
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({
+          content: '❌ You have already claimed your weekly reward this week!',
+          ephemeral: true
+        });
+      }
+    }
+  },
+
+  monthly: {
+    execute: async (interaction) => {
+      const userId = interaction.user.id;
+      const profile = profileSystem.getProfile(userId);
+
+      if (!profile || !profile.completed) {
+        await interaction.reply({
+          content: 'You need to complete your profile first!',
+          ephemeral: true
+        });
+        return;
+      }
+
+      const claimed = await economySystem.giveMonthlyReward(userId);
+      
+      if (claimed) {
+        await interaction.reply({
+          content: '✅ Monthly reward claimed! Check your DMs for details.',
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({
+          content: '❌ You have already claimed your monthly reward this month!',
+          ephemeral: true
+        });
+      }
+    }
+  },
+
+  balance: {
+    execute: async (interaction) => {
+      const userId = interaction.user.id;
+      const profile = profileSystem.getProfile(userId);
+
+      if (!profile || !profile.completed) {
+        await interaction.reply({
+          content: 'You need to complete your profile first!',
+          ephemeral: true
+        });
+        return;
+      }
+
+      const balance = economySystem.getBalance(userId);
+      
+      const balanceEmbed = new EmbedBuilder()
+        .setTitle('💰 Your Balance')
+        .setColor(0x00FF00)
+        .addFields(
+          { name: '🏦 Total Earnings', value: `₹${balance}`, inline: true },
+          { name: '⭐ Level', value: profile.level.toString(), inline: true },
+          { name: '📊 XP', value: `${profile.xp}/${profile.level * 1000}`, inline: true }
+        )
+        .setFooter({ text: 'Earn more by playing tournaments and inviting friends!' });
+
+      await interaction.reply({ embeds: [balanceEmbed], ephemeral: true });
+    }
+  },
+
   help: {
     execute: async (interaction) => {
       const helpEmbed = new EmbedBuilder()
@@ -2780,11 +3282,12 @@ const commands = {
         .setColor(0x0099FF)
         .setDescription('**Available Commands:**')
         .addFields(
-          { name: '👤 Profile Commands', value: '`-profile` - View your profile\n`-profile @user` - View user profile', inline: false },
-          { name: '📨 Invite Commands', value: '`-invite` - Your invite stats\n`-invites` - Invite leaderboard', inline: false },
-          { name: '🏆 Tournament Commands', value: '`-createtournament` - Create tournament (Staff)\n`-dashboard` - Staff dashboard', inline: false },
-          { name: '⚡ Moderation Commands', value: '`-warn @user reason` - Warn user (Staff)\n`-clear [amount]` - Clear messages (Staff)\n`-purge` - Advanced cleanup (Staff)', inline: false },
-          { name: '📊 Analytics Commands', value: '`-stats` - Server stats\n`-stats @user` - User stats', inline: false }
+          { name: '👤 Profile Commands', value: '`/profile` - View your profile\n`/profile @user` - View user profile', inline: false },
+          { name: '📨 Invite Commands', value: '`/invite` - Your invite stats\n`/invites` - Invite leaderboard', inline: false },
+          { name: '🏆 Tournament Commands', value: '`/createtournament` - Create tournament (Staff)\n`/dashboard` - Staff dashboard', inline: false },
+          { name: '⚡ Moderation Commands', value: '`/warn @user reason` - Warn user (Staff)\n`/clear [amount]` - Clear messages (Staff)\n`/purge` - Advanced cleanup (Staff)', inline: false },
+          { name: '💰 Economy Commands', value: '`/daily` - Claim daily reward\n`/weekly` - Claim weekly reward\n`/monthly` - Claim monthly reward\n`/balance` - Check your balance', inline: false },
+          { name: '📊 Analytics Commands', value: '`/stats` - Server stats\n`/stats @user` - User stats', inline: false }
         )
         .setFooter({ text: 'Need help? Mention the bot or ask in general chat!' });
 
@@ -2798,7 +3301,7 @@ client.once('ready', async () => {
   console.log(`✅ Logged in as ${client.user.tag}!`);
   console.log(`🏠 Connected to ${client.guilds.cache.size} servers`);
 
-  client.user.setActivity('OTO Tournaments | -help', { type: 3 });
+  client.user.setActivity('OTO Tournaments | /help', { type: 3 });
 
   leaderboardSystem.startAutoUpdate();
   scheduleDailyReport();
@@ -2856,15 +3359,10 @@ async function handleButtonInteraction(interaction) {
       await profileSystem.startProfileCreation(interaction);
     }
     else if (customId.startsWith('gender_')) {
-      const gender = customId.replace('gender_', '');
-      profileSystem.profileStates.get(interaction.user.id).data.gender = gender;
-      await profileSystem.askState(interaction.member);
-      await interaction.deferUpdate();
+      await profileSystem.handleGenderSelection(interaction);
     }
     else if (customId.startsWith('game_')) {
-      const game = customId.replace('game_', '');
-      await profileSystem.completeProfile(interaction.member, game);
-      await interaction.deferUpdate();
+      await profileSystem.handleGameSelection(interaction);
     }
     else if (customId.startsWith('join_tournament_')) {
       const tournamentId = customId.replace('join_tournament_', '');
@@ -2914,10 +3412,12 @@ async function handleButtonInteraction(interaction) {
 
   } catch (error) {
     console.error('Button interaction error:', error);
-    await interaction.reply({ 
-      content: '❌ An error occurred while processing your request.', 
-      ephemeral: true 
-    });
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ 
+        content: '❌ An error occurred while processing your request.', 
+        ephemeral: true 
+      });
+    }
   }
 }
 
@@ -3011,7 +3511,8 @@ async function handleCommand(message) {
           { name: '👤 Profile', value: '`-profile` - View your profile', inline: true },
           { name: '📨 Invite', value: '`-invite` - Your invite stats', inline: true },
           { name: '🏆 Tournaments', value: 'Check tournament channels!', inline: true },
-          { name: '🧹 Moderation', value: '`-clear [amount]` - Clear messages (Staff)', inline: true }
+          { name: '🧹 Moderation', value: '`-clear [amount]` - Clear messages (Staff)', inline: true },
+          { name: '💰 Economy', value: '`-daily` - Claim daily reward', inline: true }
         );
 
       await message.reply({ embeds: [helpEmbed] });
@@ -3033,6 +3534,24 @@ async function handleCommand(message) {
         channel: message.channel, 
         reply: (content) => message.reply(content) 
       }, amount);
+      break;
+
+    case 'daily':
+      const userId = message.author.id;
+      const userProfile = profileSystem.getProfile(userId);
+
+      if (!userProfile || !userProfile.completed) {
+        await message.reply('You need to complete your profile first!');
+        return;
+      }
+
+      const claimed = await economySystem.giveDailyReward(userId);
+      
+      if (claimed) {
+        await message.reply('✅ Daily reward claimed! Check your DMs for details.');
+      } else {
+        await message.reply('❌ You have already claimed your daily reward today!');
+      }
       break;
   }
 }
