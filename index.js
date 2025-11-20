@@ -1,8 +1,7 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, Collection, PermissionsBitField, ChannelType, Events, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, Collection, PermissionsBitField, ChannelType, Events, Partials, StringSelectMenuBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
-
 
 // Initialize Discord Client with all required intents
 const client = new Client({
@@ -186,7 +185,6 @@ class ProfileSystem {
 
       await member.send({ embeds: [welcomeEmbed], components: [startButton] });
       
-      // Store that we've sent welcome message
       this.pendingProfiles.set(member.id, {
         step: 0,
         data: {}
@@ -212,9 +210,8 @@ class ProfileSystem {
       data: { startedAt: Date.now() }
     });
 
-    // Create a collector for name input
     const filter = m => m.author.id === member.id && m.channel.type === ChannelType.DM;
-    const collector = interaction.channel.createMessageCollector({ filter, time: 300000 }); // 5 minutes
+    const collector = interaction.channel.createMessageCollector({ filter, time: 300000 });
 
     collector.on('collect', async (message) => {
       const name = message.content.trim();
@@ -329,15 +326,12 @@ class ProfileSystem {
       completed: true
     };
 
-    // Save profile
     this.profiles[member.id] = profileData;
     dataManager.writeData('profiles.json', this.profiles);
 
-    // Clear state
     this.profileStates.delete(member.id);
     this.pendingProfiles.delete(member.id);
 
-    // Assign Player role
     try {
       const playerRole = member.guild.roles.cache.get(ROLES.PLAYER);
       if (playerRole) {
@@ -347,13 +341,8 @@ class ProfileSystem {
       console.error('Failed to assign player role:', error);
     }
 
-    // Send completion message
     await this.sendCompletionMessage(member, profileData);
-    
-    // Post to profile showcase
     await this.postProfileShowcase(member, profileData);
-
-    // Send welcome in general chat
     await this.sendWelcomeAnnouncement(member, profileData);
   }
 
@@ -422,6 +411,7 @@ class ProfileSystem {
       const generalChannel = client.channels.cache.get(CHANNELS.GENERAL);
       if (!generalChannel) return;
 
+      const gender = profileData.gender || 'other';
       const greetings = {
         male: [
           `🔥 ${member} has entered the arena! Ready to dominate?`,
@@ -443,7 +433,7 @@ class ProfileSystem {
         ]
       };
 
-      const genderGreetings = greetings[profileData.gender] || greetings.other;
+      const genderGreetings = greetings[gender] || greetings.other;
       const randomGreeting = genderGreetings[Math.floor(Math.random() * genderGreetings.length)];
 
       await generalChannel.send(randomGreeting);
@@ -475,7 +465,6 @@ class ProfileSystem {
   }
 
   async forceProfileCompletion(member) {
-    // Send DM to existing members who haven't completed profile
     try {
       const profile = this.getProfile(member.id);
       if (!profile || !profile.completed) {
@@ -516,7 +505,6 @@ class InviteSystem {
       validated: false
     });
 
-    // Store pending validation
     this.pendingInvites.set(invitedId, {
       inviterId: inviterId,
       joinTime: Date.now(),
@@ -524,8 +512,6 @@ class InviteSystem {
     });
 
     dataManager.writeData('invites.json', this.invites);
-
-    // Notify inviter
     await this.notifyInviter(inviterId, invitedId);
   }
 
@@ -575,28 +561,23 @@ class InviteSystem {
     const pending = this.pendingInvites.get(userId);
     if (!pending || pending.validated) return false;
 
-    // Check validation criteria
     const user = await client.users.fetch(userId);
     const profile = profileSystem.getProfile(userId);
     const accountAge = Date.now() - user.createdTimestamp;
     const timeInServer = Date.now() - pending.joinTime;
 
-    // Validation rules
-    if (accountAge < 7 * 24 * 60 * 60 * 1000) return false; // 7 days old
-    if (!profile || !profile.completed) return false; // Profile completed
-    if (timeInServer < 3 * 24 * 60 * 60 * 1000) return false; // 3 days in server
+    if (accountAge < 7 * 24 * 60 * 60 * 1000) return false;
+    if (!profile || !profile.completed) return false;
+    if (timeInServer < 3 * 24 * 60 * 60 * 1000) return false;
 
-    // Mark as validated
     pending.validated = true;
     this.pendingInvites.set(userId, pending);
 
-    // Update inviter stats
     const inviterId = pending.inviterId;
     if (this.invites[inviterId]) {
       this.invites[inviterId].valid++;
       this.invites[inviterId].pending--;
       
-      // Update invited user status
       const invitedUser = this.invites[inviterId].invitedUsers.find(u => u.userId === userId);
       if (invitedUser) {
         invitedUser.status = 'valid';
@@ -605,13 +586,8 @@ class InviteSystem {
       }
 
       dataManager.writeData('invites.json', this.invites);
-
-      // Check for reward milestones
       await this.checkRewardMilestones(inviterId);
-      
-      // Update leaderboards
       this.updateInviteLeaderboards();
-      
       return true;
     }
 
@@ -659,19 +635,16 @@ class InviteSystem {
 
       await inviter.send({ embeds: [rewardEmbed] });
 
-      // Additional reward processing based on type
       switch (reward.type) {
         case 'role':
           await this.assignRecruiterRole(inviterId, reward.value);
           break;
         case 'free_entry':
-          // Add free entry to user's profile
           profileSystem.updateProfile(inviterId, {
             freeEntries: (profileSystem.getProfile(inviterId)?.freeEntries || 0) + reward.value
           });
           break;
         case 'discount':
-          // Add discount coupon
           profileSystem.updateProfile(inviterId, {
             discounts: [...(profileSystem.getProfile(inviterId)?.discounts || []), reward]
           });
@@ -698,16 +671,6 @@ class InviteSystem {
     try {
       const guild = client.guilds.cache.first();
       const member = await guild.members.fetch(userId);
-      
-      const roleNames = {
-        'Beginner Recruiter': 'Beginner Recruiter',
-        'Pro Recruiter': 'Pro Recruiter',
-        'Elite Recruiter': 'Elite Recruiter',
-        'Legend': 'Legend Recruiter'
-      };
-
-      // Implementation for role assignment would go here
-      // You need to create these roles in your Discord server first
       console.log(`Would assign ${roleType} role to ${member.user.username}`);
     } catch (error) {
       console.error('Failed to assign recruiter role:', error);
@@ -851,12 +814,10 @@ class TournamentSystem {
 
   async createTournament(interaction, template = null) {
     if (!template) {
-      // Show template selection
       await this.showTemplateSelection(interaction);
       return;
     }
 
-    // Create tournament from template
     const tournamentId = this.generateTournamentId();
     const tournamentData = {
       id: tournamentId,
@@ -878,8 +839,6 @@ class TournamentSystem {
 
     this.tournaments[tournamentId] = tournamentData;
     dataManager.writeData('tournaments.json', this.tournaments);
-
-    // Show configuration modal
     await this.showTournamentConfig(interaction, tournamentId);
   }
 
@@ -954,7 +913,6 @@ class TournamentSystem {
     const fifthActionRow = new ActionRowBuilder().addComponents(timeInput);
 
     modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow, fifthActionRow);
-
     await interaction.showModal(modal);
   }
 
@@ -962,20 +920,15 @@ class TournamentSystem {
     const tournament = this.tournaments[tournamentId];
     if (!tournament) return;
 
-    // Update tournament with config
     tournament.title = config.title;
     tournament.prizePool = parseInt(config.prizePool);
     tournament.entryFee = parseInt(config.entryFee);
     tournament.slots = parseInt(config.slots);
     tournament.time = config.time;
     tournament.status = 'open';
-    
-    // Calculate prize distribution
     tournament.prizeDistribution = this.calculatePrizeDistribution(tournament.prizePool);
 
     dataManager.writeData('tournaments.json', this.tournaments);
-
-    // Post tournament announcement
     await this.postTournamentAnnouncement(tournament);
 
     await interaction.reply({
@@ -1048,11 +1001,8 @@ class TournamentSystem {
         components: [joinButton] 
       });
 
-      // Store message ID for updates
       tournament.announcementMessageId = message.id;
       dataManager.writeData('tournaments.json', this.tournaments);
-
-      // Also post in general chat
       await this.postGeneralAnnouncement(tournament);
 
     } catch (error) {
@@ -1078,7 +1028,6 @@ class TournamentSystem {
 
       await generalChannel.send({ embeds: [alertEmbed] });
 
-      // Start spam interval (every 2 minutes while open)
       if (tournament.status === 'open') {
         const spamInterval = setInterval(async () => {
           const currentTournament = this.tournaments[tournament.id];
@@ -1094,9 +1043,8 @@ class TournamentSystem {
             .setFooter({ text: `Join now before slots fill up! • ${moment().format('HH:mm')}` });
 
           await generalChannel.send({ embeds: [spamEmbed] });
-        }, 120000); // 2 minutes
+        }, 120000);
 
-        // Store interval reference
         this.activeTournaments.set(tournament.id, {
           ...tournament,
           spamInterval
@@ -1131,30 +1079,25 @@ class TournamentSystem {
     const userId = interaction.user.id;
     const profile = profileSystem.getProfile(userId);
 
-    // Check if profile is completed
     if (!profile || !profile.completed) {
       await interaction.reply({
         content: '❌ You need to complete your profile before joining tournaments! Check your DMs.',
         ephemeral: true
       });
-      // Send profile completion reminder
       await profileSystem.forceProfileCompletion(interaction.member);
       return;
     }
 
-    // Check if already joined
     if (tournament.participants.some(p => p.userId === userId)) {
       await interaction.reply({ content: '❌ You have already joined this tournament!', ephemeral: true });
       return;
     }
 
-    // Check if tournament is full
     if (tournament.slotsFilled >= tournament.slots) {
       await interaction.reply({ content: '❌ Tournament is full!', ephemeral: true });
       return;
     }
 
-    // Create payment ticket
     await this.createPaymentTicket(interaction, tournament);
   }
 
@@ -1163,7 +1106,6 @@ class TournamentSystem {
     const ticketId = `TICKET-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
 
     try {
-      // Create ticket in ticket log channel
       const ticketChannel = client.channels.cache.get(CHANNELS.TICKET_LOG);
       if (!ticketChannel) return;
 
@@ -1206,7 +1148,6 @@ class TournamentSystem {
         components: [ticketButtons] 
       });
 
-      // Store ticket data
       this.tickets[ticketId] = {
         id: ticketId,
         userId: userId,
@@ -1224,8 +1165,6 @@ class TournamentSystem {
       };
 
       dataManager.writeData('tickets.json', this.tickets);
-
-      // Send payment instructions to user
       await this.sendPaymentInstructions(interaction, tournament, ticketId);
 
     } catch (error) {
@@ -1237,7 +1176,7 @@ class TournamentSystem {
   async sendPaymentInstructions(interaction, tournament, ticketId) {
     try {
       const user = interaction.user;
-           const qrCodeData = `upi://pay?pa=${CONFIG.UPI_ID}&am=${tournament.entryFee}&tn=OTO-${ticketId}`;
+      const qrCodeData = `upi://pay?pa=${CONFIG.UPI_ID}&am=${tournament.entryFee}&tn=OTO-${ticketId}`;
       
       const paymentEmbed = new EmbedBuilder()
         .setTitle('💳 Payment Instructions')
@@ -1255,7 +1194,6 @@ class TournamentSystem {
 
       await user.send({ embeds: [paymentEmbed] });
 
-      // Ask for IGN and Game ID
       const ignEmbed = new EmbedBuilder()
         .setTitle('🎮 Player Information Required')
         .setDescription('**Please provide your in-game details:**\n\n1️⃣ **In-Game Name (IGN)**\n2️⃣ **Game ID**')
@@ -1264,7 +1202,6 @@ class TournamentSystem {
 
       await user.send({ embeds: [ignEmbed] });
 
-      // Set up message collector for IGN
       const filter = m => m.author.id === user.id && m.channel.type === ChannelType.DM;
       const collector = user.dmChannel.createMessageCollector({ filter, time: 300000 });
 
@@ -1275,11 +1212,9 @@ class TournamentSystem {
           return;
         }
 
-        // Store IGN
         this.tickets[ticketId].userInfo.ign = ign;
         dataManager.writeData('tickets.json', this.tickets);
 
-        // Ask for Game ID
         const gameIdEmbed = new EmbedBuilder()
           .setTitle('🎮 Game ID Required')
           .setDescription('**Now please provide your Game ID:**')
@@ -1288,17 +1223,13 @@ class TournamentSystem {
 
         await user.send({ embeds: [gameIdEmbed] });
 
-        // Set up collector for Game ID
         const gameIdCollector = user.dmChannel.createMessageCollector({ filter, time: 300000 });
 
         gameIdCollector.on('collect', async (gameIdMessage) => {
           const gameId = gameIdMessage.content.trim();
-          
-          // Store Game ID
           this.tickets[ticketId].userInfo.gameId = gameId;
           dataManager.writeData('tickets.json', this.tickets);
 
-          // Ask for payment screenshot
           const screenshotEmbed = new EmbedBuilder()
             .setTitle('📸 Payment Verification')
             .setDescription('**Please upload screenshot of payment confirmation:**')
@@ -1336,12 +1267,10 @@ class TournamentSystem {
     const tournament = this.tournaments[ticket.tournamentId];
     if (!tournament) return;
 
-    // Update ticket status
     ticket.status = 'approved';
     ticket.approvedBy = staffMember.id;
     ticket.approvedAt = Date.now();
 
-    // Add user to tournament participants
     tournament.participants.push({
       userId: ticket.userId,
       ign: ticket.userInfo.ign,
@@ -1352,20 +1281,13 @@ class TournamentSystem {
 
     tournament.slotsFilled++;
 
-    // Update data
     dataManager.writeData('tickets.json', this.tickets);
     dataManager.writeData('tournaments.json', this.tournaments);
 
-    // Update tournament announcement
     await this.updateTournamentAnnouncement(tournament);
-
-    // Notify user
     await this.sendApprovalNotification(ticket.userId, tournament);
-
-    // Update ticket embed
     await this.updateTicketEmbed(ticketId, 'approved', staffMember);
 
-    // Create lobby if needed
     if (tournament.slotsFilled === tournament.slots) {
       await this.createTournamentLobby(tournament);
     }
@@ -1389,7 +1311,6 @@ class TournamentSystem {
 
       await user.send({ embeds: [approvalEmbed] });
 
-      // Send lobby information if available
       if (tournament.lobbyChannel) {
         const lobbyInfo = new EmbedBuilder()
           .setTitle('🏟️ Tournament Lobby')
@@ -1416,7 +1337,6 @@ class TournamentSystem {
         const updatedEmbed = EmbedBuilder.from(embed);
         const fields = updatedEmbed.data.fields;
         
-        // Update slots field
         const slotsFieldIndex = fields.findIndex(f => f.name === '📊 Slots');
         if (slotsFieldIndex !== -1) {
           fields[slotsFieldIndex].value = `${tournament.slotsFilled}/${tournament.slots}`;
@@ -1442,7 +1362,6 @@ class TournamentSystem {
       if (embed) {
         const updatedEmbed = EmbedBuilder.from(embed);
         
-        // Update color and status
         const statusColors = {
           'approved': 0x00FF00,
           'rejected': 0xFF0000,
@@ -1450,15 +1369,12 @@ class TournamentSystem {
         };
 
         updatedEmbed.setColor(statusColors[status] || 0x0099FF);
-        
-        // Update footer
         updatedEmbed.setFooter({ 
           text: status === 'approved' ? 
             `Approved by ${staffMember.user.username}` : 
             `Rejected by ${staffMember.user.username}` 
         });
 
-        // Remove buttons
         await message.edit({ 
           embeds: [updatedEmbed], 
           components: [] 
@@ -1473,11 +1389,10 @@ class TournamentSystem {
     try {
       const guild = client.guilds.cache.first();
       
-      // Create lobby channel
       const lobbyChannel = await guild.channels.create({
         name: `lobby-${tournament.id.toLowerCase()}`,
         type: ChannelType.GuildText,
-        parent: CHANNELS.STAFF_TOOLS, // Place under staff category
+        parent: CHANNELS.STAFF_TOOLS,
         permissionOverwrites: [
           {
             id: guild.id,
@@ -1497,13 +1412,12 @@ class TournamentSystem {
       tournament.lobbyChannel = lobbyChannel.id;
       dataManager.writeData('tournaments.json', this.tournaments);
 
-      // Send lobby message
       const lobbyEmbed = new EmbedBuilder()
         .setTitle('🏆 TOURNAMENT LOBBY')
         .setDescription(`**${tournament.title}**`)
         .setColor(0x00FF00)
         .addFields(
-          { name: '⏰ Starting', value: `${tournament.time} (<t:${Math.floor(Date.now()/1000) + 7200}:R>)`, inline: true }, // 2 hours from now
+          { name: '⏰ Starting', value: `${tournament.time} (<t:${Math.floor(Date.now()/1000) + 7200}:R>)`, inline: true },
           { name: '📊 Slots', value: `${tournament.slotsFilled}/${tournament.slots}`, inline: true },
           { name: '🎮 Mode', value: tournament.mode.toUpperCase(), inline: true }
         );
@@ -1537,7 +1451,6 @@ class TournamentSystem {
         embeds: [lobbyEmbed, checklistEmbed] 
       });
 
-      // Schedule room credential sharing (5 minutes before)
       const startTime = moment(`${tournament.date} ${tournament.time}`, 'YYYY-MM-DD h:mm A');
       const credentialTime = startTime.subtract(5, 'minutes').valueOf();
       
@@ -1557,7 +1470,6 @@ class TournamentSystem {
       const lobbyChannel = client.channels.cache.get(tournament.lobbyChannel);
       if (!lobbyChannel) return;
 
-      // Generate room credentials
       const roomId = Math.floor(100000000 + Math.random() * 900000000).toString();
       const roomPassword = `oto${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -1593,7 +1505,6 @@ class TournamentSystem {
         components: [readyButton]
       });
 
-      // Auto-delete credentials after 30 minutes
       setTimeout(async () => {
         try {
           const messages = await lobbyChannel.messages.fetch({ limit: 10 });
@@ -1635,23 +1546,19 @@ class ModerationSystem {
     const content = message.content.toLowerCase();
     const userId = message.author.id;
 
-    // Update message count for spam detection
     this.updateMessageCount(userId);
 
-    // Check for bad words
     const badWordLevel = this.checkBadWords(content);
     if (badWordLevel > 0) {
       await this.handleBadWord(message, badWordLevel);
       return;
     }
 
-    // Check for spam
     if (this.isSpam(userId, content)) {
       await this.handleSpam(message);
       return;
     }
 
-    // Check for excessive mentions
     if (this.isMentionSpam(message)) {
       await this.handleMentionSpam(message);
       return;
@@ -1662,7 +1569,6 @@ class ModerationSystem {
     for (const [level, words] of Object.entries(this.badWords)) {
       for (const word of words) {
         if (content.includes(word)) {
-          // Context check - allow game-related terms
           if (this.isGameContext(content, word)) {
             return 0;
           }
@@ -1676,11 +1582,8 @@ class ModerationSystem {
   isGameContext(content, word) {
     const gameTerms = ['pubg', 'freefire', 'minecraft', 'game', 'play', 'match'];
     const hasGameTerm = gameTerms.some(term => content.includes(term));
-    
-    // Allow common gaming phrases
     const allowedPhrases = ['pubg bc', 'ff bc', 'game noob'];
     const isAllowedPhrase = allowedPhrases.some(phrase => content.includes(phrase));
-    
     return hasGameTerm || isAllowedPhrase;
   }
 
@@ -1688,16 +1591,13 @@ class ModerationSystem {
     const userData = this.userMessageCount.get(userId);
     if (!userData) return false;
 
-    // Check message frequency (5 messages in 3 seconds)
     if (userData.count >= 5 && Date.now() - userData.firstMessage < 3000) {
       return true;
     }
 
-    // Check emoji spam (10+ emojis)
     const emojiCount = (content.match(/<a?:.+?:\d+>|[\u{1F300}-\u{1F9FF}]/gu) || []).length;
     if (emojiCount > 10) return true;
 
-    // Check caps spam (80% caps)
     const letters = content.replace(/[^a-zA-Z]/g, '');
     if (letters.length > 10) {
       const caps = letters.replace(/[a-z]/g, '').length;
@@ -1731,13 +1631,9 @@ class ModerationSystem {
     const userId = message.author.id;
     
     try {
-      // Delete the message
       await message.delete();
-
-      // Add warning
       await this.addWarning(userId, `Used inappropriate language (Level ${level})`, message.content);
 
-      // Take action based on level
       switch (level) {
         case 1:
           await message.channel.send({
@@ -1764,7 +1660,6 @@ class ModerationSystem {
     try {
       await message.delete();
       await this.timeoutUser(message.member, 10 * 60 * 1000, 'Spam detection');
-      
       await message.channel.send({
         content: `${message.author}, please avoid spamming! ⚠️`
       });
@@ -1777,7 +1672,6 @@ class ModerationSystem {
     try {
       await message.delete();
       await this.timeoutUser(message.member, 15 * 60 * 1000, 'Mention spam');
-      
       await message.channel.send({
         content: `${message.author}, please avoid mass mentioning! ⚠️`
       });
@@ -1804,7 +1698,6 @@ class ModerationSystem {
     this.warnings[userId].count++;
     this.warnings[userId].history.push(warning);
 
-    // Clean old warnings (older than 7 days)
     this.warnings[userId].history = this.warnings[userId].history.filter(
       w => Date.now() - w.timestamp < 7 * 24 * 60 * 60 * 1000
     );
@@ -1812,23 +1705,19 @@ class ModerationSystem {
 
     dataManager.writeData('warnings.json', this.warnings);
 
-    // Take action based on warning count
     const warningCount = this.warnings[userId].count;
     
     if (warningCount >= 5) {
-      // Permanent ban
       const member = await client.guilds.cache.first().members.fetch(userId).catch(() => null);
       if (member) {
         await member.ban({ reason: 'Excessive warnings' });
       }
     } else if (warningCount >= 4) {
-      // 24 hour timeout
       const member = await client.guilds.cache.first().members.fetch(userId).catch(() => null);
       if (member) {
         await this.timeoutUser(member, 24 * 60 * 60 * 1000, 'Excessive warnings');
       }
     } else if (warningCount >= 3) {
-      // 1 hour timeout
       const member = await client.guilds.cache.first().members.fetch(userId).catch(() => null);
       if (member) {
         await this.timeoutUser(member, 60 * 60 * 1000, 'Multiple warnings');
@@ -1906,10 +1795,8 @@ class AutoResponseSystem {
     const userId = message.author.id;
     const profile = profileSystem.getProfile(userId);
 
-    // Check if bot was mentioned
     const isBotMentioned = message.mentions.has(client.user);
 
-    // Response patterns
     if (this.isGreeting(content) || isBotMentioned) {
       await this.sendGreetingResponse(message, profile);
       return;
@@ -1930,13 +1817,11 @@ class AutoResponseSystem {
       return;
     }
 
-    // If no specific response and bot was mentioned, send general help
     if (isBotMentioned) {
       await this.sendGeneralHelp(message, profile);
       return;
     }
 
-    // Check for unanswered messages in general chat
     if (message.channel.id === CHANNELS.GENERAL) {
       await this.checkUnansweredMessage(message);
     }
@@ -1962,7 +1847,8 @@ class AutoResponseSystem {
     return keywords.some(keyword => content.includes(keyword));
   }
 
-    async sendGreetingResponse(message, profile) {
+  async sendGreetingResponse(message, profile) {
+    const gender = (profile && profile.gender) ? profile.gender : 'other';
     const greetings = {
       male: [
         "Kya haal bhai! Tournament kheloge aaj? 🔥",
@@ -1988,11 +1874,23 @@ class AutoResponseSystem {
         "Ji! Kya aapko tournament join karna hai? 🎮",
         "Hello! Slots fill ho rahe hain, jaldi join kariye! ⚡"
       ],
-    const gender = profile?.gender || 'other';
-    const responses = greetings[gender];
+      other: [
+        "Hello! Ready to join some tournaments? 🎮",
+        "Hi there! Check out our latest tournaments! ⚡",
+        "Hey! Want to compete and win prizes? 💰",
+        "Hello! Perfect time to join a tournament! 🏆",
+        "Hi! Slots are filling fast, join now! 🚀",
+        "Hey there! Ready for some competitive gaming? 🔥",
+        "Hello! New tournaments with amazing prizes! 💎",
+        "Hi! Check out our tournament schedule! 📅",
+        "Hey! Want to test your skills? 🎯",
+        "Hello! Join our gaming community today! 🌟"
+      ]
+    };
+
+    const responses = greetings[gender] || greetings.other;
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-    // Add time-based greeting
     const hour = new Date().getHours();
     let timeGreeting = '';
     if (hour < 12) timeGreeting = 'Good morning! ';
@@ -2003,7 +1901,6 @@ class AutoResponseSystem {
 
     await message.reply(fullResponse);
 
-    // Set up follow-up question
     setTimeout(async () => {
       try {
         const followUps = {
@@ -2014,9 +1911,9 @@ class AutoResponseSystem {
 
         await message.channel.send(followUps[gender]);
       } catch (error) {
-        // Ignore errors (might be in different channel)
+        // Ignore errors
       }
-    }, 120000); // 2 minutes later
+    }, 120000);
   }
 
   async sendJoinGuide(message, profile) {
@@ -2096,7 +1993,6 @@ class AutoResponseSystem {
   async checkUnansweredMessage(message) {
     if (message.channel.id !== CHANNELS.GENERAL) return;
 
-    // Check if message got any replies in 2 minutes
     setTimeout(async () => {
       try {
         const messages = await message.channel.messages.fetch({ limit: 10 });
@@ -2118,7 +2014,7 @@ class AutoResponseSystem {
       } catch (error) {
         // Ignore errors
       }
-    }, 120000); // 2 minutes
+    }, 120000);
   }
 }
 
@@ -2146,7 +2042,6 @@ class LeaderboardSystem {
   updateTournamentLeaderboards() {
     const profiles = dataManager.readData('profiles.json');
     
-    // Most Wins
     const mostWins = Object.values(profiles)
       .filter(p => p.stats.wins > 0)
       .sort((a, b) => b.stats.wins - a.stats.wins)
@@ -2157,7 +2052,6 @@ class LeaderboardSystem {
         earnings: p.stats.earnings
       }));
 
-    // Highest Earnings
     const highestEarnings = Object.values(profiles)
       .filter(p => p.stats.earnings > 0)
       .sort((a, b) => b.stats.earnings - a.stats.earnings)
@@ -2168,9 +2062,8 @@ class LeaderboardSystem {
         wins: p.stats.wins
       }));
 
-    // Best Win Rate
     const bestWinRate = Object.values(profiles)
-      .filter(p => p.stats.tournamentsPlayed >= 5) // Minimum 5 tournaments
+      .filter(p => p.stats.tournamentsPlayed >= 5)
       .map(p => ({
         userId: p.userId,
         winRate: (p.stats.wins / p.stats.tournamentsPlayed) * 100,
@@ -2201,8 +2094,6 @@ class LeaderboardSystem {
   }
 
   updateSquadLeaderboards() {
-    // This would require squad data implementation
-    // Placeholder for now
     this.leaderboards.squads.bestSquad = [];
     this.leaderboards.squads.deadliestSquad = [];
     this.leaderboards.squads.richestSquad = [];
@@ -2213,7 +2104,6 @@ class LeaderboardSystem {
       const leaderboardChannel = client.channels.cache.get(CHANNELS.LEADERBOARD);
       if (!leaderboardChannel) return;
 
-      // Clear previous leaderboard messages
       const messages = await leaderboardChannel.messages.fetch({ limit: 10 });
       for (const message of messages.values()) {
         if (message.author.id === client.user.id) {
@@ -2221,10 +2111,7 @@ class LeaderboardSystem {
         }
       }
 
-      // Post tournament leaderboard
       await this.postTournamentLeaderboard(leaderboardChannel);
-      
-      // Post invite leaderboard
       await this.postInviteLeaderboard(leaderboardChannel);
 
     } catch (error) {
@@ -2355,11 +2242,8 @@ class AnalyticsSystem {
     };
 
     dataManager.writeData('analytics.json', this.analytics);
-
-    // Send report to staff
     await this.sendDailyReport();
 
-    // Reset daily stats
     this.dailyStats = {
       newUsers: 0,
       tournamentsHeld: 0,
@@ -2429,6 +2313,225 @@ class AnalyticsSystem {
   }
 }
 
+// Channel Management System
+class ChannelManagementSystem {
+  constructor() {
+    this.cleanupCooldown = new Map();
+  }
+
+  async clearChannel(interaction, amount = 100) {
+    if (!interaction.member.roles.cache.has(ROLES.STAFF)) {
+      await interaction.reply({ 
+        content: '❌ You need staff permissions to clear messages!', 
+        ephemeral: true 
+      });
+      return;
+    }
+
+    const channel = interaction.channel;
+    
+    try {
+      const messages = await channel.messages.fetch({ limit: amount });
+      const deletableMessages = messages.filter(msg => 
+        Date.now() - msg.createdTimestamp < 14 * 24 * 60 * 60 * 1000
+      );
+
+      if (deletableMessages.size === 0) {
+        await interaction.reply({ 
+          content: '❌ No messages can be deleted (messages older than 14 days cannot be bulk deleted).', 
+          ephemeral: true 
+        });
+        return;
+      }
+
+      await channel.bulkDelete(deletableMessages, true);
+      
+      const successEmbed = new EmbedBuilder()
+        .setTitle('🧹 Channel Cleared')
+        .setColor(0x00FF00)
+        .addFields(
+          { name: '📊 Messages Deleted', value: deletableMessages.size.toString(), inline: true },
+          { name: '👤 Cleared by', value: interaction.user.tag, inline: true },
+          { name: '📅 Channel', value: channel.toString(), inline: true }
+        )
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+
+      const logChannel = client.channels.cache.get(CHANNELS.STAFF_TOOLS);
+      if (logChannel) {
+        await logChannel.send({ embeds: [successEmbed] });
+      }
+
+    } catch (error) {
+      console.error('Failed to clear channel:', error);
+      await interaction.reply({ 
+        content: '❌ Failed to clear messages. Make sure I have the necessary permissions.', 
+        ephemeral: true 
+      });
+    }
+  }
+
+  async showClearMenu(interaction) {
+    if (!interaction.member.roles.cache.has(ROLES.STAFF)) {
+      await interaction.reply({ 
+        content: '❌ Staff only command!', 
+        ephemeral: true 
+      });
+      return;
+    }
+
+    const clearMenu = new StringSelectMenuBuilder()
+      .setCustomId('clear_menu')
+      .setPlaceholder('Select number of messages to delete')
+      .addOptions([
+        {
+          label: 'Delete 10 messages',
+          description: 'Quick cleanup of recent messages',
+          value: 'clear_10'
+        },
+        {
+          label: 'Delete 25 messages',
+          description: 'Moderate cleanup',
+          value: 'clear_25'
+        },
+        {
+          label: 'Delete 50 messages',
+          description: 'Large cleanup',
+          value: 'clear_50'
+        },
+        {
+          label: 'Delete 100 messages',
+          description: 'Maximum bulk delete (14 days limit)',
+          value: 'clear_100'
+        },
+        {
+          label: 'Delete ALL messages',
+          description: 'Complete channel purge (creates new channel)',
+          value: 'clear_all'
+        }
+      ]);
+
+    const actionRow = new ActionRowBuilder().addComponents(clearMenu);
+
+    const menuEmbed = new EmbedBuilder()
+      .setTitle('🧹 Channel Cleanup')
+      .setDescription('**Select how many messages you want to delete:**')
+      .setColor(0x0099FF)
+      .addFields(
+        { name: '⚠️ Important', value: '• Bulk delete limited to messages under 14 days old\n• "Delete ALL" will create a new channel\n• Use with caution!', inline: false }
+      )
+      .setFooter({ text: 'Staff Tools - OTO Tournaments' });
+
+    await interaction.reply({ 
+      embeds: [menuEmbed], 
+      components: [actionRow],
+      ephemeral: true 
+    });
+  }
+
+  async handleClearMenu(interaction) {
+    const selectedOption = interaction.values[0];
+    
+    if (selectedOption === 'clear_all') {
+      await this.purgeChannel(interaction);
+      return;
+    }
+
+    const amount = parseInt(selectedOption.split('_')[1]);
+    await this.clearChannel(interaction, amount);
+  }
+
+  async purgeChannel(interaction) {
+    const channel = interaction.channel;
+    
+    try {
+      const confirmationEmbed = new EmbedBuilder()
+        .setTitle('⚠️ CHANNEL PURGE CONFIRMATION')
+        .setDescription(`**You are about to COMPLETELY PURGE ${channel}**`)
+        .setColor(0xFF0000)
+        .addFields(
+          { name: '🚨 This action will:', value: '• Create a new channel with same settings\n• Delete ALL messages permanently\n• Archive the current channel', inline: false },
+          { name: '📝 New channel will:', value: '• Have same name and permissions\n• Be completely empty\n• Replace the current channel', inline: false }
+        )
+        .setFooter({ text: 'This action cannot be undone!' });
+
+      const confirmButtons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('confirm_purge')
+          .setLabel('✅ CONFIRM PURGE')
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId('cancel_purge')
+          .setLabel('❌ CANCEL')
+          .setStyle(ButtonStyle.Secondary)
+      );
+
+      await interaction.update({ 
+        embeds: [confirmationEmbed], 
+        components: [confirmButtons] 
+      });
+
+    } catch (error) {
+      console.error('Failed to show purge confirmation:', error);
+    }
+  }
+
+  async confirmPurge(interaction) {
+    const channel = interaction.channel;
+    const guild = channel.guild;
+
+    try {
+      await interaction.update({ 
+        content: '🔄 Creating new channel...', 
+        embeds: [], 
+        components: [] 
+      });
+
+      const newChannel = await guild.channels.create({
+        name: channel.name,
+        type: channel.type,
+        parent: channel.parent,
+        topic: channel.topic,
+        position: channel.position,
+        permissionOverwrites: channel.permissionOverwrites.cache,
+        nsfw: channel.nsfw,
+        rateLimitPerUser: channel.rateLimitPerUser
+      });
+
+      await channel.delete();
+
+      const successEmbed = new EmbedBuilder()
+        .setTitle('✅ Channel Purged Successfully')
+        .setColor(0x00FF00)
+        .addFields(
+          { name: '📝 Old Channel', value: `#${channel.name}`, inline: true },
+          { name: '🆕 New Channel', value: newChannel.toString(), inline: true },
+          { name: '👤 Purged by', value: interaction.user.tag, inline: true }
+        )
+        .setTimestamp();
+
+      await newChannel.send({ 
+        content: `Channel has been purged by ${interaction.user}. All previous messages have been cleared.`,
+        embeds: [successEmbed] 
+      });
+
+      const logChannel = client.channels.cache.get(CHANNELS.STAFF_TOOLS);
+      if (logChannel) {
+        await logChannel.send({ embeds: [successEmbed] });
+      }
+
+    } catch (error) {
+      console.error('Failed to purge channel:', error);
+      await interaction.editReply({ 
+        content: '❌ Failed to purge channel. Please check my permissions.', 
+        embeds: [], 
+        components: [] 
+      });
+    }
+  }
+}
+
 // Initialize all systems
 const profileSystem = new ProfileSystem();
 const inviteSystem = new InviteSystem();
@@ -2437,12 +2540,12 @@ const moderationSystem = new ModerationSystem();
 const autoResponseSystem = new AutoResponseSystem();
 const leaderboardSystem = new LeaderboardSystem();
 const analyticsSystem = new AnalyticsSystem();
+const channelManagementSystem = new ChannelManagementSystem();
 
 // Command Handling
 client.commands = new Collection();
 
 const commands = {
-  // Profile Commands
   profile: {
     execute: async (interaction) => {
       const user = interaction.options.getUser('user') || interaction.user;
@@ -2484,7 +2587,6 @@ const commands = {
     }
   },
 
-  // Invite Commands
   invite: {
     execute: async (interaction) => {
       const invites = inviteSystem.getInviteStats(interaction.user.id);
@@ -2511,10 +2613,8 @@ const commands = {
     }
   },
 
-  // Tournament Commands
   createtournament: {
     execute: async (interaction) => {
-      // Check if user has staff role
       if (!interaction.member.roles.cache.has(ROLES.STAFF)) {
         await interaction.reply({ 
           content: '❌ You need staff permissions to create tournaments!', 
@@ -2527,7 +2627,6 @@ const commands = {
     }
   },
 
-  // Staff Commands
   dashboard: {
     execute: async (interaction) => {
       if (!interaction.member.roles.cache.has(ROLES.STAFF)) {
@@ -2579,7 +2678,6 @@ const commands = {
     }
   },
 
-  // Moderation Commands
   warn: {
     execute: async (interaction) => {
       if (!interaction.member.roles.cache.has(ROLES.STAFF)) {
@@ -2610,13 +2708,11 @@ const commands = {
     }
   },
 
-  // Analytics Commands
   stats: {
     execute: async (interaction) => {
       const user = interaction.options.getUser('user');
 
       if (user) {
-        // User stats
         const stats = analyticsSystem.getStats(user.id);
         
         if (!stats.profile) {
@@ -2643,7 +2739,6 @@ const commands = {
 
         await interaction.reply({ embeds: [userStatsEmbed] });
       } else {
-        // Server stats
         const stats = analyticsSystem.getStats();
         
         const serverStatsEmbed = new EmbedBuilder()
@@ -2665,7 +2760,19 @@ const commands = {
     }
   },
 
-  // Help Command
+  clear: {
+    execute: async (interaction) => {
+      const amount = interaction.options.getInteger('amount') || 100;
+      await channelManagementSystem.clearChannel(interaction, amount);
+    }
+  },
+
+  purge: {
+    execute: async (interaction) => {
+      await channelManagementSystem.showClearMenu(interaction);
+    }
+  },
+
   help: {
     execute: async (interaction) => {
       const helpEmbed = new EmbedBuilder()
@@ -2676,7 +2783,7 @@ const commands = {
           { name: '👤 Profile Commands', value: '`-profile` - View your profile\n`-profile @user` - View user profile', inline: false },
           { name: '📨 Invite Commands', value: '`-invite` - Your invite stats\n`-invites` - Invite leaderboard', inline: false },
           { name: '🏆 Tournament Commands', value: '`-createtournament` - Create tournament (Staff)\n`-dashboard` - Staff dashboard', inline: false },
-          { name: '⚡ Moderation Commands', value: '`-warn @user reason` - Warn user (Staff)\nAuto-moderation is always active', inline: false },
+          { name: '⚡ Moderation Commands', value: '`-warn @user reason` - Warn user (Staff)\n`-clear [amount]` - Clear messages (Staff)\n`-purge` - Advanced cleanup (Staff)', inline: false },
           { name: '📊 Analytics Commands', value: '`-stats` - Server stats\n`-stats @user` - User stats', inline: false }
         )
         .setFooter({ text: 'Need help? Mention the bot or ask in general chat!' });
@@ -2691,23 +2798,17 @@ client.once('ready', async () => {
   console.log(`✅ Logged in as ${client.user.tag}!`);
   console.log(`🏠 Connected to ${client.guilds.cache.size} servers`);
 
-  // Set bot status
   client.user.setActivity('OTO Tournaments | -help', { type: 3 });
 
-  // Start background tasks
   leaderboardSystem.startAutoUpdate();
-  
-  // Schedule daily report (midnight)
   scheduleDailyReport();
 
-  // Schedule backup every 5 minutes
   setInterval(() => {
     dataManager.backupData();
   }, CONFIG.BACKUP_INTERVAL);
 
   console.log('🔄 Background tasks started!');
 
-  // Force profile completion for existing members
   setTimeout(async () => {
     await forceExistingMembersProfile();
   }, 10000);
@@ -2715,34 +2816,22 @@ client.once('ready', async () => {
 
 client.on('guildMemberAdd', async (member) => {
   console.log(`👋 New member joined: ${member.user.tag}`);
-  
-  // Send welcome DM
   await profileSystem.sendWelcomeDM(member);
-  
-  // Track invite if applicable
   await trackInvite(member);
-  
-  // Update analytics
   analyticsSystem.trackUserJoin();
 });
 
 client.on('messageCreate', async (message) => {
-  // Ignore bot messages
   if (message.author.bot) return;
 
-  // Update analytics
   analyticsSystem.trackMessage();
 
-  // Check for commands
   if (message.content.startsWith(CONFIG.PREFIX)) {
     await handleCommand(message);
     return;
   }
 
-  // Auto-response system
   await autoResponseSystem.checkAutoResponse(message);
-
-  // Moderation system
   await moderationSystem.checkMessage(message);
 });
 
@@ -2753,6 +2842,8 @@ client.on('interactionCreate', async (interaction) => {
     await handleModalSubmit(interaction);
   } else if (interaction.isCommand()) {
     await handleSlashCommand(interaction);
+  } else if (interaction.isStringSelectMenu()) {
+    await handleSelectMenu(interaction);
   }
 });
 
@@ -2761,7 +2852,6 @@ async function handleButtonInteraction(interaction) {
   const customId = interaction.customId;
 
   try {
-    // Profile creation buttons
     if (customId === 'start_profile') {
       await profileSystem.startProfileCreation(interaction);
     }
@@ -2776,8 +2866,6 @@ async function handleButtonInteraction(interaction) {
       await profileSystem.completeProfile(interaction.member, game);
       await interaction.deferUpdate();
     }
-
-    // Tournament buttons
     else if (customId.startsWith('join_tournament_')) {
       const tournamentId = customId.replace('join_tournament_', '');
       await tournamentSystem.joinTournament(interaction, tournamentId);
@@ -2797,11 +2885,8 @@ async function handleButtonInteraction(interaction) {
         return;
       }
       const ticketId = customId.replace('reject_', '');
-      // Implement rejection logic
       await interaction.reply({ content: '❌ Payment rejected!', ephemeral: true });
     }
-
-    // Template selection buttons
     else if (customId === 'template_freefire') {
       await showFreeFireTemplates(interaction);
     }
@@ -2816,6 +2901,16 @@ async function handleButtonInteraction(interaction) {
         await tournamentSystem.createTournament(interaction, template);
       }
     }
+    else if (customId === 'confirm_purge') {
+      await channelManagementSystem.confirmPurge(interaction);
+    }
+    else if (customId === 'cancel_purge') {
+      await interaction.update({ 
+        content: '❌ Channel purge cancelled.', 
+        embeds: [], 
+        components: [] 
+      });
+    }
 
   } catch (error) {
     console.error('Button interaction error:', error);
@@ -2823,6 +2918,15 @@ async function handleButtonInteraction(interaction) {
       content: '❌ An error occurred while processing your request.', 
       ephemeral: true 
     });
+  }
+}
+
+// Select Menu Handler
+async function handleSelectMenu(interaction) {
+  const customId = interaction.customId;
+
+  if (customId === 'clear_menu') {
+    await channelManagementSystem.handleClearMenu(interaction);
   }
 }
 
@@ -2872,7 +2976,6 @@ async function handleCommand(message) {
   const args = message.content.slice(CONFIG.PREFIX.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
 
-  // Simple command handling for legacy prefix commands
   switch (commandName) {
     case 'profile':
       const user = message.mentions.users.first() || message.author;
@@ -2907,10 +3010,29 @@ async function handleCommand(message) {
         .addFields(
           { name: '👤 Profile', value: '`-profile` - View your profile', inline: true },
           { name: '📨 Invite', value: '`-invite` - Your invite stats', inline: true },
-          { name: '🏆 Tournaments', value: 'Check tournament channels!', inline: true }
+          { name: '🏆 Tournaments', value: 'Check tournament channels!', inline: true },
+          { name: '🧹 Moderation', value: '`-clear [amount]` - Clear messages (Staff)', inline: true }
         );
 
       await message.reply({ embeds: [helpEmbed] });
+      break;
+
+    case 'clear':
+      if (!message.member.roles.cache.has(ROLES.STAFF)) {
+        await message.reply({ 
+          content: '❌ You need staff permissions to clear messages!', 
+          ephemeral: true 
+        });
+        return;
+      }
+
+      const amount = parseInt(args[0]) || 100;
+      await channelManagementSystem.clearChannel({ 
+        member: message.member, 
+        user: message.author, 
+        channel: message.channel, 
+        reply: (content) => message.reply(content) 
+      }, amount);
       break;
   }
 }
@@ -2975,8 +3097,6 @@ async function showMinecraftTemplates(interaction) {
 }
 
 async function trackInvite(member) {
-  // This would require invite tracking implementation
-  // For now, it's a placeholder
   console.log(`Invite tracking for ${member.user.tag}`);
 }
 
@@ -2985,15 +3105,14 @@ function scheduleDailyReport() {
   const night = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate() + 1, // tomorrow
-    0, 0, 0 // midnight
+    now.getDate() + 1,
+    0, 0, 0
   );
   
   const msUntilMidnight = night.getTime() - now.getTime();
 
   setTimeout(() => {
     analyticsSystem.generateDailyReport();
-    // Schedule next report
     scheduleDailyReport();
   }, msUntilMidnight);
 }
@@ -3012,7 +3131,6 @@ async function forceExistingMembersProfile() {
         await profileSystem.forceProfileCompletion(member);
         processed++;
         
-        // Delay to avoid rate limits
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
