@@ -1,22 +1,21 @@
 {
   "name": "oto-tournament-bot",
-  "version": "1.0.0",
-  "description": "OTO Tournament Bot - Node.js + Discord.js v14 - JSON storage (no DB)",
+  "version": "4.0.0",
+  "description": "Advanced Discord Tournament Bot with 100+ features",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js",
-    "lint": "echo \"No linter configured\""
-  },
-  "author": "smashotoking",
-  "license": "MIT",
-  "engines": {
-    "node": ">=16.9.0"
+    "dev": "nodemon index.js"
   },
   "dependencies": {
-    "discord.js": "^14.13.0",
-    "qrcode": "^1.5.1",
-    "node-fetch": "^2.6.7",
-    "uuid": "^9.0.0"
-  }
+    "discord.js": "^14.14.1",
+    "qr-image": "^3.2.0",
+    "moment": "^2.29.4",
+    "node-cron": "^3.0.3",
+    "chalk": "^4.1.2",
+    "fs-extra": "^11.2.0"
+  },
+  "keywords": ["discord", "tournament", "gaming", "bot", "freefire", "minecraft"],
+  "author": "OTO Tournaments",
+  "license": "MIT"
 }
