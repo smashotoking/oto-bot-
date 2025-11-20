@@ -1,7 +1,7 @@
 {
   "name": "oto-tournament-bot",
   "version": "4.0.0",
-  "description": "Advanced Discord Tournament Bot with 100+ features",
+  "description": "Advanced Tournament Management Bot for FreeFire & Minecraft - 50+ Features",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -9,13 +9,14 @@
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "qr-image": "^3.2.0",
     "moment": "^2.29.4",
     "node-cron": "^3.0.3",
-    "chalk": "^4.1.2",
-    "fs-extra": "^11.2.0"
+    "qr-image": "^3.2.0",
+    "axios": "^1.6.0",
+    "ms": "^2.1.3",
+    "express": "^4.18.2"
   },
-  "keywords": ["discord", "tournament", "gaming", "bot", "freefire", "minecraft"],
-  "author": "OTO Tournaments",
+  "keywords": ["discord", "tournament", "bot", "freefire", "minecraft", "gaming"],
+  "author": "OTO Team",
   "license": "MIT"
 }
