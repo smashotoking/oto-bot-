@@ -2,8 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder
 const fs = require('fs');
 const path = require('path');
 const moment = require('moment');
-const { createCanvas, loadImage, registerFont } = require('canvas');
-const QRCode = require('qrcode');
+
 
 // Initialize Discord Client with all required intents
 const client = new Client({
@@ -1238,7 +1237,7 @@ class TournamentSystem {
   async sendPaymentInstructions(interaction, tournament, ticketId) {
     try {
       const user = interaction.user;
-      const qrCodeData = `upi://pay?pa=${CONFIG.UPI_ID}&am=${tournament.entryFee}&tn=OTO-${ticketId}`;
+           const qrCodeData = `upi://pay?pa=${CONFIG.UPI_ID}&am=${tournament.entryFee}&tn=OTO-${ticketId}`;
       
       const paymentEmbed = new EmbedBuilder()
         .setTitle('💳 Payment Instructions')
@@ -1248,24 +1247,13 @@ class TournamentSystem {
           { name: '📱 Payment Method', value: 'UPI Payment', inline: false },
           { name: '💎 UPI ID', value: `\`${CONFIG.UPI_ID}\``, inline: true },
           { name: '💰 Amount', value: `₹${tournament.entryFee}`, inline: true },
-          { name: '🎫 Reference ID', value: ticketId, inline: true }
+          { name: '🎫 Reference ID', value: ticketId, inline: true },
+          { name: '📲 Quick Pay', value: `\`${qrCodeData}\``, inline: false },
+          { name: '📸 Screenshot Required', value: 'After payment, upload screenshot here with visible reference ID', inline: false }
         )
-        .setFooter({ text: 'Scan QR code or use UPI ID to pay' });
+        .setFooter({ text: 'Copy the UPI ID or use any UPI app to pay' });
 
-      // Generate QR code
-      const qrCodeBuffer = await QRCode.toBuffer(qrCodeData, {
-        width: 200,
-        height: 200,
-        margin: 1
-      });
-
-      const paymentMessage = await user.send({ 
-        embeds: [paymentEmbed],
-        files: [{
-          attachment: qrCodeBuffer,
-          name: 'qrcode.png'
-        }]
-      });
+      await user.send({ embeds: [paymentEmbed] });
 
       // Ask for IGN and Game ID
       const ignEmbed = new EmbedBuilder()
@@ -1974,28 +1962,32 @@ class AutoResponseSystem {
     return keywords.some(keyword => content.includes(keyword));
   }
 
-  async sendGreetingResponse(message, profile) {
+    async sendGreetingResponse(message, profile) {
     const greetings = {
       male: [
         "Kya haal bhai! Tournament kheloge aaj? 🔥",
         "Bro! Slots filling fast, jaldi join karo! ⚡", 
         "Haan bhai, batao kya help chahiye? 💪",
-        "Aur bhai! Ready for today's tournament? 🎮"
+        "Aur bhai! Ready for today's tournament? 🎮",
+        "Bhai! Aaj ka tournament dekha? Prize pool massive hai! 💰",
+        "Kaisa chal raha hai bhai? Tournament join karna hai? 🏆",
+        "Hey bro! New tournament starting soon, interested? ⚡",
+        "Bhai! Perfect timing, ek naya tournament announce hua hai! 🎯",
+        "Bro! Kya plan hai aaj? Tournament khelna hai? 🎮",
+        "Bhai! Slots limited hain, jaldi join karo! 🚀"
       ],
       female: [
         "Hello ji! Tournament khelogi? 🎮",
         "Hii! Aaj ka tournament dekha? Slots limited hain! 💎",
         "Ji, batao kya help chahiye? ✨",
-        "Namaste ji! Kya aap tournament khelna chahengi? 🌸"
+        "Namaste ji! Kya aap tournament khelna chahengi? 🌸",
+        "Hello! Aaj ka special tournament dekha? Amazing prizes! 🏆",
+        "Hi ji! Ready for some competitive gaming? 🔥",
+        "Namaste! New tournament with big prize pool! 💰",
+        "Hello! Perfect timing for today's tournament! 🎯",
+        "Ji! Kya aapko tournament join karna hai? 🎮",
+        "Hello! Slots fill ho rahe hain, jaldi join kariye! ⚡"
       ],
-      other: [
-        "Hello there! Ready for some tournaments? 🎮",
-        "Hey! Check out today's tournament schedule! ⚡",
-        "Hi! Need any help with tournaments? 💫",
-        "Greetings! Let me know if you need assistance! 🌟"
-      ]
-    };
-
     const gender = profile?.gender || 'other';
     const responses = greetings[gender];
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
