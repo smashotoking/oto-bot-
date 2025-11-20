@@ -2436,7 +2436,7 @@ process.on('SIGINT', async () => {
 });
 
 // Login to Discord
-client.login(process.env.DISCORD_TOKEN).catch(error => {
+client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
     console.error('❌ Failed to login:', error);
     process.exit(1);
 });
