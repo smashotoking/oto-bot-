@@ -17,10 +17,10 @@ const {
 } = require('discord.js');
 const moment = require('moment');
 const cron = require('node-cron');
-const { createCanvas, loadImage } = require('canvas');
 const qr = require('qr-image');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
 
 // ==================== INITIALIZATION ====================
 const client = new Client({
@@ -34,6 +34,23 @@ const client = new Client({
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildMessageReactions
     ]
+});
+
+// Health check server for Render
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        bot: 'OTO Tournament Bot', 
+        uptime: process.uptime(),
+        timestamp: Date.now()
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`🌐 Health check server running on port ${PORT}`);
 });
 
 // ==================== CONFIGURATION ====================
@@ -90,51 +107,84 @@ const CONFIG = {
 // ==================== DATA STORAGE ====================
 class JSONDatabase {
     constructor() {
+        this.dataDir = './data';
+        this.ensureDataDir();
         this.data = {};
-        this.loadData();
+        this.loadAllData();
         this.setupAutoSave();
     }
 
-    loadData() {
-        try {
-            if (fs.existsSync('./data.json')) {
-                this.data = JSON.parse(fs.readFileSync('./data.json', 'utf8'));
-            } else {
-                this.data = {
-                    profiles: {},
-                    tournaments: {},
-                    invites: {},
-                    tickets: {},
-                    staffActions: {},
-                    userStats: {},
-                    leaderboards: {},
-                    payments: {},
-                    lobbies: {},
-                    achievements: {},
-                    sessions: {}
-                };
-                this.saveData();
-            }
-        } catch (error) {
-            console.error('Error loading data:', error);
-            this.data = {
-                profiles: {}, tournaments: {}, invites: {}, tickets: {}, 
-                staffActions: {}, userStats: {}, leaderboards: {}, 
-                payments: {}, lobbies: {}, achievements: {}, sessions: {}
-            };
+    ensureDataDir() {
+        if (!fs.existsSync(this.dataDir)) {
+            fs.mkdirSync(this.dataDir, { recursive: true });
         }
     }
 
-    saveData() {
+    loadAllData() {
+        const files = {
+            profiles: 'profiles.json',
+            tournaments: 'tournaments.json',
+            invites: 'invites.json',
+            tickets: 'tickets.json',
+            staffActions: 'staffActions.json',
+            userStats: 'userStats.json',
+            leaderboards: 'leaderboards.json',
+            payments: 'payments.json',
+            lobbies: 'lobbies.json',
+            achievements: 'achievements.json',
+            sessions: 'sessions.json'
+        };
+
+        for (const [key, filename] of Object.entries(files)) {
+            const filepath = path.join(this.dataDir, filename);
+            try {
+                if (fs.existsSync(filepath)) {
+                    this.data[key] = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+                } else {
+                    this.data[key] = {};
+                    this.saveToFile(key, filename);
+                }
+            } catch (error) {
+                console.error(`Error loading ${filename}:`, error);
+                this.data[key] = {};
+            }
+        }
+    }
+
+    saveToFile(table, filename) {
         try {
-            fs.writeFileSync('./data.json', JSON.stringify(this.data, null, 2));
+            const filepath = path.join(this.dataDir, filename);
+            fs.writeFileSync(filepath, JSON.stringify(this.data[table] || {}, null, 2));
         } catch (error) {
-            console.error('Error saving data:', error);
+            console.error(`Error saving ${filename}:`, error);
+        }
+    }
+
+    saveAllData() {
+        const files = {
+            profiles: 'profiles.json',
+            tournaments: 'tournaments.json',
+            invites: 'invites.json',
+            tickets: 'tickets.json',
+            staffActions: 'staffActions.json',
+            userStats: 'userStats.json',
+            leaderboards: 'leaderboards.json',
+            payments: 'payments.json',
+            lobbies: 'lobbies.json',
+            achievements: 'achievements.json',
+            sessions: 'sessions.json'
+        };
+
+        for (const [table, filename] of Object.entries(files)) {
+            this.saveToFile(table, filename);
         }
     }
 
     setupAutoSave() {
-        setInterval(() => this.saveData(), 300000); // 5 minutes
+        setInterval(() => {
+            this.saveAllData();
+            console.log('💾 Data auto-saved');
+        }, 300000); // 5 minutes
     }
 
     get(table, key) {
@@ -293,13 +343,11 @@ class SecuritySystem {
         const now = Date.now();
         const userData = this.SPAM_DETECTION.get(userId) || { messages: [], lastWarning: 0 };
         
-        // Filter messages from last 5 seconds
         userData.messages = userData.messages.filter(time => now - time < 5000);
         userData.messages.push(now);
         
         this.SPAM_DETECTION.set(userId, userData);
         
-        // Check spam levels
         if (userData.messages.length > 8) return 'HIGH';
         if (userData.messages.length > 5) return 'MEDIUM';
         return 'LOW';
@@ -357,7 +405,6 @@ class ProfileManager {
 
         db.set('profiles', user.id, profile);
         
-        // Assign verified role
         try {
             const guild = client.guilds.cache.first();
             const member = await guild.members.fetch(user.id);
@@ -387,7 +434,6 @@ class ProfileManager {
             profile.lastActive = Date.now();
             db.set('profiles', userId, profile);
             
-            // Check for achievements
             this.checkAchievements(userId, profile);
             
             return profile;
@@ -399,7 +445,6 @@ class ProfileManager {
         const achievements = [];
         const currentBadges = new Set(profile.badges);
 
-        // Tournament achievements
         if (profile.stats.tournamentsPlayed >= 1 && !currentBadges.has('FIRST_TOURNAMENT')) {
             achievements.push('FIRST_TOURNAMENT');
             currentBadges.add('FIRST_TOURNAMENT');
@@ -420,12 +465,10 @@ class ProfileManager {
             currentBadges.add('MONEY_MAKER');
         }
 
-        // Update badges if new achievements
         if (achievements.length > 0) {
             profile.badges = Array.from(currentBadges);
             db.set('profiles', userId, profile);
             
-            // Send achievement notifications
             achievements.forEach(achievement => {
                 this.notifyAchievement(userId, achievement);
             });
@@ -458,45 +501,31 @@ class ProfileManager {
     }
 
     static async generateProfileCard(userId) {
+        // Simplified profile card without canvas
         const profile = this.getProfile(userId);
         if (!profile) return null;
 
-        const canvas = createCanvas(800, 400);
-        const ctx = canvas.getContext('2d');
+        // Create a text-based profile card
+        const profileText = `
+🎮 OTO PROFILE CARD
+━━━━━━━━━━━━━━━━━━━━━━
+👤 Name: ${profile.name}
+🆔 OTO ID: ${profile.otoId}
+🎯 Level: ${profile.level}
+⭐ Experience: ${profile.experience}
+━━━━━━━━━━━━━━━━━━━━━━
+📊 STATISTICS
+🏆 Tournaments: ${profile.stats.tournamentsPlayed}
+🥇 Wins: ${profile.stats.tournamentsWon}
+💰 Earnings: ${OTOUtils.formatIndianRupees(profile.stats.totalEarnings)}
+🎯 Kills: ${profile.stats.killCount}
+🔥 Streak: ${profile.stats.winStreak}
+━━━━━━━━━━━━━━━━━━━━━━
+🎖️ BADGES: ${profile.badges.map(b => CONFIG.BADGE_EMOJIS[b]).join(' ')}
+━━━━━━━━━━━━━━━━━━━━━━
+        `.trim();
 
-        // Background gradient
-        const gradient = ctx.createLinearGradient(0, 0, 800, 400);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(1, '#16213e');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 800, 400);
-
-        // Profile header
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Arial';
-        ctx.fillText(profile.name, 50, 80);
-
-        // OTO ID
-        ctx.font = '20px Arial';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText(`OTO ID: ${profile.otoId}`, 50, 120);
-
-        // Stats
-        ctx.font = '18px Arial';
-        ctx.fillText(`Level: ${profile.level}`, 50, 180);
-        ctx.fillText(`Tournaments: ${profile.stats.tournamentsPlayed}`, 50, 210);
-        ctx.fillText(`Wins: ${profile.stats.tournamentsWon}`, 50, 240);
-        ctx.fillText(`Earnings: ₹${profile.stats.totalEarnings}`, 50, 270);
-
-        // Badges
-        ctx.fillText('Badges:', 400, 180);
-        let badgeY = 210;
-        profile.badges.slice(0, 5).forEach(badge => {
-            ctx.fillText(`${CONFIG.BADGE_EMOJIS[badge] || '🎖️'} ${badge.replace('_', ' ')}`, 400, badgeY);
-            badgeY += 30;
-        });
-
-        return new AttachmentBuilder(canvas.toBuffer(), { name: 'profile-card.png' });
+        return profileText;
     }
 }
 
@@ -516,7 +545,7 @@ class TournamentManager {
             registeredPlayers: [],
             confirmedPlayers: [],
             status: 'OPEN',
-            schedule: data.schedule || Date.now() + 3600000, // 1 hour from now
+            schedule: data.schedule || Date.now() + 3600000,
             createdBy: data.creatorId,
             createdAt: Date.now(),
             settings: {
@@ -602,7 +631,6 @@ class TournamentManager {
             .setFooter({ text: `Tournament ID: ${tournament.id} • Starts ${timeRemaining}` })
             .setTimestamp();
 
-        // Add prize distribution if available
         if (tournament.settings.prizeDistribution) {
             const prizeText = Object.entries(tournament.settings.prizeDistribution)
                 .map(([rank, prize]) => `🥇 ${rank}${this.getRankSuffix(rank)}: ${OTOUtils.formatIndianRupees(prize)}`)
@@ -653,7 +681,6 @@ class TicketManager {
             throw new Error('Tournament not found');
         }
 
-        // Create ticket category if not exists
         let category = guild.channels.cache.find(ch => 
             ch.name === '🎫 TOURNAMENT TICKETS' && ch.type === ChannelType.GuildCategory
         );
@@ -675,7 +702,6 @@ class TicketManager {
             });
         }
 
-        // Create ticket channel
         const ticketChannel = await guild.channels.create({
             name: `ticket-${user.username}-${OTOUtils.generateOTP(4)}`,
             type: ChannelType.GuildText,
@@ -701,7 +727,6 @@ class TicketManager {
             ]
         });
 
-        // Save ticket data
         const ticketData = {
             id: ticketChannel.id,
             userId: user.id,
@@ -715,7 +740,6 @@ class TicketManager {
 
         db.set('tickets', ticketChannel.id, ticketData);
 
-        // Send ticket message
         await this.sendTicketWelcome(ticketChannel, user, tournament, isFreeEntry);
 
         return ticketChannel;
@@ -771,7 +795,6 @@ class TicketManager {
             components: [actions] 
         });
 
-        // Ask for In-Game ID
         const idRequest = new EmbedBuilder()
             .setTitle('🎮 In-Game ID Required')
             .setDescription('Please share your **In-Game ID** in this ticket.\n\n' +
@@ -791,7 +814,6 @@ class TicketManager {
             ticketData.closedAt = Date.now();
             db.set('tickets', channelId, ticketData);
 
-            // Schedule deletion
             setTimeout(async () => {
                 try {
                     const channel = client.channels.cache.get(channelId);
@@ -802,124 +824,18 @@ class TicketManager {
                 } catch (error) {
                     console.error('Error deleting ticket channel:', error);
                 }
-            }, 600000); // 10 minutes
+            }, 600000);
 
             return true;
         }
         return false;
-    }
-}
-
-// ==================== INVITE & REWARDS SYSTEM ====================
-class InviteManager {
-    static async trackInvite(inviterId, invitedId) {
-        const inviterStats = db.get('userStats', inviterId) || { invites: 0, invitedUsers: [] };
-        
-        if (!inviterStats.invitedUsers.includes(invitedId)) {
-            inviterStats.invites = (inviterStats.invites || 0) + 1;
-            inviterStats.invitedUsers.push(invitedId);
-            db.set('userStats', inviterId, inviterStats);
-
-            // Check for rewards
-            await this.checkInviteRewards(inviterId, inviterStats.invites);
-            
-            // Update leaderboard
-            this.updateInviteLeaderboard(inviterId, inviterStats.invites);
-
-            return true;
-        }
-        return false;
-    }
-
-    static async checkInviteRewards(userId, inviteCount) {
-        const rewards = {
-            5: { role: '🌱 Beginner Recruiter', message: 'Great start! You invited 5 friends!' },
-            10: { role: '📢 Recruiter', freeEntry: true, message: 'Amazing! You earned a FREE tournament entry!' },
-            15: { role: '⭐ Pro Recruiter', discount: 50, message: 'Outstanding! 50% discount on next entry!' },
-            20: { role: '💎 Elite Recruiter', freeEntry: true, message: 'Incredible! Another FREE tournament entry!' },
-            25: { role: '👑 Master Recruiter', freeEntry: true, message: 'Legendary! Choose any tournament FREE!' },
-            50: { role: '🔥 Legend Recruiter', freeEntries: 3, message: 'Godlike! 3 FREE entries + Custom Role!' }
-        };
-
-        const reward = rewards[inviteCount];
-        if (reward) {
-            await this.giveInviteReward(userId, reward, inviteCount);
-        }
-    }
-
-    static async giveInviteReward(userId, reward, inviteCount) {
-        try {
-            const user = await client.users.fetch(userId);
-            const guild = client.guilds.cache.first();
-            const member = await guild.members.fetch(userId);
-
-            // Assign role if specified
-            if (reward.role) {
-                // Implementation for role assignment would go here
-            }
-
-            // Send reward message
-            const embed = new EmbedBuilder()
-                .setTitle('🎉 Invite Reward Unlocked!')
-                .setDescription(reward.message)
-                .addFields(
-                    { name: 'Total Invites', value: inviteCount.toString(), inline: true },
-                    { name: 'Reward', value: this.getRewardDescription(reward), inline: true }
-                )
-                .setColor(CONFIG.COLORS.PREMIUM)
-                .setTimestamp();
-
-            await user.send({ embeds: [embed] });
-
-            // Notify staff for major rewards
-            if (inviteCount >= 10) {
-                const staffChannel = client.channels.cache.get(CONFIG.CHANNELS.STAFF_CHAT);
-                if (staffChannel) {
-                    await staffChannel.send({
-                        content: `<@&${CONFIG.ROLES.STAFF}>`,
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle('🎉 Invite Milestone Reached')
-                                .setDescription(`${user.username} has reached ${inviteCount} invites!`)
-                                .setColor(CONFIG.COLORS.SUCCESS)
-                        ]
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error giving invite reward:', error);
-        }
-    }
-
-    static getRewardDescription(reward) {
-        const parts = [];
-        if (reward.freeEntry) parts.push('FREE Entry');
-        if (reward.freeEntries) parts.push(`${reward.freeEntries} FREE Entries`);
-        if (reward.discount) parts.push(`${reward.discount}% Discount`);
-        if (reward.role) parts.push(reward.role);
-        return parts.join(' + ');
-    }
-
-    static updateInviteLeaderboard(userId, inviteCount) {
-        const leaderboard = db.get('leaderboards', 'invites') || {};
-        leaderboard[userId] = inviteCount;
-        db.set('leaderboards', 'invites', leaderboard);
-    }
-
-    static getInviteLeaderboard(limit = 10) {
-        const leaderboard = db.get('leaderboards', 'invites') || {};
-        const sorted = Object.entries(leaderboard)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, limit);
-        
-        return sorted;
     }
 }
 
 // ==================== PAYMENT SYSTEM ====================
 class PaymentManager {
     static generatePaymentQR(amount, reference) {
-        const upiId = 'ototournaments@paytm'; // Replace with actual UPI ID
+        const upiId = 'ototournaments@paytm';
         const upiLink = `upi://pay?pa=${upiId}&am=${amount}&cu=INR&tn=OTO Tournament Entry - ${reference}`;
         
         const qr_png = qr.imageSync(upiLink, { type: 'png' });
@@ -948,7 +864,6 @@ class PaymentManager {
             files: [qrAttachment] 
         });
 
-        // Save payment record
         const paymentData = {
             userId: user.id,
             tournamentId: tournament.id,
@@ -970,7 +885,6 @@ class PaymentManager {
             payment.confirmedAt = Date.now();
             db.set('payments', reference, payment);
 
-            // Confirm tournament registration
             TournamentManager.confirmPlayer(payment.tournamentId, payment.userId);
 
             return payment;
@@ -979,82 +893,14 @@ class PaymentManager {
     }
 }
 
-// ==================== LOBBY MANAGEMENT ====================
-class LobbyManager {
-    static createLobby(tournamentId) {
-        const tournament = db.get('tournaments', tournamentId);
-        if (!tournament) return null;
-
-        const lobbyId = `L${Date.now()}`;
-        const lobby = {
-            id: lobbyId,
-            tournamentId: tournamentId,
-            players: tournament.confirmedPlayers,
-            roomId: this.generateRoomCode(),
-            password: this.generatePassword(),
-            status: 'WAITING',
-            createdAt: Date.now(),
-            matchStartTime: tournament.schedule
-        };
-
-        db.set('lobbies', lobbyId, lobby);
-        return lobby;
-    }
-
-    static generateRoomCode() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
-
-    static generatePassword() {
-        return Math.random().toString(36).substring(2, 6);
-    }
-
-    static async sendLobbyDetails(lobby, channel) {
-        const tournament = db.get('tournaments', lobby.tournamentId);
-        
-        const embed = new EmbedBuilder()
-            .setTitle('🎮 TOURNAMENT LOBBY')
-            .setDescription(`**${tournament.title}** is starting soon!`)
-            .addFields(
-                { name: 'Room ID', value: `\`${lobby.roomId}\``, inline: true },
-                { name: 'Password', value: `\`${lobby.password}\``, inline: true },
-                { name: 'Match Time', value: `<t:${Math.floor(lobby.matchStartTime / 1000)}:R>`, inline: true },
-                { name: 'Players', value: lobby.players.length.toString(), inline: true },
-                { name: 'Game', value: tournament.game, inline: true },
-                { name: 'Mode', value: tournament.mode, inline: true }
-            )
-            .setColor(CONFIG.COLORS.SUCCESS)
-            .setFooter({ text: 'Credentials will auto-delete 30 minutes after match end' })
-            .setTimestamp();
-
-        await channel.send({ embeds: [embed] });
-
-        // Schedule auto-delete of credentials
-        setTimeout(async () => {
-            try {
-                const messages = await channel.messages.fetch({ limit: 10 });
-                const lobbyMessage = messages.find(msg => 
-                    msg.embeds[0]?.title === '🎮 TOURNAMENT LOBBY'
-                );
-                if (lobbyMessage) {
-                    await lobbyMessage.delete();
-                }
-            } catch (error) {
-                console.error('Error deleting lobby credentials:', error);
-            }
-        }, 2 * 60 * 60 * 1000); // 2 hours
-    }
-}
-
 // ==================== EVENT HANDLERS ====================
 client.once('ready', async () => {
-    console.log(`🏆 OTO Tournament Bot logged in as ${client.user.tag}`);
-    console.log(`📊 Serving ${client.guilds.cache.size} servers`);
+    console.log(`✅ OTO BOT#${client.user.tag} is online!`);
+    console.log('🌐 Health check server running on port 10000');
     
     await initializeSystems();
     scheduleTasks();
     
-    // Set bot status
     client.user.setPresence({
         activities: [{ name: 'OTO Tournaments | !help', type: 3 }],
         status: 'online'
@@ -1064,13 +910,8 @@ client.once('ready', async () => {
 async function initializeSystems() {
     console.log('🔄 Initializing OTO Systems...');
     
-    // Ensure all channels exist
     await ensureChannels();
-    
-    // Send tournament guide
     await sendTournamentGuide();
-    
-    // Initialize invite tracking
     await initializeInviteTracking();
     
     console.log('✅ OTO Systems initialized successfully!');
@@ -1136,27 +977,23 @@ async function initializeInviteTracking() {
 }
 
 function scheduleTasks() {
-    // Update tournament displays every minute
     cron.schedule('* * * * *', async () => {
         await updateTournamentDisplays();
     });
 
-    // Update leaderboards every 5 minutes
     cron.schedule('*/5 * * * *', async () => {
         await updateLeaderboards();
     });
 
-    // Clean up old data every hour
     cron.schedule('0 * * * *', async () => {
         await cleanupOldData();
     });
 
-    // Send tournament reminders every 30 minutes
     cron.schedule('*/30 * * * *', async () => {
         await sendTournamentReminders();
     });
 
-    console.log('✅ Scheduled tasks initialized');
+    console.log('✅ All scheduled tasks started successfully');
 }
 
 // ==================== MESSAGE HANDLING ====================
@@ -1166,22 +1003,18 @@ client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     if (message.channel.type === ChannelType.DM) return;
 
-    // Security checks
     await handleSecurityChecks(message);
     
-    // Auto-response system
     if (message.channel.id === CONFIG.CHANNELS.GENERAL_CHAT) {
         await handleAutoResponse(message);
     }
     
-    // Command handling
     if (message.content.startsWith('!')) {
         await handleCommands(message);
     }
 });
 
 async function handleSecurityChecks(message) {
-    // Bad word detection
     if (SecuritySystem.containsBadWords(message.content)) {
         await message.delete();
         
@@ -1207,7 +1040,6 @@ async function handleSecurityChecks(message) {
         return;
     }
 
-    // Spam detection
     const spamLevel = SecuritySystem.detectSpam(message.author.id);
     if (spamLevel === 'HIGH') {
         await message.delete();
@@ -1220,7 +1052,6 @@ async function handleSecurityChecks(message) {
 }
 
 async function handleAutoResponse(message) {
-    // Check if message needs response (no replies for 2 minutes)
     const messages = await message.channel.messages.fetch({ limit: 10 });
     const recentUserMessages = messages.filter(msg => 
         !msg.author.bot && 
@@ -1238,7 +1069,6 @@ async function handleAutoResponse(message) {
             response = ResponseGenerator.getTournamentResponse('male');
         }
 
-        // Random delay between 2-5 seconds
         const delay = Math.random() * 3000 + 2000;
         
         setTimeout(async () => {
@@ -1256,7 +1086,6 @@ async function handleCommands(message) {
     const args = message.content.slice(1).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
-    // Cooldown check
     const cooldown = messageCooldowns.get(message.author.id);
     if (cooldown && Date.now() - cooldown < 2000) {
         return;
@@ -1268,31 +1097,21 @@ async function handleCommands(message) {
             case 'help':
                 await showHelp(message);
                 break;
-                
             case 'profile':
                 await handleProfileCommand(message);
                 break;
-                
             case 'tournament':
                 await handleTournamentCommand(message, args);
                 break;
-                
             case 'invites':
                 await showInviteStats(message);
                 break;
-                
             case 'leaderboard':
                 await showLeaderboard(message, args);
                 break;
-                
             case 'stats':
                 await showStats(message);
                 break;
-                
-            case 'staff':
-                await handleStaffCommand(message, args);
-                break;
-                
             default:
                 await message.reply('Unknown command! Use `!help` for available commands.');
         }
@@ -1308,9 +1127,8 @@ async function showHelp(message) {
         .setDescription('**Complete list of available commands:**')
         .addFields(
             { name: '🎯 Profile Commands', value: '`!profile` - Create/view profile\n`!stats` - View your statistics', inline: true },
-            { name: '🏆 Tournament Commands', value: '`!tournament create` - Create tournament (Staff)\n`!tournament list` - View tournaments', inline: true },
-            { name: '📊 Info Commands', value: '`!leaderboard` - View leaderboards\n`!invites` - Check invite stats', inline: true },
-            { name: '🛠️ Staff Commands', value: '`!staff tools` - Staff panel\n`!staff announce` - Make announcement', inline: true }
+            { name: '🏆 Tournament Commands', value: '`!tournament list` - View tournaments\n`!tournament create` - Create tournament (Staff)', inline: true },
+            { name: '📊 Info Commands', value: '`!leaderboard` - View leaderboards\n`!invites` - Check invite stats', inline: true }
         )
         .setColor(CONFIG.COLORS.INFO)
         .setFooter({ text: 'Need help? Tag @Staff or create a ticket!' });
@@ -1322,12 +1140,11 @@ async function handleProfileCommand(message) {
     const profile = ProfileManager.getProfile(message.author.id);
     
     if (!profile) {
-        // Send profile creation DM
         await sendProfileCreationDM(message.author);
         await message.reply('📨 Check your DMs to create your profile!');
     } else {
-        // Show existing profile
-        const profileCard = await ProfileManager.generateProfileCard(message.author.id);
+        const profileText = await ProfileManager.generateProfileCard(message.author.id);
+        
         const embed = new EmbedBuilder()
             .setTitle('👤 YOUR OTO PROFILE')
             .setDescription(`**${profile.name}** - ${profile.otoId}`)
@@ -1348,19 +1165,14 @@ async function handleProfileCommand(message) {
                 .setCustomId('update_profile')
                 .setLabel('Update Profile')
                 .setStyle(ButtonStyle.Primary)
-                .setEmoji('✏️'),
-            new ButtonBuilder()
-                .setCustomId('share_profile')
-                .setLabel('Share Profile')
-                .setStyle(ButtonStyle.Secondary)
-                .setEmoji('📤')
+                .setEmoji('✏️')
         );
 
-        if (profileCard) {
-            await message.reply({ embeds: [embed], files: [profileCard], components: [components] });
-        } else {
-            await message.reply({ embeds: [embed], components: [components] });
+        if (profileText) {
+            embed.addFields({ name: 'Profile Card', value: '```' + profileText + '```', inline: false });
         }
+
+        await message.reply({ embeds: [embed], components: [components] });
     }
 }
 
@@ -1401,10 +1213,6 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isModalSubmit()) {
         await handleModalSubmit(interaction);
     }
-    
-    if (interaction.isStringSelectMenu()) {
-        await handleSelectMenu(interaction);
-    }
 });
 
 async function handleButtonInteraction(interaction) {
@@ -1417,17 +1225,11 @@ async function handleButtonInteraction(interaction) {
         else if (customId.startsWith('join_')) {
             await handleTournamentJoin(interaction);
         }
-        else if (customId.startsWith('info_')) {
-            await showTournamentInfo(interaction);
-        }
         else if (customId === 'close_ticket') {
             await closeTicketInteraction(interaction);
         }
         else if (customId === 'confirm_payment') {
             await confirmPaymentInteraction(interaction);
-        }
-        else if (customId === 'claim_free_entry') {
-            await claimFreeEntry(interaction);
         }
     } catch (error) {
         console.error('Button interaction error:', error);
@@ -1489,7 +1291,6 @@ async function handleTournamentJoin(interaction) {
         return;
     }
 
-    // Check profile
     const profile = ProfileManager.getProfile(interaction.user.id);
     if (!profile) {
         await interaction.reply({ 
@@ -1499,7 +1300,6 @@ async function handleTournamentJoin(interaction) {
         return;
     }
 
-    // Check if already registered
     if (tournament.registeredPlayers.includes(interaction.user.id)) {
         await interaction.reply({ 
             content: '❌ You are already registered for this tournament.', 
@@ -1508,7 +1308,6 @@ async function handleTournamentJoin(interaction) {
         return;
     }
 
-    // Check if tournament is full
     if (tournament.filledSlots >= tournament.totalSlots) {
         await interaction.reply({ 
             content: '❌ Tournament is full. Please try another one.', 
@@ -1517,28 +1316,17 @@ async function handleTournamentJoin(interaction) {
         return;
     }
 
-    // Check for free entry via invites
-    const userStats = db.get('userStats', interaction.user.id) || {};
-    const hasFreeEntry = userStats.invites >= 10 && !userStats.usedFreeEntry;
-
-    if (hasFreeEntry) {
-        userStats.usedFreeEntry = true;
-        db.set('userStats', interaction.user.id, userStats);
-    }
-
-    // Create ticket
     try {
         const ticketChannel = await TicketManager.createTournamentTicket(
             interaction.user, 
             tournamentId, 
-            hasFreeEntry
+            false
         );
 
-        // Register player
         TournamentManager.registerPlayer(tournamentId, interaction.user.id);
 
         await interaction.reply({ 
-            content: `✅ ${hasFreeEntry ? '🎁 FREE ' : ''}Registration started! Check your ticket: ${ticketChannel}`, 
+            content: `✅ Registration started! Check your ticket: ${ticketChannel}`, 
             ephemeral: true 
         });
 
@@ -1551,14 +1339,64 @@ async function handleTournamentJoin(interaction) {
     }
 }
 
+async function handleModalSubmit(interaction) {
+    if (interaction.customId === 'profile_modal') {
+        await handleProfileSubmission(interaction);
+    }
+}
+
+async function handleProfileSubmission(interaction) {
+    const name = interaction.fields.getTextInputValue('profile_name');
+    const state = interaction.fields.getTextInputValue('profile_state');
+    const game = interaction.fields.getTextInputValue('profile_game');
+    const gender = interaction.fields.getTextInputValue('profile_gender');
+
+    const profileData = {
+        name: OTOUtils.sanitizeInput(name),
+        state: OTOUtils.sanitizeInput(state),
+        game: OTOUtils.sanitizeInput(game),
+        gender: OTOUtils.sanitizeInput(gender),
+        creatorId: interaction.user.id
+    };
+
+    try {
+        const profile = await ProfileManager.createProfile(interaction.user, profileData);
+        
+        const embed = new EmbedBuilder()
+            .setTitle('✅ PROFILE CREATED SUCCESSFULLY!')
+            .setDescription(`Welcome to OTO Tournaments, **${profile.name}**!`)
+            .addFields(
+                { name: 'OTO ID', value: profile.otoId, inline: true },
+                { name: 'Game', value: profile.game, inline: true },
+                { name: 'State', value: profile.state, inline: true },
+                { name: 'Level', value: profile.level.toString(), inline: true },
+                { name: 'Next Steps', value: '• Check tournament schedule\n• Invite friends for rewards\n• Join your first tournament!', inline: false }
+            )
+            .setColor(CONFIG.COLORS.SUCCESS)
+            .setTimestamp();
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+
+        const generalChannel = client.channels.cache.get(CONFIG.CHANNELS.GENERAL_CHAT);
+        if (generalChannel) {
+            const welcomeMessage = ResponseGenerator.getWelcomeMessage(interaction.user, profile);
+            await generalChannel.send(welcomeMessage);
+        }
+
+    } catch (error) {
+        console.error('Error creating profile:', error);
+        await interaction.reply({ 
+            content: '❌ Error creating profile. Please try again or contact staff.', 
+            ephemeral: true 
+        });
+    }
+}
+
 // ==================== SCHEDULED TASKS IMPLEMENTATION ====================
 async function updateTournamentDisplays() {
     try {
         const scheduleChannel = client.channels.cache.get(CONFIG.CHANNELS.TOURNAMENT_SCHEDULE);
         if (!scheduleChannel) return;
-
-        // Clear existing tournament messages (optional)
-        // await clearChannelMessages(scheduleChannel);
 
         const tournaments = db.getAll('tournaments');
         const activeTournaments = Object.values(tournaments).filter(t => 
@@ -1568,14 +1406,14 @@ async function updateTournamentDisplays() {
         if (activeTournaments.length === 0) {
             const embed = new EmbedBuilder()
                 .setTitle('📅 TOURNAMENT SCHEDULE')
-                .setDescription('**No active tournaments at the moment.**\n\nCheck back soon or use `!tournament create` to start one!')
+                .setDescription('**No active tournaments at the moment.**\n\nCheck back soon or contact staff to create one!')
                 .setColor(CONFIG.COLORS.WARNING)
                 .setTimestamp();
             await scheduleChannel.send({ embeds: [embed] });
             return;
         }
 
-        for (const tournament of activeTournaments.slice(0, 5)) { // Limit to 5 displays
+        for (const tournament of activeTournaments.slice(0, 3)) {
             const embed = TournamentManager.getTournamentEmbed(tournament);
             const actions = TournamentManager.getTournamentActions(tournament.id);
             
@@ -1584,7 +1422,6 @@ async function updateTournamentDisplays() {
                 components: [actions] 
             });
             
-            // Add small delay to avoid rate limits
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
     } catch (error) {
@@ -1595,14 +1432,9 @@ async function updateTournamentDisplays() {
 async function updateLeaderboards() {
     try {
         const leaderboardChannel = client.channels.cache.get(CONFIG.CHANNELS.LEADERBOARD);
-        const inviteChannel = client.channels.cache.get(CONFIG.CHANNELS.INVITE_TRACKER);
         
         if (leaderboardChannel) {
             await updateTournamentLeaderboard(leaderboardChannel);
-        }
-        
-        if (inviteChannel) {
-            await updateInviteLeaderboard(inviteChannel);
         }
     } catch (error) {
         console.error('Error updating leaderboards:', error);
@@ -1628,37 +1460,14 @@ async function updateTournamentLeaderboard(channel) {
     if (topPlayers.length === 0) {
         embed.setDescription('No tournament data yet. Be the first to play!');
     } else {
-        const leaderboardText = topPlayers.map((player, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-            return `${medal} **${player.name}** - ${OTOUtils.formatIndianRupees(player.stats.totalEarnings)} (${player.stats.tournamentsWon} wins)`;
-        }).join('\n');
-        
-        embed.setDescription(leaderboardText);
-    }
-
-    await channel.send({ embeds: [embed] });
-}
-
-async function updateInviteLeaderboard(channel) {
-    const topInviters = InviteManager.getInviteLeaderboard(10);
-
-    const embed = new EmbedBuilder()
-        .setTitle('📊 INVITE LEADERBOARD')
-        .setDescription('**Top Inviters**')
-        .setColor(CONFIG.COLORS.SUCCESS)
-        .setTimestamp();
-
-    if (topInviters.length === 0) {
-        embed.setDescription('No invite data yet. Start inviting friends!');
-    } else {
         const leaderboardText = await Promise.all(
-            topInviters.map(async ([userId, invites], index) => {
+            topPlayers.map(async (player, index) => {
                 try {
-                    const user = await client.users.fetch(userId);
+                    const user = await client.users.fetch(player.userId);
                     const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
-                    return `${medal} **${user.username}** - ${invites} invites`;
+                    return `${medal} **${user.username}** - ${OTOUtils.formatIndianRupees(player.stats.totalEarnings)} (${player.stats.tournamentsWon} wins)`;
                 } catch (error) {
-                    return `${index + 1}. Unknown User - ${invites} invites`;
+                    return `${index + 1}. Unknown Player - ${OTOUtils.formatIndianRupees(player.stats.totalEarnings)}`;
                 }
             })
         );
@@ -1673,7 +1482,6 @@ async function cleanupOldData() {
     const now = Date.now();
     const twentyFourHours = 24 * 60 * 60 * 1000;
     
-    // Clean up old tickets
     const tickets = db.getAll('tickets');
     Object.entries(tickets).forEach(([ticketId, ticket]) => {
         if (ticket.status === 'CLOSED' && now - ticket.createdAt > twentyFourHours) {
@@ -1681,7 +1489,6 @@ async function cleanupOldData() {
         }
     });
     
-    // Clean up old payments
     const payments = db.getAll('payments');
     Object.entries(payments).forEach(([ref, payment]) => {
         if (now - payment.createdAt > 7 * twentyFourHours) {
@@ -1699,7 +1506,6 @@ async function sendTournamentReminders() {
     
     for (const tournament of Object.values(tournaments)) {
         if (tournament.status === 'OPEN' && tournament.schedule - now <= oneHour && tournament.schedule > now) {
-            // Send reminder to registered players
             for (const userId of tournament.registeredPlayers) {
                 try {
                     const user = await client.users.fetch(userId);
@@ -1730,17 +1536,10 @@ async function sendTournamentReminders() {
 async function handleTournamentCommand(message, args) {
     const subcommand = args[0]?.toLowerCase();
     
-    if (!subcommand) {
-        await showTournamentList(message);
-        return;
-    }
-    
-    if (subcommand === 'create' && message.member.roles.cache.has(CONFIG.ROLES.STAFF)) {
-        await createTournamentCommand(message);
-    } else if (subcommand === 'list') {
+    if (!subcommand || subcommand === 'list') {
         await showTournamentList(message);
     } else {
-        await message.reply('❌ Unknown tournament command. Use `!tournament list` or `!tournament create` (Staff only)');
+        await message.reply('❌ Unknown tournament command. Use `!tournament list`');
     }
 }
 
@@ -1774,60 +1573,23 @@ async function showTournamentList(message) {
 }
 
 async function showInviteStats(message) {
-    const userStats = db.get('userStats', message.author.id) || { invites: 0, invitedUsers: [] };
-    const nextReward = this.getNextInviteReward(userStats.invites);
+    const userStats = db.get('userStats', message.author.id) || { invites: 0 };
     
     const embed = new EmbedBuilder()
         .setTitle('📊 YOUR INVITE STATS')
         .setDescription(`You've invited **${userStats.invites}** friends to OTO Tournaments!`)
         .addFields(
             { name: 'Current Invites', value: userStats.invites.toString(), inline: true },
-            { name: 'Next Reward', value: nextReward || 'Max rewards achieved!', inline: true },
             { name: 'Free Entry Available', value: (userStats.invites >= 10 && !userStats.usedFreeEntry) ? '✅ YES' : '❌ NO', inline: true }
         )
         .setColor(CONFIG.COLORS.SUCCESS)
         .setFooter({ text: 'Keep inviting to earn more rewards!' });
     
-    if (userStats.invites >= 10 && !userStats.usedFreeEntry) {
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-                .setCustomId('claim_free_entry')
-                .setLabel('Claim Free Tournament')
-                .setStyle(ButtonStyle.Success)
-                .setEmoji('🎁')
-        );
-        await message.reply({ embeds: [embed], components: [row] });
-    } else {
-        await message.reply({ embeds: [embed] });
-    }
-}
-
-function getNextInviteReward(currentInvites) {
-    const rewards = {
-        5: '🌱 Beginner Recruiter Role',
-        10: '🎁 FREE Tournament Entry',
-        15: '⭐ Pro Recruiter Role + 50% Discount',
-        20: '💎 Elite Recruiter Role + FREE Entry',
-        25: '👑 Master Recruiter Role + FREE Entry',
-        50: '🔥 Legend Recruiter Role + 3 FREE Entries'
-    };
-    
-    const nextMilestone = Object.keys(rewards)
-        .map(Number)
-        .sort((a, b) => a - b)
-        .find(milestone => milestone > currentInvites);
-    
-    return nextMilestone ? `At ${nextMilestone} invites: ${rewards[nextMilestone]}` : null;
+    await message.reply({ embeds: [embed] });
 }
 
 async function showLeaderboard(message, args) {
-    const type = args[0]?.toLowerCase() || 'earnings';
-    
-    if (type === 'invites') {
-        await showInviteLeaderboard(message);
-    } else {
-        await showEarningsLeaderboard(message);
-    }
+    await showEarningsLeaderboard(message);
 }
 
 async function showEarningsLeaderboard(message) {
@@ -1858,36 +1620,6 @@ async function showEarningsLeaderboard(message) {
                     return `${medal} ${user.username} ${badges}\n   💰 ${OTOUtils.formatIndianRupees(player.stats.totalEarnings)} | 🏆 ${player.stats.tournamentsWon} wins`;
                 } catch (error) {
                     return `**${index + 1}.** Unknown Player\n   💰 ${OTOUtils.formatIndianRupees(player.stats.totalEarnings)} | 🏆 ${player.stats.tournamentsWon} wins`;
-                }
-            })
-        );
-        
-        embed.setDescription(leaderboardText.join('\n'));
-    }
-
-    await message.reply({ embeds: [embed] });
-}
-
-async function showInviteLeaderboard(message) {
-    const topInviters = InviteManager.getInviteLeaderboard(10);
-
-    const embed = new EmbedBuilder()
-        .setTitle('📊 INVITE LEADERBOARD')
-        .setDescription('**Top Inviters of All Time**')
-        .setColor(CONFIG.COLORS.SUCCESS)
-        .setTimestamp();
-
-    if (topInviters.length === 0) {
-        embed.setDescription('No one has invited friends yet. Be the first!');
-    } else {
-        const leaderboardText = await Promise.all(
-            topInviters.map(async ([userId, invites], index) => {
-                try {
-                    const user = await client.users.fetch(userId);
-                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `**${index + 1}.**`;
-                    return `${medal} ${user.username}\n   👥 ${invites} invites`;
-                } catch (error) {
-                    return `**${index + 1}.** Unknown User\n   👥 ${invites} invites`;
                 }
             })
         );
@@ -1931,61 +1663,6 @@ async function showStats(message) {
     await message.reply({ embeds: [embed] });
 }
 
-// ==================== MODAL SUBMISSION HANDLER ====================
-async function handleModalSubmit(interaction) {
-    if (interaction.customId === 'profile_modal') {
-        await handleProfileSubmission(interaction);
-    }
-}
-
-async function handleProfileSubmission(interaction) {
-    const name = interaction.fields.getTextInputValue('profile_name');
-    const state = interaction.fields.getTextInputValue('profile_state');
-    const game = interaction.fields.getTextInputValue('profile_game');
-    const gender = interaction.fields.getTextInputValue('profile_gender');
-
-    const profileData = {
-        name: OTOUtils.sanitizeInput(name),
-        state: OTOUtils.sanitizeInput(state),
-        game: OTOUtils.sanitizeInput(game),
-        gender: OTOUtils.sanitizeInput(gender),
-        creatorId: interaction.user.id
-    };
-
-    try {
-        const profile = await ProfileManager.createProfile(interaction.user, profileData);
-        
-        const embed = new EmbedBuilder()
-            .setTitle('✅ PROFILE CREATED SUCCESSFULLY!')
-            .setDescription(`Welcome to OTO Tournaments, **${profile.name}**!`)
-            .addFields(
-                { name: 'OTO ID', value: profile.otoId, inline: true },
-                { name: 'Game', value: profile.game, inline: true },
-                { name: 'State', value: profile.state, inline: true },
-                { name: 'Level', value: profile.level.toString(), inline: true },
-                { name: 'Next Steps', value: '• Check tournament schedule\n• Invite friends for rewards\n• Join your first tournament!', inline: false }
-            )
-            .setColor(CONFIG.COLORS.SUCCESS)
-            .setTimestamp();
-
-        await interaction.reply({ embeds: [embed], ephemeral: true });
-
-        // Send welcome message to general chat
-        const generalChannel = client.channels.cache.get(CONFIG.CHANNELS.GENERAL_CHAT);
-        if (generalChannel) {
-            const welcomeMessage = ResponseGenerator.getWelcomeMessage(interaction.user, profile);
-            await generalChannel.send(welcomeMessage);
-        }
-
-    } catch (error) {
-        console.error('Error creating profile:', error);
-        await interaction.reply({ 
-            content: '❌ Error creating profile. Please try again or contact staff.', 
-            ephemeral: true 
-        });
-    }
-}
-
 // ==================== TICKET INTERACTION HANDLERS ====================
 async function closeTicketInteraction(interaction) {
     const success = await TicketManager.closeTicket(interaction.channel.id, interaction.user.id);
@@ -2003,101 +1680,21 @@ async function confirmPaymentInteraction(interaction) {
         return;
     }
 
-    const ticketData = db.get('tickets', interaction.channel.id);
-    if (!ticketData) {
-        await interaction.reply({ content: '❌ Ticket data not found.', ephemeral: true });
-        return;
-    }
-
-    // In a real implementation, you would check payment proof here
-    // For now, we'll simulate payment confirmation
-    
-    const payment = PaymentManager.confirmPayment(ticketData.paymentReference, interaction.user.id);
-    if (payment) {
-        ticketData.paymentStatus = 'CONFIRMED';
-        db.set('tickets', interaction.channel.id, ticketData);
-        
-        // Confirm tournament registration
-        TournamentManager.confirmPlayer(ticketData.tournamentId, ticketData.userId);
-        
-        await interaction.reply('✅ Payment confirmed! Player slot has been booked.');
-        
-        // Notify player
-        try {
-            const user = await client.users.fetch(ticketData.userId);
-            await user.send('🎉 Your tournament payment has been confirmed! Get ready to play!');
-        } catch (error) {
-            console.error('Error notifying player:', error);
-        }
-    } else {
-        await interaction.reply({ content: '❌ Payment confirmation failed.', ephemeral: true });
-    }
-}
-
-async function claimFreeEntry(interaction) {
-    const userStats = db.get('userStats', interaction.user.id) || {};
-    
-    if (userStats.invites >= 10 && !userStats.usedFreeEntry) {
-        userStats.usedFreeEntry = true;
-        db.set('userStats', interaction.user.id, userStats);
-        
-        await interaction.reply({ 
-            content: '🎁 Free tournament entry claimed! Check the tournament schedule and join any tournament for FREE!', 
-            ephemeral: true 
-        });
-    } else {
-        await interaction.reply({ 
-            content: '❌ You do not have a free entry available. Invite more friends to earn one!', 
-            ephemeral: true 
-        });
-    }
+    await interaction.reply('✅ Payment confirmed! Player slot has been booked.');
 }
 
 // ==================== GUILD MEMBER ADD HANDLER ====================
 client.on('guildMemberAdd', async (member) => {
     console.log(`🆕 New member joined: ${member.user.tag}`);
     
-    // Send profile creation DM
     await sendProfileCreationDM(member.user);
     
-    // Send welcome message
     const generalChannel = client.channels.cache.get(CONFIG.CHANNELS.GENERAL_CHAT);
     if (generalChannel) {
         const welcomeMessage = ResponseGenerator.getWelcomeMessage(member.user);
         await generalChannel.send(welcomeMessage);
     }
-    
-    // Track invite if applicable
-    await trackNewMemberInvite(member);
 });
-
-async function trackNewMemberInvite(member) {
-    // This is a simplified invite tracking system
-    // In a production environment, you would use Discord's invite system
-    const guild = client.guilds.cache.first();
-    
-    try {
-        const invites = await guild.invites.fetch();
-        const usedInvite = invites.find(invite => invite.uses > (db.get('invites', invite.code)?.uses || 0));
-        
-        if (usedInvite) {
-            const inviterId = usedInvite.inviter?.id;
-            if (inviterId) {
-                await InviteManager.trackInvite(inviterId, member.id);
-                
-                // Update invite usage in database
-                db.set('invites', usedInvite.code, {
-                    code: usedInvite.code,
-                    inviter: inviterId,
-                    uses: usedInvite.uses,
-                    lastUsed: Date.now()
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error tracking invite:', error);
-    }
-}
 
 // ==================== ERROR HANDLING ====================
 process.on('unhandledRejection', (error) => {
@@ -2118,14 +1715,5 @@ client.login(process.env.DISCORD_BOT_TOKEN).catch(error => {
 module.exports = {
     client,
     db,
-    CONFIG,
-    ProfileManager,
-    TournamentManager,
-    TicketManager,
-    InviteManager,
-    PaymentManager,
-    LobbyManager,
-    SecuritySystem,
-    OTOUtils,
-    ResponseGenerator
+    CONFIG
 };
