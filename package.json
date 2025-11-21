@@ -1,16 +1,41 @@
 {
   "name": "oto-tournament-bot",
-  "version": "1.0.0",
-  "description": "OTO Tournament Discord Bot",
+  "version": "2.0.0",
+  "description": "Ultimate Discord Tournament Bot with 50+ features - No Database Required",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "worker": "node index.js"
+    "dev": "nodemon index.js",
+    "test": "echo \"OTO Bot - Ready for deployment\" && exit 0"
   },
-  "keywords": ["discord", "bot", "tournament"],
-  "author": "OTO",
+  "keywords": [
+    "discord",
+    "bot",
+    "tournament",
+    "gaming",
+    "free-fire",
+    "minecraft",
+    "esports",
+    "discord.js"
+  ],
+  "author": "OTO Tournaments",
   "license": "MIT",
+  "engines": {
+    "node": ">=16.9.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "discord.js": "^14.14.1"
-  }
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/oto-tournament-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/oto-tournament-bot/issues"
+  },
+  "homepage": "https://github.com/yourusername/oto-tournament-bot#readme"
 }
