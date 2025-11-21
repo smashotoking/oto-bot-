@@ -1,21 +1,16 @@
 {
   "name": "oto-tournament-bot",
   "version": "1.0.0",
-  "description": "Complete tournament management bot for OTO Tournaments",
+  "description": "OTO Tournament Discord Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "echo 'No build step required'"
+    "worker": "node index.js"
   },
+  "keywords": ["discord", "bot", "tournament"],
+  "author": "OTO",
+  "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.14.1",
-    "qrcode": "^1.5.3",
-    "moment": "^2.29.4"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": ["discord", "tournament", "gaming", "bot"],
-  "author": "OTO Tournaments",
-  "license": "MIT"
+    "discord.js": "^14.14.1"
+  }
 }
