@@ -2885,7 +2885,7 @@ async function showWinnerForm(interaction) {
 // 🚀 BOT LOGIN
 // ═══════════════════════════════════════════════════════════════
 
-const token = process.env.BOT_TOKEN || process.env.DISCORD_TOKEN;
+const token = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN;
 
 if (!token) {
   console.error('❌ Error: BOT_TOKEN not found in environment variables!');
