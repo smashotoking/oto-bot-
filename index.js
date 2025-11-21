@@ -2948,38 +2948,3 @@ server.listen(PORT, () => {
   console.log(`🌐 HTTP server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
 });
-
-// ═══════════════════════════════════════════════════════════════
-// 🎯 ADDITIONAL FEATURES TO ADD (Continuation in comments)
-// ═══════════════════════════════════════════════════════════════
-
-/*
-FEATURES TO IMPLEMENT:
-✅ Profile System with OTO ID
-✅ Invite Tracking & Rewards
-✅ Auto Response System
-✅ Moderation (Bad words, Spam detection)
-✅ Tournament Creation & Management
-✅ Ticket System (Registration, Lobby)
-✅ Staff Tools Panel
-✅ Leaderboards
-✅ Payment System (QR code simulation)
-✅ Analytics Dashboard
-
-ADDITIONAL FEATURES (Add as needed):
-- Achievement System
-- Squad/Clan System
-- Daily Challenges
-- Seasonal Events
-- Mini Games
-- Practice Rooms
-- Coaching System
-- Certificate Generation
-- Prize Distribution Tracking
-- Advanced Search & Filters
-- Backup & Recovery System
-*/
-
-console.log('📝 Total Lines:', '4000+');
-console.log('✨ All core features implemented!');
-console.log('🚀 Bot is production-ready!');
