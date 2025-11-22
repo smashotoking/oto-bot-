@@ -791,56 +791,76 @@ client.on('messageCreate', async (message) => {
 // 🔘 INTERACTION HANDLER
 // ===========================
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.guild) return;
+    try {
+        if (!interaction.guild && !interaction.isModalSubmit() && !interaction.customId?.startsWith('start_profile') && !interaction.customId?.startsWith('select_gender')) {
+            // Allow DM interactions for profile creation
+            if (interaction.isButton() && interaction.customId === 'resend_profile_dm') {
+                if (await hasProfile(interaction.user.id)) {
+                    await interaction.reply({ content: '✅ You already have a profile!', ephemeral: true });
+                    return;
+                }
 
-    if (interaction.isButton()) {
-        const customId = interaction.customId;
+                const sent = await createProfilePrompt(interaction.user);
+                if (sent) {
+                    await interaction.reply({ content: '✅ Profile creation message sent to your DMs! Check your inbox!', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: '❌ Could not send DM! Please enable DMs from server members.', ephemeral: true });
+                }
+                return;
+            }
+        }
 
-        // Resend profile DM
-        if (customId === 'resend_profile_dm') {
-            if (await hasProfile(interaction.user.id)) {
-                await interaction.reply({ content: '✅ You already have a profile!', ephemeral: true });
+        if (interaction.isButton()) {
+            const customId = interaction.customId;
+
+            // Profile creation start (works in DMs)
+            if (customId === 'start_profile') {
+                const modal = new ModalBuilder()
+                    .setCustomId('profile_modal')
+                    .setTitle('🎮 Create Your OTO Profile');
+
+                const nameInput = new TextInputBuilder()
+                    .setCustomId('profile_name')
+                    .setLabel('Your Name')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMaxLength(50)
+                    .setPlaceholder('Enter your real name');
+
+                const gameInput = new TextInputBuilder()
+                    .setCustomId('profile_game')
+                    .setLabel('Favorite Game')
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setPlaceholder('Free Fire, Minecraft, BGMI, etc.');
+
+                modal.addComponents(
+                    new ActionRowBuilder().addComponents(nameInput),
+                    new ActionRowBuilder().addComponents(gameInput)
+                );
+
+                await interaction.showModal(modal);
                 return;
             }
 
-            const sent = await createProfilePrompt(interaction.user);
-            if (sent) {
-                await interaction.reply({ content: '✅ Profile creation message sent to your DMs! Check your inbox!', ephemeral: true });
-            } else {
-                await interaction.reply({ content: '❌ Could not send DM! Please enable DMs from server members.', ephemeral: true });
+            // Gender selection (works in DMs)
+            if (customId.startsWith('select_gender_')) {
+                const gender = customId.replace('select_gender_', '');
+                
+                if (!interaction.client.tempProfiles) {
+                    interaction.client.tempProfiles = new Map();
+                }
+                
+                const tempData = interaction.client.tempProfiles.get(interaction.user.id) || {};
+                tempData.gender = gender;
+                interaction.client.tempProfiles.set(interaction.user.id, tempData);
+
+                await showStateSelection(interaction);
+                return;
             }
-            return;
-        }
 
-        // Profile creation start
-        if (customId === 'start_profile') {
-            const modal = new ModalBuilder()
-                .setCustomId('profile_modal')
-                .setTitle('🎮 Create Your OTO Profile');
-
-            const nameInput = new TextInputBuilder()
-                .setCustomId('profile_name')
-                .setLabel('Your Name')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setMaxLength(50);
-
-            const gameInput = new TextInputBuilder()
-                .setCustomId('profile_game')
-                .setLabel('Favorite Game (Free Fire/Minecraft)')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true);
-
-            modal.addComponents(
-                new ActionRowBuilder().addComponents(nameInput),
-                new ActionRowBuilder().addComponents(gameInput)
-            );
-
-            await interaction.showModal(modal);
-            return;
-        }
-
-        // Join tournament
+            // Rest of guild-only interactions
+            if (!interaction.guild) return;
         if (customId.startsWith('join_tournament_')) {
             const tournamentId = customId.replace('join_tournament_', '');
             const tournament = DB.tournaments[tournamentId];
@@ -1056,15 +1076,19 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // Select menu interactions
+    // Select menu interactions (works in DMs for state selection)
     if (interaction.isStringSelectMenu()) {
         const customId = interaction.customId;
 
         if (customId === 'select_state') {
             const state = interaction.values[0];
             
-            const tempData = interaction.client.tempProfiles.get(interaction.user.id) || {};
+            const tempData = interaction.client.tempProfiles?.get(interaction.user.id) || {};
             tempData.state = state;
+            
+            if (!interaction.client.tempProfiles) {
+                interaction.client.tempProfiles = new Map();
+            }
             interaction.client.tempProfiles.set(interaction.user.id, tempData);
 
             const embed = createEmbed(
@@ -1080,37 +1104,42 @@ client.on('interactionCreate', async (interaction) => {
 
             await interaction.update({ embeds: [embed], components: [] });
 
+            // Save profile
             DB.profiles[interaction.user.id] = tempData;
             saveJSON('profiles.json', DB.profiles);
 
-            const member = await interaction.guild.members.fetch(interaction.user.id);
-            await unlockChannelsForUser(member);
+            // Get guild and unlock channels
+            const guild = client.guilds.cache.first();
+            if (guild) {
+                const member = await guild.members.fetch(interaction.user.id);
+                await unlockChannelsForUser(member);
 
-            const profileChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.PROFILE_SECTION);
-            if (profileChannel) {
-                const profileEmbed = createEmbed(
-                    `👤 ${tempData.name}'s Profile`,
-                    `**OTO ID:** ${tempData.otoId}\n` +
-                    `**Gender:** ${tempData.gender === 'male' ? '👨 Male' : '👩 Female'}\n` +
-                    `**State:** ${tempData.state}\n` +
-                    `**Favorite Game:** ${tempData.game}\n` +
-                    `**Joined:** <t:${Math.floor(Date.now() / 1000)}:R>\n\n` +
-                    `**Stats:** 🏆 0 Wins | 🎮 0 Played | 💰 ₹0 Earned`,
-                    '#9b59b6'
-                );
-                await profileChannel.send({ embeds: [profileEmbed] });
-            }
+                const profileChannel = guild.channels.cache.get(CONFIG.CHANNELS.PROFILE_SECTION);
+                if (profileChannel) {
+                    const profileEmbed = createEmbed(
+                        `👤 ${tempData.name}'s Profile`,
+                        `**OTO ID:** ${tempData.otoId}\n` +
+                        `**Gender:** ${tempData.gender === 'male' ? '👨 Male' : '👩 Female'}\n` +
+                        `**State:** ${tempData.state}\n` +
+                        `**Favorite Game:** ${tempData.game}\n` +
+                        `**Joined:** <t:${Math.floor(Date.now() / 1000)}:R>\n\n` +
+                        `**Stats:** 🏆 0 Wins | 🎮 0 Played | 💰 ₹0 Earned`,
+                        '#9b59b6'
+                    );
+                    await profileChannel.send({ embeds: [profileEmbed] });
+                }
 
-            const generalChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.GENERAL_CHAT);
-            if (generalChannel) {
-                const welcomeEmbed = createEmbed(
-                    '🎉 Welcome to OTO!',
-                    `${getRandomWelcome(`<@${interaction.user.id}>`)}\n\n` +
-                    `Profile unlocked! You can now access all channels! 🔓\n` +
-                    `Check out <#${CONFIG.CHANNELS.TOURNAMENT_SCHEDULE}> to join tournaments!`,
-                    '#2ecc71'
-                );
-                await generalChannel.send({ embeds: [welcomeEmbed] });
+                const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL_CHAT);
+                if (generalChannel) {
+                    const welcomeEmbed = createEmbed(
+                        '🎉 Welcome to OTO!',
+                        `${getRandomWelcome(`<@${interaction.user.id}>`)}\n\n` +
+                        `Profile unlocked! You can now access all channels! 🔓\n` +
+                        `Check out <#${CONFIG.CHANNELS.TOURNAMENT_SCHEDULE}> to join tournaments!`,
+                        '#2ecc71'
+                    );
+                    await generalChannel.send({ embeds: [welcomeEmbed] });
+                }
             }
 
             interaction.client.tempProfiles.delete(interaction.user.id);
@@ -1118,7 +1147,7 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
 
-    // Modal interactions
+    // Modal interactions (works in DMs)
     if (interaction.isModalSubmit()) {
         const customId = interaction.customId;
 
@@ -1158,6 +1187,16 @@ client.on('interactionCreate', async (interaction) => {
 
             await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
             return;
+        }
+    }
+    } catch (error) {
+        console.error('Interaction error:', error);
+        try {
+            if (!interaction.replied && !interaction.deferred) {
+                await interaction.reply({ content: '❌ An error occurred! Please try again.', ephemeral: true });
+            }
+        } catch (err) {
+            console.error('Error sending error message:', err);
         }
     }
 });
