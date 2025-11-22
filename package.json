@@ -1,7 +1,7 @@
 {
   "name": "oto-tournament-bot",
   "version": "2.0.0",
-  "description": "Complete OTO Tournament Management Bot for Discord",
+  "description": "Complete OTO Tournament Discord Bot with profile system, tournaments, invites, and moderation",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -18,10 +18,11 @@
   "author": "OTO Tournaments",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.14.1"
+    "discord.js": "^14.14.1",
+    "express": "^4.18.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.2"
   },
   "engines": {
     "node": ">=16.9.0"
