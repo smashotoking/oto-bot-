@@ -21,7 +21,7 @@ const path = require('path');
 // ============================================
 const CONFIG = {
   // Bot Token from Environment Variable
-  TOKEN: process.env.DISCORD_TOKEN,
+  TOKEN: process.env.DISCORD_BOT_TOKEN,
   GUILD_ID: process.env.GUILD_ID || '1438443817799045141',
   
   // Channel IDs
