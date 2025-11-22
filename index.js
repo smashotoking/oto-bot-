@@ -602,7 +602,8 @@ client.on('messageCreate', async (message) => {
             console.error('Could not send DM:', err);
         }
         return;
-    }message) => {
+    }
+    {
     if (message.author.bot) return;
     
     const guild = message.guild;
