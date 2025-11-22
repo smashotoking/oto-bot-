@@ -22,7 +22,7 @@ const path = require('path');
 const CONFIG = {
   // Bot Token from Environment Variable
   TOKEN: process.env.DISCORD_BOT_TOKEN,
-  GUILD_ID: process.env.GUILD_ID || '1438443817799045141',
+  GUILD_ID: process.env.GUILD_ID || 'YOUR_GUILD_ID_HERE',
   
   // Channel IDs
   CHANNELS: {
@@ -65,7 +65,7 @@ const CONFIG = {
   },
   
   // Owner ID from Environment Variable
-  OWNER_ID: process.env.OWNER_ID || '1438443937588183110'
+  OWNER_ID: process.env.OWNER_ID || 'YOUR_OWNER_ID_HERE'
 };
 
 // ============================================
@@ -270,9 +270,41 @@ function isSpamming(userId) {
 client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} is online!`);
   
+  // List all guilds the bot is in
+  console.log('\n📋 Bot is currently in these servers:');
+  client.guilds.cache.forEach(guild => {
+    console.log(`   - ${guild.name} (ID: ${guild.id})`);
+  });
+  
+  if (client.guilds.cache.size === 0) {
+    console.error('\n❌ ERROR: Bot is not in any servers!');
+    console.error('   Please invite the bot to your server using the OAuth2 URL.');
+    console.error('   Then set the correct GUILD_ID in your environment variables.\n');
+    return;
+  }
+  
+  // If GUILD_ID is not set or invalid, use the first available guild
+  let targetGuild;
+  if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
+    targetGuild = client.guilds.cache.first();
+    console.log(`\n⚠️  GUILD_ID not set. Using first available server: ${targetGuild.name} (${targetGuild.id})`);
+    console.log(`   Please add this to your Render environment variables:`);
+    console.log(`   GUILD_ID=${targetGuild.id}\n`);
+  } else {
+    targetGuild = client.guilds.cache.get(CONFIG.GUILD_ID);
+    if (!targetGuild) {
+      console.error(`\n❌ ERROR: Cannot find guild with ID: ${CONFIG.GUILD_ID}`);
+      console.error('   Available guild IDs:');
+      client.guilds.cache.forEach(g => console.error(`   - ${g.id} (${g.name})`));
+      console.error('\n   Please update GUILD_ID in your Render environment variables.\n');
+      return;
+    }
+  }
+  
+  const guild = targetGuild;
+  console.log(`\n🎯 Working with server: ${guild.name}`);
+  
   try {
-    const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
-    
     // Pin rules and how to join in announcement channel
     const announcementChannel = guild.channels.cache.get(CONFIG.CHANNELS.ANNOUNCEMENT);
     if (announcementChannel) {
@@ -317,6 +349,9 @@ client.once('ready', async () => {
         const msg = await announcementChannel.send({ embeds: [rulesEmbed], components: [resendButton] });
         await msg.pin();
       }
+      console.log('✅ Announcement message posted');
+    } else {
+      console.log('⚠️  Announcement channel not found');
     }
     
     // Send profile creation DM to all existing members without profiles
@@ -340,15 +375,20 @@ client.once('ready', async () => {
     
     // Pin staff tools guide
     await pinStaffToolsGuide(guild);
+    console.log('✅ Staff tools guide pinned');
     
     // Pin owner tools guide
     await pinOwnerToolsGuide(guild);
+    console.log('✅ Owner tools guide pinned');
     
     // Update leaderboards
     await updateLeaderboards(guild);
+    console.log('✅ Leaderboards updated');
+    
+    console.log('\n🚀 Bot is fully operational!\n');
     
   } catch (error) {
-    console.error('Error in ready event:', error);
+    console.error('❌ Error in ready event:', error.message);
   }
 });
 
@@ -2038,11 +2078,23 @@ client.on('ready', async () => {
   ];
   
   try {
-    const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
+    // Get the target guild
+    let guild;
+    if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
+      guild = client.guilds.cache.first();
+    } else {
+      guild = client.guilds.cache.get(CONFIG.GUILD_ID);
+    }
+    
+    if (!guild) {
+      console.error('❌ Cannot register commands: No valid guild found');
+      return;
+    }
+    
     await guild.commands.set(commands);
     console.log('✅ Slash commands registered!');
   } catch (error) {
-    console.error('Error registering commands:', error);
+    console.error('❌ Error registering commands:', error.message);
   }
 });
 
