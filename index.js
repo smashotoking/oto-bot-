@@ -1997,11 +1997,13 @@ async function pinStaffToolsGuide(guild) {
     );
   
   // Clear all bot messages
-  const messages = await staffChannel.messages.fetch({ limit: 100 });
-  await staffChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id && {
+ const deletable = messages.filter(m => {
+    if (m.author.id !== client.user.id) return false;
     const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
     return daysDiff < 14;
-  }), true);
+});
+await staffChannel.bulkDelete(deletable, true);
+
   
   const msg = await staffChannel.send({ embeds: [guideEmbed], components: [staffPanel] });
   await msg.pin();
@@ -2076,12 +2078,13 @@ async function pinOwnerToolsGuide(guild) {
   
   // Clear all bot messages
   const messages = await ownerChannel.messages.fetch({ limit: 100 });
-  await ownerChannel.bulkDelete(messages.filter(m => {
+  const deletable = messages.filter(m => {
     if (m.author.id !== client.user.id) return false;
     const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
     return daysDiff < 14;
-  }), true);
-  
+});
+await ownerChannel.bulkDelete(deletable, true);
+
   const msg = await ownerChannel.send({ embeds: [guideEmbed], components: [ownerPanel, ownerPanel2] });
   await msg.pin();
 }
