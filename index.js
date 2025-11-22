@@ -1,3 +1,4 @@
+const express = require('express');
 const { 
   Client, 
   GatewayIntentBits, 
@@ -16,12 +17,24 @@ const {
 const fs = require('fs');
 const path = require('path');
 
+// Express server for Render.com health checks
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('OTO Tournament Bot is running!');
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Web server running on port ${PORT}`);
+});
+
 // ============================================
 // CONFIGURATION
 // ============================================
 const CONFIG = {
   // Bot Token from Environment Variable
-  TOKEN: process.env.DISCORD_BOT_TOKEN,
+  TOKEN: process.env.DISCORD_TOKEN,
   GUILD_ID: process.env.GUILD_ID || 'YOUR_GUILD_ID_HERE',
   
   // Channel IDs
@@ -33,8 +46,12 @@ const CONFIG = {
     INVITE_TRACKER: '1439216884774998107',
     LEADERBOARD: '1438947356690223347',
     STAFF_TOOLS: '1438486059255336970',
-    OWNER_TOOLS: '1438486059255336970',
+    OWNER_TOOLS: '1439218596877308005',
     MINECRAFT_CHAT: '1439223955960627421',
+    WELCOME_CHANNEL: '1441653083120603187',
+    SUPPORT: '1438485759891079180',
+    TICKET_LOG: '1438485821572518030',
+    MOD_LOG: '1438506342938706092',
     TICKET_CATEGORY: process.env.TICKET_CATEGORY_ID || 'YOUR_TICKET_CATEGORY_ID',
     
     // Additional Channels
@@ -42,14 +59,12 @@ const CONFIG = {
     RULES_CHANNEL: '1438482342145687643',
     BOT_COMMANDS: '1438483009950191676',
     OPEN_TICKET: '1438485759891079180',
-    TICKET_LOG: '1438485821572518030',
     MATCH_REPORTS: '1438486113047150714',
     PAYMENT_PROOF: '1438486113047150714',
     PLAYER_FORM: '1438486008453660863',
     STAFF_CHAT: '1438486059255336970',
     MOST_PLAYER_LB: '1439226024863993988',
-    CELEBRATION: '1441653083120603187',
-    WELCOME_CHANNEL: '1438482904018849835'
+    CELEBRATION: '1441653083120603187'
   },
   
   // Role IDs
@@ -305,6 +320,59 @@ client.once('ready', async () => {
   console.log(`\n🎯 Working with server: ${guild.name}`);
   
   try {
+    // Clear old bot DMs and send new profile creation DMs
+    const members = await guild.members.fetch();
+    let dmsSent = 0;
+    let dmsCleared = 0;
+    
+    for (const [memberId, member] of members) {
+      if (member.user.bot) continue;
+      
+      try {
+        // Try to delete old DMs from bot
+        const dmChannel = await member.user.createDM();
+        const oldMessages = await dmChannel.messages.fetch({ limit: 50 });
+        const botMessages = oldMessages.filter(m => m.author.id === client.user.id);
+        
+        for (const [msgId, msg] of botMessages) {
+          try {
+            await msg.delete();
+            dmsCleared++;
+          } catch (e) {
+            // Message might be too old or already deleted
+          }
+        }
+        
+        // Send new profile DM if user doesn't have profile
+        if (!hasProfile(memberId)) {
+          await sendProfileCreationDM(member.user);
+          dmsSent++;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limit protection
+      } catch (error) {
+        console.log(`Could not process DM for ${member.user.tag}`);
+      }
+    }
+    
+    console.log(`🧹 Cleared ${dmsCleared} old bot DMs`);
+    console.log(`📨 Sent ${dmsSent} new profile creation DMs`);
+    
+    // Clear support channel messages
+    const supportChannel = guild.channels.cache.get(CONFIG.CHANNELS.SUPPORT);
+    if (supportChannel) {
+      try {
+        const supportMessages = await supportChannel.messages.fetch({ limit: 100 });
+        await supportChannel.bulkDelete(supportMessages.filter(m => {
+          const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
+          return daysDiff < 14;
+        }), true);
+        console.log('🧹 Support channel cleared');
+      } catch (error) {
+        console.log('⚠️  Could not clear support channel');
+      }
+    }
+    
     // Pin rules and how to join in announcement channel
     const announcementChannel = guild.channels.cache.get(CONFIG.CHANNELS.ANNOUNCEMENT);
     if (announcementChannel) {
@@ -354,30 +422,11 @@ client.once('ready', async () => {
       console.log('⚠️  Announcement channel not found');
     }
     
-    // Send profile creation DM to all existing members without profiles
-    const members = await guild.members.fetch();
-    let dmsSent = 0;
-    
-    for (const [memberId, member] of members) {
-      if (member.user.bot) continue;
-      if (hasProfile(memberId)) continue;
-      
-      try {
-        await sendProfileCreationDM(member.user);
-        dmsSent++;
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limit protection
-      } catch (error) {
-        console.log(`Could not DM ${member.user.tag}`);
-      }
-    }
-    
-    console.log(`📨 Sent profile creation DMs to ${dmsSent} members`);
-    
-    // Pin staff tools guide
+    // Pin staff tools guide with panel
     await pinStaffToolsGuide(guild);
     console.log('✅ Staff tools guide pinned');
     
-    // Pin owner tools guide
+    // Pin owner tools guide with panel
     await pinOwnerToolsGuide(guild);
     console.log('✅ Owner tools guide pinned');
     
@@ -796,6 +845,148 @@ client.on('interactionCreate', async (interaction) => {
     await handleTicketClose(interaction);
     return;
   }
+  
+  // Staff Panel Buttons
+  if (interaction.customId === 'staff_create_tournament') {
+    const member = interaction.member;
+    const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
+                    member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
+                    member.id === CONFIG.OWNER_ID;
+    
+    if (!isStaff) {
+      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      return;
+    }
+    
+    await createTournament(interaction, 'quick');
+    return;
+  }
+  
+  if (interaction.customId === 'staff_list_tournaments') {
+    const member = interaction.member;
+    const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
+                    member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
+                    member.id === CONFIG.OWNER_ID;
+    
+    if (!isStaff) {
+      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      return;
+    }
+    
+    const tournaments = loadData('tournaments.json');
+    const activeTournaments = Object.entries(tournaments).filter(([id, t]) => 
+      t.status === 'open' || t.status === 'filling' || t.status === 'almost_full'
+    );
+    
+    if (activeTournaments.length === 0) {
+      await interaction.reply({ content: '📋 No active tournaments at the moment.', flags: 64 });
+      return;
+    }
+    
+    const listEmbed = new EmbedBuilder()
+      .setColor('#2196F3')
+      .setTitle('📋 ACTIVE TOURNAMENTS')
+      .setDescription(
+        activeTournaments.map(([id, t]) => 
+          `**${t.title}**\nID: \`${id}\`\nSlots: ${t.currentSlots}/${t.maxSlots} | Status: ${t.status.toUpperCase()}`
+        ).join('\n\n')
+      )
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [listEmbed], flags: 64 });
+    return;
+  }
+  
+  if (interaction.customId === 'staff_view_stats') {
+    const member = interaction.member;
+    const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
+                    member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
+                    member.id === CONFIG.OWNER_ID;
+    
+    if (!isStaff) {
+      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      return;
+    }
+    
+    const profiles = loadData('profiles.json');
+    const tournaments = loadData('tournaments.json');
+    
+    const statsEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('📊 SERVER STATS')
+      .addFields(
+        { name: 'Total Users', value: `${Object.keys(profiles).length}`, inline: true },
+        { name: 'Total Tournaments', value: `${Object.keys(tournaments).length}`, inline: true },
+        { name: 'Active Tournaments', value: `${Object.values(tournaments).filter(t => t.status === 'open').length}`, inline: true }
+      )
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [statsEmbed], flags: 64 });
+    return;
+  }
+  
+  // Owner Panel Buttons
+  if (interaction.customId === 'owner_view_stats') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', flags: 64 });
+      return;
+    }
+    
+    const profiles = loadData('profiles.json');
+    const tournaments = loadData('tournaments.json');
+    const invitesData = loadData('invites.json');
+    
+    const totalRevenue = Object.values(tournaments).reduce((sum, t) => {
+      return sum + (t.entryFee * t.currentSlots);
+    }, 0);
+    
+    const totalPrizesGiven = Object.values(profiles).reduce((sum, p) => {
+      return sum + p.stats.earned;
+    }, 0);
+    
+    const statsEmbed = new EmbedBuilder()
+      .setColor('#9C27B0')
+      .setTitle('📊 OWNER STATISTICS')
+      .addFields(
+        { name: '👥 Total Users', value: `${Object.keys(profiles).length}`, inline: true },
+        { name: '🎮 Tournaments', value: `${Object.keys(tournaments).length}`, inline: true },
+        { name: '👋 Total Invites', value: `${Object.values(invitesData).reduce((s, i) => s + i.total, 0)}`, inline: true },
+        { name: '💰 Revenue', value: `₹${totalRevenue}`, inline: true },
+        { name: '🏆 Prizes Given', value: `₹${totalPrizesGiven}`, inline: true },
+        { name: '💵 Profit', value: `₹${totalRevenue - totalPrizesGiven}`, inline: true }
+      )
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [statsEmbed], flags: 64 });
+    return;
+  }
+  
+  if (interaction.customId === 'owner_clear_support') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', flags: 64 });
+      return;
+    }
+    
+    try {
+      const supportChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.SUPPORT);
+      if (!supportChannel) {
+        await interaction.reply({ content: '❌ Support channel not found!', flags: 64 });
+        return;
+      }
+      
+      const messages = await supportChannel.messages.fetch({ limit: 100 });
+      const deletableMessages = messages.filter(m => {
+        const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
+        return daysDiff < 14;
+      });
+      
+      await supportChannel.bulkDelete(deletableMessages, true);
+      await interaction.reply({ content: `✅ Cleared ${deletableMessages.size} messages from support!`, flags: 64 });
+    } catch (error) {
+      await interaction.reply({ content: `❌ Error: ${error.message}`, flags: 64 });
+    }
+    return;
+  }
 });
 
 // ============================================
@@ -950,10 +1141,11 @@ client.on('interactionCreate', async (interaction) => {
       await profileChannel.send({ embeds: [profileEmbed] });
     }
     
-    // Welcome announcement in general
-    const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
-    if (generalChannel) {
-      await generalChannel.send(`🎊 **${tempProfile.name} bhai aa gaya!** Welcome ${interaction.user}! 🔥`);
+    // Welcome announcement in welcome channel with heart reaction
+    const welcomeChannel = guild.channels.cache.get(CONFIG.CHANNELS.WELCOME_CHANNEL);
+    if (welcomeChannel) {
+      const welcomeMsg = await welcomeChannel.send(`🎊 **${tempProfile.name} bhai aa gaya!** Welcome ${interaction.user}! 🔥`);
+      await welcomeMsg.react('❤️');
     }
     
     return;
@@ -1762,41 +1954,56 @@ async function pinStaffToolsGuide(guild) {
         name: '🎯 TOURNAMENT MANAGEMENT',
         value: 
           '`/tournament-create` - Create new tournament\n' +
-          '`/tournament-manage` - Edit/cancel tournaments\n' +
+          '`/tournament-list` - View all tournaments\n' +
           '`/tournament-start [id]` - Start tournament\n' +
-          '`/tournament-list` - View all tournaments'
+          '`/tournament-cancel [id]` - Cancel tournament'
       },
       {
         name: '👥 PLAYER MANAGEMENT',
         value: 
-          '`/payment-confirm` - Confirm payment (use in tickets)\n' +
-          '`/ticket-close` - Close support ticket\n' +
-          '`/user-profile @user` - View user profile\n' +
-          '`/user-stats @user` - View user statistics'
+          '`Click buttons in tickets` - Confirm/Close tickets\n' +
+          '`/user-profile @user` - View user profile'
       },
       {
         name: '⚡ MODERATION',
         value: 
           '`/user-warn @user [reason]` - Warn user\n' +
           '`/user-timeout @user [minutes]` - Timeout user\n' +
-          '`/user-untimeout @user` - Remove timeout\n' +
-          '`/user-ban @user [reason]` - Ban user'
+          '`/user-untimeout @user` - Remove timeout'
       },
       {
         name: '🏆 WINNER DECLARATION',
         value: 
-          '`/winner-declare [tournament] @user [position]` - Declare winner\n' +
-          '`/badge-give @user [badge]` - Give badge to user\n' +
-          '`/prize-distribute [tournament]` - Distribute prizes'
+          '`/winner-declare [tournament] @user [position]` - Declare winner'
       }
     )
-    .setFooter({ text: 'Use these commands to manage OTO Tournaments efficiently!' })
+    .setFooter({ text: 'Staff Panel - Quick Actions' })
     .setTimestamp();
   
-  const messages = await staffChannel.messages.fetch({ limit: 100 });
-  await staffChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id));
+  const staffPanel = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('staff_create_tournament')
+        .setLabel('🎮 Create Tournament')
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId('staff_list_tournaments')
+        .setLabel('📋 View Tournaments')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('staff_view_stats')
+        .setLabel('📊 Server Stats')
+        .setStyle(ButtonStyle.Secondary)
+    );
   
-  const msg = await staffChannel.send({ embeds: [guideEmbed] });
+  // Clear all bot messages
+  const messages = await staffChannel.messages.fetch({ limit: 100 });
+  await staffChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id && {
+    const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
+    return daysDiff < 14;
+  }), true);
+  
+  const msg = await staffChannel.send({ embeds: [guideEmbed], components: [staffPanel] });
   await msg.pin();
 }
 
@@ -1816,39 +2023,66 @@ async function pinOwnerToolsGuide(guild) {
         name: '👥 STAFF MANAGEMENT',
         value: 
           '`/owner-staff-add @user` - Add new staff member\n' +
-          '`/owner-staff-remove @user` - Remove staff member\n' +
-          '`/owner-staff-list` - View all staff\n' +
-          '`/owner-staff-stats @user` - Staff performance'
+          '`/owner-staff-remove @user` - Remove staff member'
       },
       {
-        name: '📢 BROADCAST SYSTEM',
+        name: '📢 BROADCAST & CLEAN',
         value: 
           '`/owner-broadcast [message]` - Announce to all channels\n' +
-          '`/owner-dm-all [message]` - DM all members\n' +
-          '`/owner-clear-chat [channel]` - Clear channel messages'
+          '`/owner-clear-chat [channel] [amount]` - Clear messages'
       },
       {
-        name: '📊 ANALYTICS & REPORTS',
+        name: '📊 ANALYTICS',
         value: 
-          '`/owner-stats` - Detailed server analytics\n' +
-          '`/owner-revenue` - Total revenue report\n' +
-          '`/owner-user-growth` - User growth statistics'
+          '`/owner-stats` - Detailed server analytics'
       },
       {
-        name: '🚨 EMERGENCY CONTROLS',
+        name: '🚨 EMERGENCY',
         value: 
-          '`/owner-lockdown` - Emergency server lockdown\n' +
-          '`/owner-maintenance [on/off]` - Bot maintenance mode\n' +
-          '`/owner-reset [type]` - Reset specific data'
+          '`/owner-lockdown` - Emergency lockdown\n' +
+          '`/owner-maintenance [on/off]` - Maintenance mode'
       }
     )
-    .setFooter({ text: 'Owner commands - Use with care!' })
+    .setFooter({ text: 'Owner Panel - Quick Actions' })
     .setTimestamp();
   
-  const messages = await ownerChannel.messages.fetch({ limit: 100 });
-  await ownerChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id));
+  const ownerPanel = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('owner_view_stats')
+        .setLabel('📊 Stats')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('owner_manage_staff')
+        .setLabel('👥 Staff')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('owner_broadcast')
+        .setLabel('📢 Broadcast')
+        .setStyle(ButtonStyle.Danger)
+    );
   
-  const msg = await ownerChannel.send({ embeds: [guideEmbed] });
+  const ownerPanel2 = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('owner_clear_support')
+        .setLabel('🧹 Clear Support')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId('owner_maintenance')
+        .setLabel('🛠️ Maintenance')
+        .setStyle(ButtonStyle.Danger)
+    );
+  
+  // Clear all bot messages
+  const messages = await ownerChannel.messages.fetch({ limit: 100 });
+  await ownerChannel.bulkDelete(messages.filter(m => {
+    if (m.author.id !== client.user.id) return false;
+    const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
+    return daysDiff < 14;
+  }), true);
+  
+  const msg = await ownerChannel.send({ embeds: [guideEmbed], components: [ownerPanel, ownerPanel2] });
   await msg.pin();
 }
 
@@ -2091,12 +2325,12 @@ client.on('interactionCreate', async (interaction) => {
   if (commandName === 'profile') {
     const profile = getUserProfile(interaction.user.id);
     if (!profile) {
-      await interaction.reply({ content: '❌ You don\'t have a profile yet! Complete profile creation first.', ephemeral: true });
+      await interaction.reply({ content: '❌ You don\'t have a profile yet! Complete profile creation first.', flags: 64 });
       return;
     }
     
     const profileEmbed = createProfileEmbed(interaction.user, profile);
-    await interaction.reply({ embeds: [profileEmbed], ephemeral: true });
+    await interaction.reply({ embeds: [profileEmbed], flags: 64 });
     return;
   }
   
