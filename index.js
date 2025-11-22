@@ -953,21 +953,7 @@ client.on('interactionCreate', async (interaction) => {
     // Welcome announcement in general
     const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
     if (generalChannel) {
-      const welcomeEmbed = new EmbedBuilder()
-        .setColor('#FFD700')
-        .setTitle('🎊 NEW PLAYER JOINED!')
-        .setDescription(
-          `Welcome ${interaction.user} to OTO Family! 🎉\n\n` +
-          `**Name:** ${tempProfile.name}\n` +
-          `**Game:** ${tempProfile.game.toUpperCase()}\n` +
-          `**State:** ${tempProfile.state}\n` +
-          `**OTO ID:** ${otoId}\n\n` +
-          `Let's dominate the tournaments together! 🏆💪`
-        )
-        .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }))
-        .setTimestamp();
-      
-      await generalChannel.send({ content: `${interaction.user}`, embeds: [welcomeEmbed] });
+      await generalChannel.send(`🎊 **${tempProfile.name} bhai aa gaya!** Welcome ${interaction.user}! 🔥`);
     }
     
     return;
@@ -1769,7 +1755,7 @@ async function pinStaffToolsGuide(guild) {
   
   const guideEmbed = new EmbedBuilder()
     .setColor('#2196F3')
-    .setTitle('🛠️ OTO STAFF COMMANDS QUICK GUIDE')
+    .setTitle('🛠️ STAFF COMMANDS')
     .setDescription('Complete command list for staff members:')
     .addFields(
       {
@@ -1802,28 +1788,16 @@ async function pinStaffToolsGuide(guild) {
           '`/winner-declare [tournament] @user [position]` - Declare winner\n' +
           '`/badge-give @user [badge]` - Give badge to user\n' +
           '`/prize-distribute [tournament]` - Distribute prizes'
-      },
-      {
-        name: '📊 ANALYTICS',
-        value: 
-          '`/server-stats` - View server statistics\n' +
-          '`/tournament-report [id]` - Tournament report\n' +
-          '`/user-invites @user` - Check invite count'
       }
     )
     .setFooter({ text: 'Use these commands to manage OTO Tournaments efficiently!' })
     .setTimestamp();
   
-  const messages = await staffChannel.messages.fetch({ limit: 10 });
-  const existingMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0);
+  const messages = await staffChannel.messages.fetch({ limit: 100 });
+  await staffChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id));
   
-  if (existingMessage) {
-    await existingMessage.edit({ embeds: [guideEmbed] });
-    await existingMessage.pin();
-  } else {
-    const msg = await staffChannel.send({ embeds: [guideEmbed] });
-    await msg.pin();
-  }
+  const msg = await staffChannel.send({ embeds: [guideEmbed] });
+  await msg.pin();
 }
 
 // ============================================
@@ -1835,7 +1809,7 @@ async function pinOwnerToolsGuide(guild) {
   
   const guideEmbed = new EmbedBuilder()
     .setColor('#FF0000')
-    .setTitle('👑 OWNER CONTROL PANEL')
+    .setTitle('👑 OWNER COMMANDS')
     .setDescription('Exclusive commands for server owner:')
     .addFields(
       {
@@ -1851,7 +1825,7 @@ async function pinOwnerToolsGuide(guild) {
         value: 
           '`/owner-broadcast [message]` - Announce to all channels\n' +
           '`/owner-dm-all [message]` - DM all members\n' +
-          '`/owner-notify-winners` - Notify tournament winners'
+          '`/owner-clear-chat [channel]` - Clear channel messages'
       },
       {
         name: '📊 ANALYTICS & REPORTS',
@@ -1866,27 +1840,16 @@ async function pinOwnerToolsGuide(guild) {
           '`/owner-lockdown` - Emergency server lockdown\n' +
           '`/owner-maintenance [on/off]` - Bot maintenance mode\n' +
           '`/owner-reset [type]` - Reset specific data'
-      },
-      {
-        name: '🎮 TOURNAMENT FEATURES',
-        value: 
-          '`/owner-tournament-followsubscribe` - Enable follow/subscribe reminder\n' +
-          '`/owner-auto-create-tournament` - Schedule recurring tournaments'
       }
     )
     .setFooter({ text: 'Owner commands - Use with care!' })
     .setTimestamp();
   
-  const messages = await ownerChannel.messages.fetch({ limit: 10 });
-  const existingMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0);
+  const messages = await ownerChannel.messages.fetch({ limit: 100 });
+  await ownerChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id));
   
-  if (existingMessage) {
-    await existingMessage.edit({ embeds: [guideEmbed] });
-    await existingMessage.pin();
-  } else {
-    const msg = await ownerChannel.send({ embeds: [guideEmbed] });
-    await msg.pin();
-  }
+  const msg = await ownerChannel.send({ embeds: [guideEmbed] });
+  await msg.pin();
 }
 
 // ============================================
@@ -2072,6 +2035,24 @@ client.on('ready', async () => {
             { name: 'ON', value: 'on' },
             { name: 'OFF', value: 'off' }
           ]
+        }
+      ]
+    },
+    {
+      name: 'owner-clear-chat',
+      description: 'Clear messages from a channel (Owner only)',
+      options: [
+        {
+          name: 'channel',
+          description: 'Channel to clear',
+          type: 7,
+          required: true
+        },
+        {
+          name: 'amount',
+          description: 'Number of messages to delete (default: 100)',
+          type: 4,
+          required: false
         }
       ]
     }
@@ -2620,6 +2601,49 @@ client.on('interactionCreate', async (interaction) => {
       await interaction.reply({ content: '✅ Maintenance mode activated!', ephemeral: true });
     } else {
       await interaction.reply({ content: '✅ Maintenance mode deactivated! Bot is now operational.', ephemeral: true });
+    }
+    return;
+  }
+  
+  if (commandName === 'owner-clear-chat') {
+    if (!isOwner) {
+      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      return;
+    }
+    
+    const channel = interaction.options.getChannel('channel');
+    const amount = interaction.options.getInteger('amount') || 100;
+    
+    try {
+      await interaction.deferReply({ ephemeral: true });
+      
+      const messages = await channel.messages.fetch({ limit: Math.min(amount, 100) });
+      const deletableMessages = messages.filter(m => {
+        const now = Date.now();
+        const messageTime = m.createdTimestamp;
+        const daysDiff = (now - messageTime) / (1000 * 60 * 60 * 24);
+        return daysDiff < 14; // Discord only allows deleting messages less than 14 days old
+      });
+      
+      if (deletableMessages.size === 0) {
+        await interaction.editReply({ content: '❌ No messages to delete (messages must be less than 14 days old).' });
+        return;
+      }
+      
+      await channel.bulkDelete(deletableMessages, true);
+      
+      await interaction.editReply({ 
+        content: `✅ Successfully deleted ${deletableMessages.size} messages from ${channel}!` 
+      });
+      
+      // Send confirmation in the cleared channel
+      const confirmMsg = await channel.send('🧹 **Channel cleared by owner!**');
+      setTimeout(() => confirmMsg.delete(), 5000);
+      
+    } catch (error) {
+      await interaction.editReply({ 
+        content: `❌ Error clearing chat: ${error.message}` 
+      });
     }
     return;
   }
