@@ -34,7 +34,7 @@ app.listen(PORT, () => {
 // ============================================
 const CONFIG = {
   // Bot Token from Environment Variable
-  TOKEN: process.env.DISCORD_TOKEN,
+  TOKEN: process.env.DISCORD_BOT_TOKEN,
   GUILD_ID: process.env.GUILD_ID || 'YOUR_GUILD_ID_HERE',
   
   // Channel IDs
