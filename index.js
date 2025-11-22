@@ -590,6 +590,7 @@ client.on('messageCreate', async (message) => {
     const guild = message.guild;
     const member = message.member;
     const content = message.content.toLowerCase();
+    const now = Date.now();
 
     // Check if user has profile for server messages
     if (guild && !await hasProfile(message.author.id)) {
@@ -600,6 +601,34 @@ client.on('messageCreate', async (message) => {
         } catch (err) {
             console.error('Could not send DM:', err);
         }
+        return;
+    }message) => {
+    if (message.author.bot) return;
+    
+    const guild = message.guild;
+    const member = message.member;
+    const content = message.content.toLowerCase();
+    const now = Date.now();
+
+    // Check if user has profile for server messages
+    if (guild && !await hasProfile(message.author.id)) {
+        try {
+            await message.delete();
+            const dm = await message.author.send('⚠️ Please complete your profile first to chat in the server! Check your DMs for the profile form.');
+            setTimeout(() => dm.delete(), 5000);
+        } catch (err) {
+            console.error('Could not send DM:', err);
+        }
+        return;
+    }
+
+    // Handle ticket messages separately
+    const ticketEntry = Object.entries(DB.tickets).find(([id, ticket]) => 
+        ticket.channelId === message.channel?.id && ticket.status === 'open'
+    );
+
+    if (ticketEntry) {
+        await handleTicketMessages(message, ticketEntry);
         return;
     }
 
@@ -1348,8 +1377,8 @@ async function createPrivateTicket(guild, user, type, tournamentData = null) {
     return channel;
 }
 
-// Listen for payment screenshots and game info in tickets
-client.on('messageCreate', async (message) => {
+// Separate message handler for ticket updates
+async function handleTicketMessages(message) {
     if (message.author.bot) return;
     if (!message.guild) return;
 
