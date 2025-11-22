@@ -622,6 +622,7 @@ client.on('messageCreate', async (message) => {
         return;
     }
 
+
     // Handle ticket messages separately
     const ticketEntry = Object.entries(DB.tickets).find(([id, ticket]) => 
         ticket.channelId === message.channel?.id && ticket.status === 'open'
@@ -631,6 +632,9 @@ client.on('messageCreate', async (message) => {
         await handleTicketMessages(message, ticketEntry);
         return;
     }
+
+    // ===========================
+    // 🚫 MODERATION - Bad Words
 
     // ===========================
     // 🚫 MODERATION - Bad Words
