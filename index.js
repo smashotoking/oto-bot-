@@ -458,7 +458,7 @@ try {
     await interaction.reply({ content: '✅ Match started! Room details shared!', ephemeral: true });
     return;
   }
-  
+  });
   if (interaction.customId.startsWith('close_ticket_')) {
     await handleTicketClose(interaction);
     return;
