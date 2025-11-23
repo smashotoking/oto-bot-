@@ -400,19 +400,6 @@ client.once('ready', async () => {
     console.log(`   - ${guild.name} (ID: ${guild.id})`);
   });
   
-  if (client.guilds.cache.size === 0) {
-    console.error('\n❌ ERROR: Bot is not in any servers!');
-    return;
-  }
-  
- let targetGuild;
-if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
-  targetGuild = client.guilds.cache.first();
-  console.log(`\n⚠️  GUILD_ID not set. Using: ${targetGuild.name} (${targetGuild.id})`);
-} else {
-  targetGuild = client.guilds.cache.get(CONFIG.GUILD_ID);
-}
-
 if (client.guilds.cache.size === 0) {
     console.error('\n❌ ERROR: Bot is not in any servers!');
     return;
