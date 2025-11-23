@@ -17,7 +17,7 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-// Express server for Render.com health checks
+// Express server
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -33,11 +33,9 @@ app.listen(PORT, () => {
 // CONFIGURATION
 // ============================================
 const CONFIG = {
-  // Bot Token from Environment Variable
   TOKEN: process.env.DISCORD_BOT_TOKEN,
   GUILD_ID: process.env.GUILD_ID || 'YOUR_GUILD_ID_HERE',
   
-  // Channel IDs
   CHANNELS: {
     GENERAL: '1438482904018849835',
     ANNOUNCEMENT: '1438484746165555243',
@@ -53,8 +51,6 @@ const CONFIG = {
     TICKET_LOG: '1438485821572518030',
     MOD_LOG: '1438506342938706092',
     TICKET_CATEGORY: process.env.TICKET_CATEGORY_ID || 'YOUR_TICKET_CATEGORY_ID',
-    
-    // Additional Channels
     HOW_TO_JOIN: '1438482512296022017',
     RULES_CHANNEL: '1438482342145687643',
     BOT_COMMANDS: '1438483009950191676',
@@ -67,7 +63,6 @@ const CONFIG = {
     CELEBRATION: '1441653083120603187'
   },
   
-  // Role IDs
   ROLES: {
     OWNER: '1438443937588183110',
     ADMIN: '1438475461977047112',
@@ -79,7 +74,6 @@ const CONFIG = {
     ELITE_RECRUITER: process.env.ELITE_RECRUITER_ROLE_ID || 'elite_recruiter_role_id'
   },
   
-  // Owner ID from Environment Variable
   OWNER_ID: process.env.OWNER_ID || 'YOUR_OWNER_ID_HERE'
 };
 
@@ -91,7 +85,6 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Initialize data files
 const dataFiles = {
   profiles: 'profiles.json',
   tournaments: 'tournaments.json',
@@ -100,10 +93,11 @@ const dataFiles = {
   warnings: 'warnings.json',
   leaderboard: 'leaderboard.json',
   settings: 'settings.json',
-  badges: 'badges.json'
+  badges: 'badges.json',
+  lobbies: 'lobbies.json',
+  staffApps: 'staff_applications.json'
 };
 
-// Create data files if they don't exist
 Object.entries(dataFiles).forEach(([key, filename]) => {
   const filepath = path.join(DATA_DIR, filename);
   if (!fs.existsSync(filepath)) {
@@ -111,7 +105,6 @@ Object.entries(dataFiles).forEach(([key, filename]) => {
   }
 });
 
-// Data loaders
 const loadData = (filename) => {
   try {
     const data = fs.readFileSync(path.join(DATA_DIR, filename), 'utf8');
@@ -141,12 +134,9 @@ const INDIAN_STATES = [
 ];
 
 // ============================================
-// BAD WORDS FILTER (Hindi + English)
+// BAD WORDS FILTER
 // ============================================
-const BAD_WORDS = [
-  // Add your bad words here (keeping it clean for this example)
-  'badword1', 'badword2', 'spam', 'scam'
-];
+const BAD_WORDS = ['badword1', 'badword2', 'spam', 'scam'];
 
 // ============================================
 // BOT INITIALIZATION
@@ -168,7 +158,6 @@ const client = new Client({
 // UTILITY FUNCTIONS
 // ============================================
 
-// Generate OTO ID
 function generateOTOID() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = 'OTO';
@@ -178,7 +167,6 @@ function generateOTOID() {
   return id;
 }
 
-// Generate Tournament ID
 function generateTournamentID() {
   const date = new Date();
   const year = date.getFullYear().toString().slice(-2);
@@ -194,14 +182,8 @@ function generateTournamentID() {
   return `OTO-${year}${month}${day}-${count}`;
 }
 
-// Create beautiful profile embed
 function createProfileEmbed(user, profileData) {
-  const gameEmojis = {
-    freefire: '🔥',
-    minecraft: '⛏️',
-    other: '🎮'
-  };
-  
+  const gameEmojis = { freefire: '🔥', minecraft: '⛏️', other: '🎮' };
   const genderEmoji = profileData.gender === 'male' ? '👨' : profileData.gender === 'female' ? '👩' : '❓';
   
   return new EmbedBuilder()
@@ -217,9 +199,7 @@ function createProfileEmbed(user, profileData) {
       { name: '📍 State', value: profileData.state, inline: true },
       { name: `${genderEmoji} Gender`, value: profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1), inline: true }
     )
-    .addFields(
-      { name: '\u200B', value: '━━━━━━━━━━━━━━━━━━━━━━' }
-    )
+    .addFields({ name: '\u200B', value: '━━━━━━━━━━━━━━━━━━━━━━' })
     .addFields(
       { name: '📊 STATS', value: 
         `🏆 Wins: ${profileData.stats.wins}\n` +
@@ -228,55 +208,51 @@ function createProfileEmbed(user, profileData) {
         `👥 Invites: ${profileData.stats.invites}`,
         inline: true
       },
-      { name: '⭐ Level', value: `Level ${profileData.level} (New Player)`, inline: true }
+      { name: '⭐ Level', value: `Level ${profileData.level} (${profileData.badges.join(' ') || 'New Player'})`, inline: true }
     )
-    .addFields(
-      { name: '\u200B', value: '━━━━━━━━━━━━━━━━━━━━━━' }
-    )
+    .addFields({ name: '\u200B', value: '━━━━━━━━━━━━━━━━━━━━━━' })
     .setFooter({ text: `Joined: ${new Date(profileData.createdAt).toLocaleDateString()}` })
     .setTimestamp();
 }
 
-// Check if user has profile
 function hasProfile(userId) {
   const profiles = loadData('profiles.json');
   return !!profiles[userId];
 }
 
-// Get user profile
 function getUserProfile(userId) {
   const profiles = loadData('profiles.json');
   return profiles[userId] || null;
 }
 
-// Save user profile
 function saveUserProfile(userId, data) {
   const profiles = loadData('profiles.json');
   profiles[userId] = data;
   saveData('profiles.json', profiles);
 }
 
-// Check for bad words
 function containsBadWords(message) {
   const lowerMessage = message.toLowerCase();
   return BAD_WORDS.some(word => lowerMessage.includes(word));
 }
 
-// Detect spam
 const userMessages = new Map();
 function isSpamming(userId) {
   const now = Date.now();
   const userMsgs = userMessages.get(userId) || [];
-  
-  // Filter messages from last 5 seconds
   const recentMsgs = userMsgs.filter(time => now - time < 5000);
-  
-  // Add current message
   recentMsgs.push(now);
   userMessages.set(userId, recentMsgs);
-  
-  // If more than 5 messages in 5 seconds = spam
   return recentMsgs.length > 5;
+}
+
+async function logToChannel(guild, channelId, embed) {
+  try {
+    const channel = guild.channels.cache.get(channelId);
+    if (channel) await channel.send({ embeds: [embed] });
+  } catch (error) {
+    console.error(`Failed to log to channel ${channelId}:`, error.message);
+  }
 }
 
 // ============================================
@@ -285,7 +261,6 @@ function isSpamming(userId) {
 client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} is online!`);
   
-  // List all guilds the bot is in
   console.log('\n📋 Bot is currently in these servers:');
   client.guilds.cache.forEach(guild => {
     console.log(`   - ${guild.name} (ID: ${guild.id})`);
@@ -293,25 +268,17 @@ client.once('ready', async () => {
   
   if (client.guilds.cache.size === 0) {
     console.error('\n❌ ERROR: Bot is not in any servers!');
-    console.error('   Please invite the bot to your server using the OAuth2 URL.');
-    console.error('   Then set the correct GUILD_ID in your environment variables.\n');
     return;
   }
   
-  // If GUILD_ID is not set or invalid, use the first available guild
   let targetGuild;
   if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
     targetGuild = client.guilds.cache.first();
-    console.log(`\n⚠️  GUILD_ID not set. Using first available server: ${targetGuild.name} (${targetGuild.id})`);
-    console.log(`   Please add this to your Render environment variables:`);
-    console.log(`   GUILD_ID=${targetGuild.id}\n`);
+    console.log(`\n⚠️  GUILD_ID not set. Using: ${targetGuild.name} (${targetGuild.id})`);
   } else {
     targetGuild = client.guilds.cache.get(CONFIG.GUILD_ID);
     if (!targetGuild) {
       console.error(`\n❌ ERROR: Cannot find guild with ID: ${CONFIG.GUILD_ID}`);
-      console.error('   Available guild IDs:');
-      client.guilds.cache.forEach(g => console.error(`   - ${g.id} (${g.name})`));
-      console.error('\n   Please update GUILD_ID in your Render environment variables.\n');
       return;
     }
   }
@@ -320,45 +287,38 @@ client.once('ready', async () => {
   console.log(`\n🎯 Working with server: ${guild.name}`);
   
   try {
-    // Clear old bot DMs and send new profile creation DMs
+    // Clear old DMs and send apology + new profile creation
     const members = await guild.members.fetch();
     let dmsSent = 0;
-    let dmsCleared = 0;
     
     for (const [memberId, member] of members) {
       if (member.user.bot) continue;
       
       try {
-        // Try to delete old DMs from bot
         const dmChannel = await member.user.createDM();
         const oldMessages = await dmChannel.messages.fetch({ limit: 50 });
         const botMessages = oldMessages.filter(m => m.author.id === client.user.id);
         
         for (const [msgId, msg] of botMessages) {
-          try {
-            await msg.delete();
-            dmsCleared++;
-          } catch (e) {
-            // Message might be too old or already deleted
-          }
+          try { await msg.delete(); } catch (e) {}
         }
         
-        // Send new profile DM if user doesn't have profile
         if (!hasProfile(memberId)) {
+          await member.user.send('🙏 **Sorry for the disturbance!** We had to update our bot. Please create your profile one last time. Thanks for your patience! 💙');
+          await new Promise(resolve => setTimeout(resolve, 2000));
           await sendProfileCreationDM(member.user);
           dmsSent++;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limit protection
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
-        console.log(`Could not process DM for ${member.user.tag}`);
+        console.log(`Could not DM ${member.user.tag}`);
       }
     }
     
-    console.log(`🧹 Cleared ${dmsCleared} old bot DMs`);
-    console.log(`📨 Sent ${dmsSent} new profile creation DMs`);
+    console.log(`📨 Sent ${dmsSent} apology + profile creation DMs`);
     
-    // Clear support channel messages
+    // Clear support channel
     const supportChannel = guild.channels.cache.get(CONFIG.CHANNELS.SUPPORT);
     if (supportChannel) {
       try {
@@ -373,66 +333,18 @@ client.once('ready', async () => {
       }
     }
     
-    // Pin rules and how to join in announcement channel
-    const announcementChannel = guild.channels.cache.get(CONFIG.CHANNELS.ANNOUNCEMENT);
-    if (announcementChannel) {
-      const rulesEmbed = new EmbedBuilder()
-        .setColor('#4CAF50')
-        .setTitle('📜 WELCOME TO OTO TOURNAMENTS!')
-        .setDescription(
-          '**To talk in server, you need to create your OTO profile!**\n\n' +
-          '📱 **Check your DMs** for profile creation\n' +
-          '❌ **Didn\'t get DM?** Click the button below to resend!\n\n' +
-          '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-          '**🎯 How to Join Tournaments:**\n' +
-          '1️⃣ Complete your profile\n' +
-          '2️⃣ Check <#' + CONFIG.CHANNELS.TOURNAMENT_SCHEDULE + '>\n' +
-          '3️⃣ Click "JOIN NOW" button\n' +
-          '4️⃣ Provide IGN and payment proof\n' +
-          '5️⃣ Win big prizes! 💰\n\n' +
-          '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
-          '**🎁 Invite Rewards:**\n' +
-          '• 5 invites = FREE match vs Pro Player\n' +
-          '• Win 1 match = FREE tournament entry!\n\n' +
-          '**Need help?** Ask in support channel!'
-        )
-        .setThumbnail(guild.iconURL({ dynamic: true }))
-        .setFooter({ text: 'OTO Tournaments - Win Big, Play Fair!' })
-        .setTimestamp();
-      
-      const resendButton = new ActionRowBuilder()
-        .addComponents(
-          new ButtonBuilder()
-            .setCustomId('resend_profile_dm')
-            .setLabel('📩 Resend Profile DM')
-            .setStyle(ButtonStyle.Primary)
-        );
-      
-      const messages = await announcementChannel.messages.fetch({ limit: 10 });
-      const existingMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0);
-      
-      if (existingMessage) {
-        await existingMessage.edit({ embeds: [rulesEmbed], components: [resendButton] });
-      } else {
-        const msg = await announcementChannel.send({ embeds: [rulesEmbed], components: [resendButton] });
-        await msg.pin();
-      }
-      console.log('✅ Announcement message posted');
-    } else {
-      console.log('⚠️  Announcement channel not found');
-    }
+    // Setup announcement message
+    await setupAnnouncementMessage(guild);
     
-    // Pin staff tools guide with panel
+    // Setup panels
     await pinStaffToolsGuide(guild);
-    console.log('✅ Staff tools guide pinned');
-    
-    // Pin owner tools guide with panel
     await pinOwnerToolsGuide(guild);
-    console.log('✅ Owner tools guide pinned');
+    
+    // Setup bot commands channel
+    await setupBotCommandsChannel(guild);
     
     // Update leaderboards
     await updateLeaderboards(guild);
-    console.log('✅ Leaderboards updated');
     
     console.log('\n🚀 Bot is fully operational!\n');
     
@@ -440,6 +352,109 @@ client.once('ready', async () => {
     console.error('❌ Error in ready event:', error.message);
   }
 });
+
+// ============================================
+// SETUP ANNOUNCEMENT MESSAGE
+// ============================================
+async function setupAnnouncementMessage(guild) {
+  const announcementChannel = guild.channels.cache.get(CONFIG.CHANNELS.ANNOUNCEMENT);
+  if (!announcementChannel) return;
+  
+  const rulesEmbed = new EmbedBuilder()
+    .setColor('#4CAF50')
+    .setTitle('📜 WELCOME TO OTO TOURNAMENTS!')
+    .setDescription(
+      '**To talk in server, you need to create your OTO profile!**\n\n' +
+      '📱 **Check your DMs** for profile creation\n' +
+      '❌ **Didn\'t get DM?** Click the button below to resend!\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '**🎯 How to Join Tournaments:**\n' +
+      '1️⃣ Complete your profile\n' +
+      '2️⃣ Check <#' + CONFIG.CHANNELS.TOURNAMENT_SCHEDULE + '>\n' +
+      '3️⃣ Click "JOIN NOW" button\n' +
+      '4️⃣ Provide IGN and payment proof\n' +
+      '5️⃣ Win big prizes! 💰\n\n' +
+      '━━━━━━━━━━━━━━━━━━━━━━\n\n' +
+      '**🎁 Invite Rewards:**\n' +
+      '• 5 invites = FREE match vs Pro Player\n' +
+      '• Win 1 match = FREE tournament entry!\n\n' +
+      '**Need help?** Ask in <#' + CONFIG.CHANNELS.SUPPORT + '>!'
+    )
+    .setThumbnail(guild.iconURL({ dynamic: true }))
+    .setFooter({ text: 'OTO Tournaments - Win Big, Play Fair!' })
+    .setTimestamp();
+  
+  const resendButton = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('resend_profile_dm')
+        .setLabel('📩 Resend Profile DM')
+        .setStyle(ButtonStyle.Primary)
+    );
+  
+  try {
+    const messages = await announcementChannel.messages.fetch({ limit: 10 });
+    const existingMessage = messages.find(m => m.author.id === client.user.id && m.embeds.length > 0);
+    
+    if (existingMessage) {
+      await existingMessage.edit({ embeds: [rulesEmbed], components: [resendButton] });
+    } else {
+      const msg = await announcementChannel.send({ embeds: [rulesEmbed], components: [resendButton] });
+      await msg.pin();
+    }
+    console.log('✅ Announcement message posted');
+  } catch (error) {
+    console.log('⚠️  Could not setup announcement');
+  }
+}
+
+// ============================================
+// SETUP BOT COMMANDS CHANNEL
+// ============================================
+async function setupBotCommandsChannel(guild) {
+  const commandsChannel = guild.channels.cache.get(CONFIG.CHANNELS.BOT_COMMANDS);
+  if (!commandsChannel) return;
+  
+  const commandsEmbed = new EmbedBuilder()
+    .setColor('#2196F3')
+    .setTitle('🤖 BOT COMMANDS - USER GUIDE')
+    .setDescription('Complete list of commands you can use:')
+    .addFields(
+      {
+        name: '👤 Profile Commands',
+        value: '`/profile` - View your profile card\n`/profile-edit` - Edit your profile\n`/profile-public` - Make profile public/private'
+      },
+      {
+        name: '🎮 Tournament Commands',
+        value: '`/tournaments` - View active tournaments\n`/tournament-info [id]` - Get tournament details\n`/my-tournaments` - View your tournament history'
+      },
+      {
+        name: '👥 Invite Commands',
+        value: '`/invites` - Check your invite stats\n`/invite-leaderboard` - View top inviters'
+      },
+      {
+        name: '🎫 Support Commands',
+        value: '`/ticket` - Create a support ticket\n`/help` - Get help and guide'
+      },
+      {
+        name: '📊 Stats Commands',
+        value: '`/leaderboard` - View server leaderboards\n`/stats` - View your detailed stats'
+      }
+    )
+    .setFooter({ text: 'Use commands in any channel!' })
+    .setTimestamp();
+  
+  try {
+    const messages = await commandsChannel.messages.fetch({ limit: 10 });
+    await commandsChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id && (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24) < 14), true);
+    
+    const msg = await commandsChannel.send({ embeds: [commandsEmbed] });
+    await msg.pin();
+    console.log('✅ Bot commands guide posted');
+  } catch (error) {
+    console.log('⚠️  Could not setup bot commands');
+  }
+}
 
 // ============================================
 // PROFILE CREATION DM SYSTEM
@@ -476,7 +491,21 @@ client.on('guildMemberAdd', async (member) => {
   
   const guild = member.guild;
   
-  // Send welcome message in general
+  // Log join event
+  const joinEmbed = new EmbedBuilder()
+    .setColor('#00FF00')
+    .setTitle('👋 Member Joined')
+    .setDescription(`${member.user.tag} joined the server`)
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .addFields(
+      { name: 'User ID', value: member.id, inline: true },
+      { name: 'Account Created', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true }
+    )
+    .setTimestamp();
+  
+  await logToChannel(guild, CONFIG.CHANNELS.MOD_LOG, joinEmbed);
+  
+  // Send welcome in general
   const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
   if (generalChannel) {
     const welcomeMessages = [
@@ -484,12 +513,10 @@ client.on('guildMemberAdd', async (member) => {
       `🔥 ${member} aa gaya! Machayenge ab! Check DMs for profile setup! 🎮`,
       `👋 Hello ${member}! Ready to win big? Tournaments waiting for you! 💰`
     ];
-    
-    const randomWelcome = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
-    await generalChannel.send(randomWelcome);
+    await generalChannel.send(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
   }
   
-  // Send profile creation DM
+  // Send profile DM
   try {
     await sendProfileCreationDM(member.user);
   } catch (error) {
@@ -497,7 +524,7 @@ client.on('guildMemberAdd', async (member) => {
   }
   
   // Track invite
-  trackInvite(member);
+  await trackInvite(member);
 });
 
 // ============================================
@@ -506,6 +533,20 @@ client.on('guildMemberAdd', async (member) => {
 client.on('guildMemberRemove', async (member) => {
   if (member.user.bot) return;
   
+  // Log leave event
+  const leaveEmbed = new EmbedBuilder()
+    .setColor('#FF0000')
+    .setTitle('👋 Member Left')
+    .setDescription(`${member.user.tag} left the server`)
+    .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+    .addFields(
+      { name: 'User ID', value: member.id, inline: true },
+      { name: 'Joined', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: true }
+    )
+    .setTimestamp();
+  
+  await logToChannel(member.guild, CONFIG.CHANNELS.MOD_LOG, leaveEmbed);
+  
   const generalChannel = member.guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
   if (generalChannel) {
     const goodbyeMessages = [
@@ -513,9 +554,7 @@ client.on('guildMemberRemove', async (member) => {
       `👋 ${member.user.username} has left OTO Family. Hope to see you back! 🏆`,
       `🚪 ${member.user.username} left the tournament grounds. Miss you bro! 😞`
     ];
-    
-    const randomGoodbye = goodbyeMessages[Math.floor(Math.random() * goodbyeMessages.length)];
-    await generalChannel.send(randomGoodbye);
+    await generalChannel.send(goodbyeMessages[Math.floor(Math.random() * goodbyeMessages.length)]);
   }
 });
 
@@ -525,9 +564,13 @@ client.on('guildMemberRemove', async (member) => {
 const invites = new Map();
 
 client.on('ready', async () => {
-  const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
-  const guildInvites = await guild.invites.fetch();
-  invites.set(guild.id, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
+  try {
+    const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
+    const guildInvites = await guild.invites.fetch();
+    invites.set(guild.id, new Map(guildInvites.map(invite => [invite.code, invite.uses])));
+  } catch (error) {
+    console.log('Could not fetch invites');
+  }
 });
 
 async function trackInvite(member) {
@@ -545,27 +588,26 @@ async function trackInvite(member) {
     const invitesData = loadData('invites.json');
     
     if (!invitesData[inviter.id]) {
-      invitesData[inviter.id] = {
-        total: 0,
-        active: 0,
-        fake: 0,
-        rewards: []
-      };
+      invitesData[inviter.id] = { total: 0, active: 0, fake: 0, rewards: [] };
     }
     
     invitesData[inviter.id].total++;
     invitesData[inviter.id].active++;
     saveData('invites.json', invitesData);
     
-    // Check for milestone rewards
+    // Update profile invite count
+    const profile = getUserProfile(inviter.id);
+    if (profile) {
+      profile.stats.invites = invitesData[inviter.id].total;
+      saveUserProfile(inviter.id, profile);
+    }
+    
     await checkInviteMilestone(guild, inviter.id);
   }
   
-  // Update cached invites
   invites.set(guild.id, new Map(newInvites.map(invite => [invite.code, invite.uses])));
 }
 
-// Check invite milestones
 async function checkInviteMilestone(guild, userId) {
   const invitesData = loadData('invites.json');
   const userData = invitesData[userId];
@@ -574,7 +616,6 @@ async function checkInviteMilestone(guild, userId) {
     userData.rewards.push('5_invites');
     saveData('invites.json', invitesData);
     
-    // Send congratulations DM
     const user = await client.users.fetch(userId);
     const rewardEmbed = new EmbedBuilder()
       .setColor('#FFD700')
@@ -602,46 +643,39 @@ async function checkInviteMilestone(guild, userId) {
       );
     
     await user.send({ embeds: [rewardEmbed], components: [requestButton] });
-    
-    // Update invite tracker
     await updateInviteTracker(guild);
   }
 }
 
 // ============================================
-// MESSAGE HANDLING
+// MESSAGE HANDLING & MODERATION
 // ============================================
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
   
-  // Check if user has profile
   if (!hasProfile(message.author.id) && message.channel.id !== CONFIG.CHANNELS.ANNOUNCEMENT) {
-    return; // User can only see announcement until profile complete
+    return;
   }
   
-  // Moderation checks
   const member = message.member;
   const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
                   member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
                   member.id === CONFIG.OWNER_ID;
   
   if (!isStaff) {
-    // Check for bad words
     if (containsBadWords(message.content)) {
       await message.delete();
       await handleModeration(message.author, 'bad_word', message);
       return;
     }
     
-    // Check for spam
     if (isSpamming(message.author.id)) {
       await message.delete();
       await handleModeration(message.author, 'spam', message);
       return;
     }
     
-    // Check for unauthorized links
     const linkRegex = /(https?:\/\/[^\s]+)/g;
     const links = message.content.match(linkRegex);
     if (links) {
@@ -654,7 +688,6 @@ client.on('messageCreate', async (message) => {
     }
   }
   
-  // Auto-responses
   await handleAutoResponses(message);
 });
 
@@ -667,47 +700,40 @@ async function handleAutoResponses(message) {
   const lowerContent = message.content.toLowerCase().trim();
   const profile = getUserProfile(message.author.id);
   
-  // Check if bot already responded recently to this user
   const lastResponse = lastResponses.get(message.author.id);
   if (lastResponse && Date.now() - lastResponse < 120000) {
-    return; // Don't respond if responded in last 2 minutes
+    return;
   }
   
-  // Greetings
   const greetings = ['hi', 'hello', 'hey', 'hii', 'helo'];
   if (greetings.includes(lowerContent)) {
-    // Wait 2 minutes to see if someone else responds
     await new Promise(resolve => setTimeout(resolve, 120000));
     
-    // Check if anyone replied
     const messages = await message.channel.messages.fetch({ after: message.id, limit: 10 });
     const hasReply = messages.some(m => !m.author.bot && m.author.id !== message.author.id);
     
     if (!hasReply) {
       const greeting = profile && profile.gender === 'female' ? 'Hello ji! 👋' : 'Hi bhai! 😊';
       const reply = await message.reply(greeting);
-      
       lastResponses.set(message.author.id, Date.now());
       
-      // Follow-up after user responds
       setTimeout(async () => {
         const followUpMessages = await message.channel.messages.fetch({ after: reply.id, limit: 5 });
         const userReplied = followUpMessages.some(m => m.author.id === message.author.id);
         
         if (userReplied) {
           await message.channel.send(
-            `If you have any query, you can ask in support channel and check out <#${CONFIG.CHANNELS.TOURNAMENT_SCHEDULE}> channel! 🎮`
+            `If you have any query, you can ask in <#${CONFIG.CHANNELS.SUPPORT}> and check out <#${CONFIG.CHANNELS.TOURNAMENT_SCHEDULE}>! 🎮`
           );
         }
       }, 10000);
     }
   }
   
-  // Help requests
   if (lowerContent.includes('help') || lowerContent.includes('support')) {
     await message.reply(
       `Need help? 🤔\n` +
-      `📞 Ask in support channel\n` +
+      `📞 Ask in <#${CONFIG.CHANNELS.SUPPORT}>\n` +
       `🏆 Check <#${CONFIG.CHANNELS.TOURNAMENT_SCHEDULE}> for tournaments\n` +
       `📊 View your stats: /profile`
     );
@@ -722,10 +748,7 @@ async function handleModeration(user, type, message) {
   const warningsData = loadData('warnings.json');
   
   if (!warningsData[user.id]) {
-    warningsData[user.id] = {
-      warnings: 0,
-      history: []
-    };
+    warningsData[user.id] = { warnings: 0, history: [] };
   }
   
   const userData = warningsData[user.id];
@@ -740,7 +763,16 @@ async function handleModeration(user, type, message) {
   
   const member = message.guild.members.cache.get(user.id);
   
-  // Moderate action based on type
+  // Log moderation action
+  const modEmbed = new EmbedBuilder()
+    .setColor('#FFA500')
+    .setTitle('⚠️ Auto Moderation')
+    .setDescription(`**User:** ${user.tag}\n**Type:** ${type}\n**Warnings:** ${userData.warnings}`)
+    .addFields({ name: 'Channel', value: `<#${message.channel.id}>` })
+    .setTimestamp();
+  
+  await logToChannel(message.guild, CONFIG.CHANNELS.MOD_LOG, modEmbed);
+  
   if (type === 'bad_word') {
     if (userData.warnings === 1) {
       await user.send('⚠️ Warning: Please avoid using inappropriate language in OTO server.');
@@ -767,7 +799,6 @@ async function handleModeration(user, type, message) {
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
   
-  // Resend profile DM
   if (interaction.customId === 'resend_profile_dm') {
     if (hasProfile(interaction.user.id)) {
       await interaction.reply({ content: '✅ You already have a profile!', ephemeral: true });
@@ -783,18 +814,15 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
   
-  // Start profile creation
   if (interaction.customId === 'start_profile_creation') {
     await interaction.reply({ content: '📝 Let\'s create your profile! What\'s your name?', ephemeral: false });
     
-    // Wait for name response
     const filter = m => m.author.id === interaction.user.id;
     const collector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
     
     collector.on('collect', async (nameMsg) => {
       const name = nameMsg.content.trim();
       
-      // Ask for game
       const gameEmbed = new EmbedBuilder()
         .setColor('#4CAF50')
         .setTitle('🎮 Select Your Favorite Game')
@@ -808,39 +836,34 @@ client.on('interactionCreate', async (interaction) => {
             .addOptions([
               { label: 'Free Fire', value: 'freefire', emoji: '🔥' },
               { label: 'Minecraft', value: 'minecraft', emoji: '⛏️' },
-              { label: 'Other Games', value: 'other', emoji: '🎮' },
-              { label: 'Custom', value: 'custom', emoji: '✏️' }
+              { label: 'Other Games', value: 'other', emoji: '🎮' }
             ])
         );
       
       await interaction.channel.send({ embeds: [gameEmbed], components: [gameSelect] });
       
-      // Store name temporarily
       client.tempProfiles = client.tempProfiles || new Map();
       client.tempProfiles.set(interaction.user.id, { name });
     });
+    return;
   }
   
-  // Join tournament
   if (interaction.customId.startsWith('join_tournament_')) {
     const tournamentId = interaction.customId.replace('join_tournament_', '');
     await handleTournamentJoin(interaction, tournamentId);
     return;
   }
   
-  // Request free match
   if (interaction.customId === 'request_free_match') {
     await handleFreeMatchRequest(interaction);
     return;
   }
   
-  // Staff confirm payment
   if (interaction.customId.startsWith('confirm_payment_')) {
     await handlePaymentConfirmation(interaction);
     return;
   }
   
-  // Staff close ticket
   if (interaction.customId.startsWith('close_ticket_')) {
     await handleTicketClose(interaction);
     return;
@@ -854,7 +877,7 @@ client.on('interactionCreate', async (interaction) => {
                     member.id === CONFIG.OWNER_ID;
     
     if (!isStaff) {
-      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      await interaction.reply({ content: '❌ Only staff can use this!', ephemeral: true });
       return;
     }
     
@@ -869,7 +892,7 @@ client.on('interactionCreate', async (interaction) => {
                     member.id === CONFIG.OWNER_ID;
     
     if (!isStaff) {
-      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      await interaction.reply({ content: '❌ Only staff can use this!', ephemeral: true });
       return;
     }
     
@@ -879,7 +902,7 @@ client.on('interactionCreate', async (interaction) => {
     );
     
     if (activeTournaments.length === 0) {
-      await interaction.reply({ content: '📋 No active tournaments at the moment.', flags: 64 });
+      await interaction.reply({ content: '📋 No active tournaments at the moment.', ephemeral: true });
       return;
     }
     
@@ -888,12 +911,12 @@ client.on('interactionCreate', async (interaction) => {
       .setTitle('📋 ACTIVE TOURNAMENTS')
       .setDescription(
         activeTournaments.map(([id, t]) => 
-          `**${t.title}**\nID: \`${id}\`\nSlots: ${t.currentSlots}/${t.maxSlots} | Status: ${t.status.toUpperCase()}`
+          `**${t.title}**\nID: \`${id}\`\nSlots: ${t.currentSlots}/${t.maxSlots} | Status: ${t.status.toUpperCase()}\nTime: ${t.time}`
         ).join('\n\n')
       )
       .setTimestamp();
     
-    await interaction.reply({ embeds: [listEmbed], flags: 64 });
+    await interaction.reply({ embeds: [listEmbed], ephemeral: true });
     return;
   }
   
@@ -904,7 +927,7 @@ client.on('interactionCreate', async (interaction) => {
                     member.id === CONFIG.OWNER_ID;
     
     if (!isStaff) {
-      await interaction.reply({ content: '❌ Only staff can use this!', flags: 64 });
+      await interaction.reply({ content: '❌ Only staff can use this!', ephemeral: true });
       return;
     }
     
@@ -921,14 +944,14 @@ client.on('interactionCreate', async (interaction) => {
       )
       .setTimestamp();
     
-    await interaction.reply({ embeds: [statsEmbed], flags: 64 });
+    await interaction.reply({ embeds: [statsEmbed], ephemeral: true });
     return;
   }
   
   // Owner Panel Buttons
   if (interaction.customId === 'owner_view_stats') {
     if (interaction.user.id !== CONFIG.OWNER_ID) {
-      await interaction.reply({ content: '❌ Only owner can use this!', flags: 64 });
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
       return;
     }
     
@@ -936,13 +959,8 @@ client.on('interactionCreate', async (interaction) => {
     const tournaments = loadData('tournaments.json');
     const invitesData = loadData('invites.json');
     
-    const totalRevenue = Object.values(tournaments).reduce((sum, t) => {
-      return sum + (t.entryFee * t.currentSlots);
-    }, 0);
-    
-    const totalPrizesGiven = Object.values(profiles).reduce((sum, p) => {
-      return sum + p.stats.earned;
-    }, 0);
+    const totalRevenue = Object.values(tournaments).reduce((sum, t) => sum + (t.entryFee * t.currentSlots), 0);
+    const totalPrizesGiven = Object.values(profiles).reduce((sum, p) => sum + p.stats.earned, 0);
     
     const statsEmbed = new EmbedBuilder()
       .setColor('#9C27B0')
@@ -957,20 +975,111 @@ client.on('interactionCreate', async (interaction) => {
       )
       .setTimestamp();
     
-    await interaction.reply({ embeds: [statsEmbed], flags: 64 });
+    await interaction.reply({ embeds: [statsEmbed], ephemeral: true });
+    return;
+  }
+  
+  if (interaction.customId === 'owner_view_players') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
+      return;
+    }
+    
+    const profiles = loadData('profiles.json');
+    const playerList = Object.entries(profiles)
+      .sort((a, b) => b[1].stats.played - a[1].stats.played)
+      .slice(0, 10)
+      .map((entry, i) => {
+        const [userId, profile] = entry;
+        return `${i + 1}. **${profile.name}** (${profile.otoId})\n   Played: ${profile.stats.played} | Wins: ${profile.stats.wins} | Earned: ₹${profile.stats.earned}`;
+      }).join('\n\n');
+    
+    const playersEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('👥 TOP PLAYERS')
+      .setDescription(playerList || 'No players yet')
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [playersEmbed], ephemeral: true });
+    return;
+  }
+  
+  if (interaction.customId === 'owner_manage_staff') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
+      return;
+    }
+    
+    const guild = interaction.guild;
+    const staffRole = guild.roles.cache.get(CONFIG.ROLES.STAFF);
+    const staffMembers = guild.members.cache.filter(m => m.roles.cache.has(staffRole?.id));
+    
+    const staffList = staffMembers.map(m => `• ${m.user.tag} (${m.id})`).join('\n') || 'No staff members';
+    
+    const staffEmbed = new EmbedBuilder()
+      .setColor('#2196F3')
+      .setTitle('👥 STAFF MEMBERS')
+      .setDescription(staffList)
+      .setFooter({ text: 'Use /owner-staff-add or /owner-staff-remove to manage' })
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [staffEmbed], ephemeral: true });
+    return;
+  }
+  
+  if (interaction.customId === 'owner_broadcast') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
+      return;
+    }
+    
+    const modal = new ModalBuilder()
+      .setCustomId('broadcast_modal')
+      .setTitle('Broadcast Message');
+    
+    const messageInput = new TextInputBuilder()
+      .setCustomId('broadcast_message')
+      .setLabel('Message to broadcast')
+      .setStyle(TextInputStyle.Paragraph)
+      .setPlaceholder('Enter your announcement...')
+      .setRequired(true);
+    
+    modal.addComponents(new ActionRowBuilder().addComponents(messageInput));
+    await interaction.showModal(modal);
+    return;
+  }
+  
+  if (interaction.customId === 'owner_staff_applications') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
+      return;
+    }
+    
+    const settings = loadData('settings.json');
+    settings.staffApplicationsEnabled = !settings.staffApplicationsEnabled;
+    saveData('settings.json', settings);
+    
+    await interaction.reply({ 
+      content: `✅ Staff applications are now **${settings.staffApplicationsEnabled ? 'ENABLED' : 'DISABLED'}**!`, 
+      ephemeral: true 
+    });
+    
+    if (settings.staffApplicationsEnabled) {
+      await setupStaffApplications(interaction.guild);
+    }
     return;
   }
   
   if (interaction.customId === 'owner_clear_support') {
     if (interaction.user.id !== CONFIG.OWNER_ID) {
-      await interaction.reply({ content: '❌ Only owner can use this!', flags: 64 });
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
       return;
     }
     
     try {
       const supportChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.SUPPORT);
       if (!supportChannel) {
-        await interaction.reply({ content: '❌ Support channel not found!', flags: 64 });
+        await interaction.reply({ content: '❌ Support channel not found!', ephemeral: true });
         return;
       }
       
@@ -981,10 +1090,95 @@ client.on('interactionCreate', async (interaction) => {
       });
       
       await supportChannel.bulkDelete(deletableMessages, true);
-      await interaction.reply({ content: `✅ Cleared ${deletableMessages.size} messages from support!`, flags: 64 });
+      await interaction.reply({ content: `✅ Cleared ${deletableMessages.size} messages from support!`, ephemeral: true });
     } catch (error) {
-      await interaction.reply({ content: `❌ Error: ${error.message}`, flags: 64 });
+      await interaction.reply({ content: `❌ Error: ${error.message}`, ephemeral: true });
     }
+    return;
+  }
+  
+  if (interaction.customId === 'owner_maintenance') {
+    if (interaction.user.id !== CONFIG.OWNER_ID) {
+      await interaction.reply({ content: '❌ Only owner can use this!', ephemeral: true });
+      return;
+    }
+    
+    const settings = loadData('settings.json');
+    settings.maintenanceMode = !settings.maintenanceMode;
+    saveData('settings.json', settings);
+    
+    if (settings.maintenanceMode) {
+      const maintenanceEmbed = new EmbedBuilder()
+        .setColor('#FFA500')
+        .setTitle('🛠️ MAINTENANCE MODE ACTIVATED')
+        .setDescription(
+          '**OTO Bot is now in maintenance mode!**\n\n' +
+          'Some features may be temporarily unavailable.\n' +
+          'We\'ll be back soon! ⏰'
+        )
+        .setFooter({ text: 'OTO Tournaments' })
+        .setTimestamp();
+      
+      const generalChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
+      if (generalChannel) await generalChannel.send({ embeds: [maintenanceEmbed] });
+      
+      await interaction.reply({ content: '✅ Maintenance mode activated!', ephemeral: true });
+    } else {
+      await interaction.reply({ content: '✅ Maintenance mode deactivated! Bot is operational.', ephemeral: true });
+    }
+    return;
+  }
+  
+  if (interaction.customId === 'apply_staff') {
+    const settings = loadData('settings.json');
+    if (!settings.staffApplicationsEnabled) {
+      await interaction.reply({ content: '❌ Staff applications are currently closed!', ephemeral: true });
+      return;
+    }
+    
+    const modal = new ModalBuilder()
+      .setCustomId('staff_application_modal')
+      .setTitle('Staff Application');
+    
+    const nameInput = new TextInputBuilder()
+      .setCustomId('app_name')
+      .setLabel('Your Name')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+    
+    const ageInput = new TextInputBuilder()
+      .setCustomId('app_age')
+      .setLabel('Your Age')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+    
+    const experienceInput = new TextInputBuilder()
+      .setCustomId('app_experience')
+      .setLabel('Previous Experience (if any)')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+    
+    const whyInput = new TextInputBuilder()
+      .setCustomId('app_why')
+      .setLabel('Why do you want to be staff?')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
+    
+    const availabilityInput = new TextInputBuilder()
+      .setCustomId('app_availability')
+      .setLabel('Your Availability (hours per day)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+    
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(nameInput),
+      new ActionRowBuilder().addComponents(ageInput),
+      new ActionRowBuilder().addComponents(experienceInput),
+      new ActionRowBuilder().addComponents(whyInput),
+      new ActionRowBuilder().addComponents(availabilityInput)
+    );
+    
+    await interaction.showModal(modal);
     return;
   }
 });
@@ -995,7 +1189,6 @@ client.on('interactionCreate', async (interaction) => {
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isStringSelectMenu()) return;
   
-  // Game selection
   if (interaction.customId.startsWith('select_game_')) {
     const userId = interaction.customId.replace('select_game_', '');
     if (userId !== interaction.user.id) return;
@@ -1006,17 +1199,10 @@ client.on('interactionCreate', async (interaction) => {
     
     await interaction.update({ components: [] });
     
-    // Ask for state
     const stateEmbed = new EmbedBuilder()
       .setColor('#2196F3')
       .setTitle('📍 Select Your State')
       .setDescription('Choose your state from the dropdown:');
-    
-    // Split states into chunks of 25 (Discord limit)
-    const stateChunks = [];
-    for (let i = 0; i < INDIAN_STATES.length; i += 25) {
-      stateChunks.push(INDIAN_STATES.slice(i, i + 25));
-    }
     
     const stateSelect = new ActionRowBuilder()
       .addComponents(
@@ -1024,7 +1210,7 @@ client.on('interactionCreate', async (interaction) => {
           .setCustomId('select_state_' + interaction.user.id)
           .setPlaceholder('Choose your state')
           .addOptions(
-            stateChunks[0].map(state => ({ label: state, value: state }))
+            INDIAN_STATES.slice(0, 25).map(state => ({ label: state, value: state }))
           )
       );
     
@@ -1032,7 +1218,6 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
   
-  // State selection
   if (interaction.customId.startsWith('select_state_')) {
     const userId = interaction.customId.replace('select_state_', '');
     if (userId !== interaction.user.id) return;
@@ -1043,7 +1228,6 @@ client.on('interactionCreate', async (interaction) => {
     
     await interaction.update({ components: [] });
     
-    // Ask for gender
     const genderEmbed = new EmbedBuilder()
       .setColor('#9C27B0')
       .setTitle('👤 Select Your Gender')
@@ -1068,10 +1252,73 @@ client.on('interactionCreate', async (interaction) => {
     await interaction.channel.send({ embeds: [genderEmbed], components: [genderButtons] });
     return;
   }
+  
+  if (interaction.customId === 'select_tournament_template') {
+    const template = interaction.values[0];
+    let tournamentData = {};
+    
+    if (template === 'ff_solo_quick') {
+      tournamentData = {
+        title: 'Friday Night Free Fire',
+        description: 'Quick Fire Solo Tournament',
+        game: 'freefire',
+        mode: 'solo',
+        map: 'bermuda',
+        maxSlots: 12,
+        currentSlots: 0,
+        entryFee: 50,
+        prizePool: 500,
+        time: '8:00 PM',
+        prizeDistribution: { '1st': 250, '2nd': 150, '3rd': 100 },
+        participants: [],
+        status: 'open',
+        createdBy: interaction.user.id,
+        createdAt: Date.now()
+      };
+    } else if (template === 'ff_squad_mega') {
+      tournamentData = {
+        title: 'Mega Squad Event',
+        description: 'Epic Squad Tournament with Big Prizes!',
+        game: 'freefire',
+        mode: 'squad',
+        map: 'bermuda',
+        maxSlots: 48,
+        currentSlots: 0,
+        entryFee: 100,
+        prizePool: 2000,
+        time: '8:00 PM',
+        prizeDistribution: { '1st': 1000, '2nd': 600, '3rd': 400 },
+        participants: [],
+        status: 'open',
+        createdBy: interaction.user.id,
+        createdAt: Date.now()
+      };
+    } else if (template === 'mc_free') {
+      tournamentData = {
+        title: 'Minecraft Practice Tournament',
+        description: 'Free entry practice tournament for all!',
+        game: 'minecraft',
+        mode: 'solo',
+        map: 'survival',
+        maxSlots: 20,
+        currentSlots: 0,
+        entryFee: 0,
+        prizePool: 100,
+        time: '6:00 PM',
+        prizeDistribution: { '1st': 50, '2nd': 30, '3rd': 20 },
+        participants: [],
+        status: 'open',
+        createdBy: interaction.user.id,
+        createdAt: Date.now()
+      };
+    }
+    
+    await postTournament(interaction, tournamentData);
+  }
 });
 
 // ============================================
-// GENDER SELECTION HANDLER
+// GENDER SELECTION & PROFILE COMPLETION
 // ============================================
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
@@ -1088,7 +1335,6 @@ client.on('interactionCreate', async (interaction) => {
     
     await interaction.update({ components: [] });
     
-    // Create profile
     const otoId = generateOTOID();
     const profileData = {
       name: tempProfile.name,
@@ -1098,19 +1344,14 @@ client.on('interactionCreate', async (interaction) => {
       otoId: otoId,
       createdAt: Date.now(),
       level: 1,
-      stats: {
-        wins: 0,
-        played: 0,
-        earned: 0,
-        invites: 0
-      },
-      badges: []
+      stats: { wins: 0, played: 0, earned: 0, invites: 0 },
+      badges: [],
+      isPublic: false
     };
     
     saveUserProfile(interaction.user.id, profileData);
     client.tempProfiles.delete(interaction.user.id);
     
-    // Send confirmation
     const confirmEmbed = new EmbedBuilder()
       .setColor('#00FF00')
       .setTitle('✅ PROFILE CREATED SUCCESSFULLY!')
@@ -1125,30 +1366,161 @@ client.on('interactionCreate', async (interaction) => {
     
     await interaction.channel.send({ embeds: [confirmEmbed] });
     
-    // Assign player role and unlock server
     const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
     const member = await guild.members.fetch(interaction.user.id);
     const playerRole = guild.roles.cache.get(CONFIG.ROLES.PLAYER);
     
-    if (playerRole) {
-      await member.roles.add(playerRole);
-    }
+    if (playerRole) await member.roles.add(playerRole);
     
-    // Post profile in profile channel
     const profileChannel = guild.channels.cache.get(CONFIG.CHANNELS.PROFILE);
     if (profileChannel) {
       const profileEmbed = createProfileEmbed(interaction.user, profileData);
       await profileChannel.send({ embeds: [profileEmbed] });
     }
     
-    // Welcome announcement in welcome channel with heart reaction
     const welcomeChannel = guild.channels.cache.get(CONFIG.CHANNELS.WELCOME_CHANNEL);
     if (welcomeChannel) {
       const welcomeMsg = await welcomeChannel.send(`🎊 **${tempProfile.name} bhai aa gaya!** Welcome ${interaction.user}! 🔥`);
       await welcomeMsg.react('❤️');
     }
     
+    const joinLogEmbed = new EmbedBuilder()
+      .setColor('#00FF00')
+      .setTitle('✅ Profile Created')
+      .setDescription(`${interaction.user.tag} completed profile creation`)
+      .addFields(
+        { name: 'OTO ID', value: otoId, inline: true },
+        { name: 'Game', value: tempProfile.game, inline: true },
+        { name: 'State', value: tempProfile.state, inline: true }
+      )
+      .setTimestamp();
+    
+    await logToChannel(guild, CONFIG.CHANNELS.MOD_LOG, joinLogEmbed);
+    
     return;
+  }
+});
+
+// ============================================
+// MODAL SUBMIT HANDLER
+// ============================================
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isModalSubmit()) return;
+  
+  if (interaction.customId === 'broadcast_modal') {
+    const message = interaction.fields.getTextInputValue('broadcast_message');
+    
+    const broadcastEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('📢 ANNOUNCEMENT FROM OTO TOURNAMENTS')
+      .setDescription(message)
+      .setThumbnail(interaction.guild.iconURL({ dynamic: true }))
+      .setFooter({ text: 'Official OTO Announcement' })
+      .setTimestamp();
+    
+    const channels = [CONFIG.CHANNELS.GENERAL, CONFIG.CHANNELS.ANNOUNCEMENT, CONFIG.CHANNELS.TOURNAMENT_SCHEDULE];
+    
+    let sent = 0;
+    for (const channelId of channels) {
+      try {
+        const channel = interaction.guild.channels.cache.get(channelId);
+        if (channel) {
+          await channel.send({ embeds: [broadcastEmbed] });
+          sent++;
+        }
+      } catch (error) {
+        console.error(`Could not send to channel ${channelId}`);
+      }
+    }
+    
+    await interaction.reply({ content: `✅ Broadcast sent to ${sent} channels!`, ephemeral: true });
+    return;
+  }
+  
+  if (interaction.customId === 'staff_application_modal') {
+    const name = interaction.fields.getTextInputValue('app_name');
+    const age = interaction.fields.getTextInputValue('app_age');
+    const experience = interaction.fields.getTextInputValue('app_experience');
+    const why = interaction.fields.getTextInputValue('app_why');
+    const availability = interaction.fields.getTextInputValue('app_availability');
+    
+    const staffApps = loadData('staff_applications.json');
+    const appId = `APP-${Date.now()}`;
+    
+    staffApps[appId] = {
+      userId: interaction.user.id,
+      name, age, experience, why, availability,
+      submittedAt: Date.now(),
+      status: 'pending'
+    };
+    
+    saveData('staff_applications.json', staffApps);
+    
+    const appEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('📝 NEW STAFF APPLICATION')
+      .setDescription(`**Applicant:** ${interaction.user.tag}`)
+      .addFields(
+        { name: 'Name', value: name, inline: true },
+        { name: 'Age', value: age, inline: true },
+        { name: 'Availability', value: availability, inline: true },
+        { name: 'Experience', value: experience },
+        { name: 'Why Staff?', value: why }
+      )
+      .setFooter({ text: `Application ID: ${appId}` })
+      .setTimestamp();
+    
+    const appButtons = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`approve_app_${appId}`)
+          .setLabel('✅ Approve')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`reject_app_${appId}`)
+          .setLabel('❌ Reject')
+          .setStyle(ButtonStyle.Danger)
+      );
+    
+    const playerFormChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.PLAYER_FORM);
+    if (playerFormChannel) {
+      await playerFormChannel.send({ content: `<@${CONFIG.OWNER_ID}>`, embeds: [appEmbed], components: [appButtons] });
+    }
+    
+    await interaction.reply({ content: '✅ Your staff application has been submitted! You will be notified of the decision.', ephemeral: true });
+    return;
+  }
+  
+  if (interaction.customId === 'custom_tournament_modal') {
+    const title = interaction.fields.getTextInputValue('tournament_title');
+    const description = interaction.fields.getTextInputValue('tournament_description') || 'Custom Tournament';
+    const details = interaction.fields.getTextInputValue('tournament_details');
+    const prizeDist = interaction.fields.getTextInputValue('prize_distribution');
+    const game = interaction.fields.getTextInputValue('tournament_game').toLowerCase();
+    
+    const [slots, entry, prize, time, mode, map] = details.split(',').map(s => s.trim());
+    
+    const prizeDistribution = {};
+    prizeDist.split(',').forEach(item => {
+      const [place, amount] = item.split(':');
+      prizeDistribution[place] = parseInt(amount);
+    });
+    
+    const tournamentData = {
+      title, description, game, mode, map,
+      maxSlots: parseInt(slots),
+      currentSlots: 0,
+      entryFee: parseInt(entry),
+      prizePool: parseInt(prize),
+      time,
+      prizeDistribution,
+      participants: [],
+      status: 'open',
+      createdBy: interaction.user.id,
+      createdAt: Date.now()
+    };
+    
+    await postTournament(interaction, tournamentData);
   }
 });
 
@@ -1156,9 +1528,7 @@ client.on('interactionCreate', async (interaction) => {
 // TOURNAMENT SYSTEM
 // ============================================
 
-// Create tournament (Staff/Owner only)
 async function createTournament(interaction, type) {
-  // Verify permissions
   const member = interaction.member;
   const isAuthorized = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
                        member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
@@ -1170,7 +1540,6 @@ async function createTournament(interaction, type) {
   }
   
   if (type === 'quick') {
-    // Quick create with template
     const templateEmbed = new EmbedBuilder()
       .setColor('#FF6B6B')
       .setTitle('⚡ Quick Tournament Templates')
@@ -1182,31 +1551,15 @@ async function createTournament(interaction, type) {
           .setCustomId('select_tournament_template')
           .setPlaceholder('Choose tournament template')
           .addOptions([
-            {
-              label: 'Free Fire Solo - Quick Fire',
-              value: 'ff_solo_quick',
-              description: '12 slots, ₹50 entry, ₹500 prize',
-              emoji: '🔥'
-            },
-            {
-              label: 'Free Fire Squad - Mega Event',
-              value: 'ff_squad_mega',
-              description: '48 slots, ₹100 entry, ₹2000 prize',
-              emoji: '💎'
-            },
-            {
-              label: 'Minecraft - Free Practice',
-              value: 'mc_free',
-              description: 'Free entry, practice tournament',
-              emoji: '⛏️'
-            }
+            { label: 'Free Fire Solo - Quick Fire', value: 'ff_solo_quick', description: '12 slots, ₹50 entry, ₹500 prize', emoji: '🔥' },
+            { label: 'Free Fire Squad - Mega Event', value: 'ff_squad_mega', description: '48 slots, ₹100 entry, ₹2000 prize', emoji: '💎' },
+            { label: 'Minecraft - Free Practice', value: 'mc_free', description: 'Free entry, practice tournament', emoji: '⛏️' }
           ])
       );
     
     await interaction.reply({ embeds: [templateEmbed], components: [templateSelect], ephemeral: true });
     
   } else if (type === 'custom') {
-    // Custom tournament creation modal
     const modal = new ModalBuilder()
       .setCustomId('custom_tournament_modal')
       .setTitle('Create Custom Tournament');
@@ -1258,140 +1611,14 @@ async function createTournament(interaction, type) {
   }
 }
 
-// Handle tournament template selection
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isStringSelectMenu()) return;
-  
-  if (interaction.customId === 'select_tournament_template') {
-    const template = interaction.values[0];
-    let tournamentData = {};
-    
-    if (template === 'ff_solo_quick') {
-      tournamentData = {
-        title: 'Friday Night Free Fire',
-        description: 'Quick Fire Solo Tournament',
-        game: 'freefire',
-        mode: 'solo',
-        map: 'bermuda',
-        maxSlots: 12,
-        currentSlots: 0,
-        entryFee: 50,
-        prizePool: 500,
-        time: '8:00 PM',
-        prizeDistribution: {
-          '1st': 250,
-          '2nd': 150,
-          '3rd': 100
-        },
-        participants: [],
-        status: 'open',
-        createdBy: interaction.user.id,
-        createdAt: Date.now()
-      };
-    } else if (template === 'ff_squad_mega') {
-      tournamentData = {
-        title: 'Mega Squad Event',
-        description: 'Epic Squad Tournament with Big Prizes!',
-        game: 'freefire',
-        mode: 'squad',
-        map: 'bermuda',
-        maxSlots: 48,
-        currentSlots: 0,
-        entryFee: 100,
-        prizePool: 2000,
-        time: '8:00 PM',
-        prizeDistribution: {
-          '1st': 1000,
-          '2nd': 600,
-          '3rd': 400
-        },
-        participants: [],
-        status: 'open',
-        createdBy: interaction.user.id,
-        createdAt: Date.now()
-      };
-    } else if (template === 'mc_free') {
-      tournamentData = {
-        title: 'Minecraft Practice Tournament',
-        description: 'Free entry practice tournament for all!',
-        game: 'minecraft',
-        mode: 'solo',
-        map: 'survival',
-        maxSlots: 20,
-        currentSlots: 0,
-        entryFee: 0,
-        prizePool: 100,
-        time: '6:00 PM',
-        prizeDistribution: {
-          '1st': 50,
-          '2nd': 30,
-          '3rd': 20
-        },
-        participants: [],
-        status: 'open',
-        createdBy: interaction.user.id,
-        createdAt: Date.now()
-      };
-    }
-    
-    await postTournament(interaction, tournamentData);
-  }
-});
-
-// Handle custom tournament modal
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isModalSubmit()) return;
-  
-  if (interaction.customId === 'custom_tournament_modal') {
-    const title = interaction.fields.getTextInputValue('tournament_title');
-    const description = interaction.fields.getTextInputValue('tournament_description') || 'Custom Tournament';
-    const details = interaction.fields.getTextInputValue('tournament_details');
-    const prizeDist = interaction.fields.getTextInputValue('prize_distribution');
-    const game = interaction.fields.getTextInputValue('tournament_game').toLowerCase();
-    
-    // Parse details
-    const [slots, entry, prize, time, mode, map] = details.split(',').map(s => s.trim());
-    
-    // Parse prize distribution
-    const prizeDistribution = {};
-    prizeDist.split(',').forEach(item => {
-      const [place, amount] = item.split(':');
-      prizeDistribution[place] = parseInt(amount);
-    });
-    
-    const tournamentData = {
-      title,
-      description,
-      game,
-      mode,
-      map,
-      maxSlots: parseInt(slots),
-      currentSlots: 0,
-      entryFee: parseInt(entry),
-      prizePool: parseInt(prize),
-      time,
-      prizeDistribution,
-      participants: [],
-      status: 'open',
-      createdBy: interaction.user.id,
-      createdAt: Date.now()
-    };
-    
-    await postTournament(interaction, tournamentData);
-  }
-});
-
-// Post tournament
 async function postTournament(interaction, tournamentData) {
   const tournamentId = generateTournamentID();
   tournamentData.id = tournamentId;
   
-  // Save tournament
   const tournaments = loadData('tournaments.json');
   tournaments[tournamentId] = tournamentData;
   saveData('tournaments.json', tournaments);
   
-  // Create tournament embed
   const gameEmojis = { freefire: '🔥', minecraft: '⛏️', other: '🎮' };
   const statusEmojis = { open: '🟢', filling: '🟡', almost_full: '🟠', closed: '🔴', live: '⚫', completed: '✅' };
   
@@ -1416,11 +1643,7 @@ async function postTournament(interaction, tournamentData) {
         .map(([place, amount]) => `${place === '1st' ? '🥇' : place === '2nd' ? '🥈' : place === '3rd' ? '🥉' : '🏅'} ${place}: ₹${amount}`)
         .join('\n')
     })
-    .addFields({
-      name: '🆔 Tournament ID',
-      value: `\`${tournamentId}\``,
-      inline: false
-    })
+    .addFields({ name: '🆔 Tournament ID', value: `\`${tournamentId}\``, inline: false })
     .setFooter({ text: 'Click JOIN NOW to participate!' })
     .setTimestamp();
   
@@ -1432,7 +1655,6 @@ async function postTournament(interaction, tournamentData) {
         .setStyle(ButtonStyle.Success)
     );
   
-  // Post in tournament schedule
   const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
   const tournamentChannel = guild.channels.cache.get(CONFIG.CHANNELS.TOURNAMENT_SCHEDULE);
   
@@ -1443,7 +1665,6 @@ async function postTournament(interaction, tournamentData) {
     saveData('tournaments.json', tournaments);
   }
   
-  // Post in general
   const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
   if (generalChannel) {
     await generalChannel.send({
@@ -1453,10 +1674,31 @@ async function postTournament(interaction, tournamentData) {
     });
   }
   
+  // Send reminder to owner
+  try {
+    const owner = await client.users.fetch(CONFIG.OWNER_ID);
+    const reminderEmbed = new EmbedBuilder()
+      .setColor('#FFD700')
+      .setTitle('📢 Tournament Created - Reminder')
+      .setDescription(
+        `**Tournament:** ${tournamentData.title}\n` +
+        `**ID:** ${tournamentId}\n` +
+        `**Slots:** ${tournamentData.maxSlots}\n` +
+        `**Entry Fee:** ₹${tournamentData.entryFee}\n` +
+        `**Prize Pool:** ₹${tournamentData.prizePool}\n\n` +
+        `✅ Tournament has been posted!\n` +
+        `📊 Monitor registrations in staff tools.`
+      )
+      .setTimestamp();
+    
+    await owner.send({ embeds: [reminderEmbed] });
+  } catch (error) {
+    console.log('Could not send reminder to owner');
+  }
+  
   await interaction.reply({ content: `✅ Tournament created successfully! ID: ${tournamentId}`, ephemeral: true });
 }
 
-// Handle tournament join
 async function handleTournamentJoin(interaction, tournamentId) {
   const tournaments = loadData('tournaments.json');
   const tournament = tournaments[tournamentId];
@@ -1481,7 +1723,6 @@ async function handleTournamentJoin(interaction, tournamentId) {
     return;
   }
   
-  // Create private registration ticket
   const guild = interaction.guild;
   const ticketCategory = guild.channels.cache.get(CONFIG.CHANNELS.TICKET_CATEGORY);
   
@@ -1490,26 +1731,13 @@ async function handleTournamentJoin(interaction, tournamentId) {
     type: ChannelType.GuildText,
     parent: ticketCategory,
     permissionOverwrites: [
-      {
-        id: guild.id,
-        deny: [PermissionFlagsBits.ViewChannel]
-      },
-      {
-        id: interaction.user.id,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-      },
-      {
-        id: CONFIG.ROLES.STAFF,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-      },
-      {
-        id: tournament.createdBy,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-      }
+      { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+      { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+      { id: CONFIG.ROLES.STAFF, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+      { id: tournament.createdBy, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
     ]
   });
   
-  // Save ticket data
   const tickets = loadData('tickets.json');
   tickets[ticketChannel.id] = {
     userId: interaction.user.id,
@@ -1519,7 +1747,19 @@ async function handleTournamentJoin(interaction, tournamentId) {
   };
   saveData('tickets.json', tickets);
   
-  // Send ticket welcome message
+  // Log ticket creation
+  const ticketLogEmbed = new EmbedBuilder()
+    .setColor('#4CAF50')
+    .setTitle('🎫 Ticket Created')
+    .setDescription(`${interaction.user.tag} joined tournament: ${tournament.title}`)
+    .addFields(
+      { name: 'Tournament ID', value: tournamentId, inline: true },
+      { name: 'Ticket Channel', value: `<#${ticketChannel.id}>`, inline: true }
+    )
+    .setTimestamp();
+  
+  await logToChannel(guild, CONFIG.CHANNELS.TICKET_LOG, ticketLogEmbed);
+  
   const ticketEmbed = new EmbedBuilder()
     .setColor('#4CAF50')
     .setTitle('🎫 TOURNAMENT REGISTRATION')
@@ -1537,7 +1777,6 @@ async function handleTournamentJoin(interaction, tournamentId) {
   
   await ticketChannel.send({ content: `${interaction.user} <@&${CONFIG.ROLES.STAFF}>`, embeds: [ticketEmbed] });
   
-  // Generate payment QR if entry fee exists
   if (tournament.entryFee > 0) {
     const paymentEmbed = new EmbedBuilder()
       .setColor('#FFD700')
@@ -1554,7 +1793,6 @@ async function handleTournamentJoin(interaction, tournamentId) {
     await ticketChannel.send({ embeds: [paymentEmbed] });
   }
   
-  // Staff action buttons
   const actionButtons = new ActionRowBuilder()
     .addComponents(
       new ButtonBuilder()
@@ -1569,17 +1807,12 @@ async function handleTournamentJoin(interaction, tournamentId) {
   
   await ticketChannel.send({ content: '**Staff Actions:**', components: [actionButtons] });
   
-  await interaction.reply({ 
-    content: `✅ Registration ticket created! Check ${ticketChannel}`, 
-    ephemeral: true 
-  });
+  await interaction.reply({ content: `✅ Registration ticket created! Check ${ticketChannel}`, ephemeral: true });
 }
 
-// Handle payment confirmation
 async function handlePaymentConfirmation(interaction) {
   const ticketId = interaction.customId.replace('confirm_payment_', '');
   
-  // Verify staff permission
   const member = interaction.member;
   const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
                   member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
@@ -1601,11 +1834,9 @@ async function handlePaymentConfirmation(interaction) {
   const tournaments = loadData('tournaments.json');
   const tournament = tournaments[ticket.tournamentId];
   
-  // Add participant
   tournament.participants.push(ticket.userId);
   tournament.currentSlots++;
   
-  // Update tournament status
   const fillPercentage = (tournament.currentSlots / tournament.maxSlots) * 100;
   if (fillPercentage >= 80) {
     tournament.status = 'almost_full';
@@ -1620,10 +1851,8 @@ async function handlePaymentConfirmation(interaction) {
   tournaments[ticket.tournamentId] = tournament;
   saveData('tournaments.json', tournaments);
   
-  // Update tournament message
   await updateTournamentMessage(tournament);
   
-  // Confirm to user
   const user = await client.users.fetch(ticket.userId);
   const confirmEmbed = new EmbedBuilder()
     .setColor('#00FF00')
@@ -1640,9 +1869,28 @@ async function handlePaymentConfirmation(interaction) {
   await user.send({ embeds: [confirmEmbed] });
   await interaction.channel.send({ embeds: [confirmEmbed] });
   
+  // Update profile stats
+  const profile = getUserProfile(ticket.userId);
+  if (profile) {
+    profile.stats.played++;
+    saveUserProfile(ticket.userId, profile);
+  }
+  
+  // Log confirmation
+  const confirmLogEmbed = new EmbedBuilder()
+    .setColor('#00FF00')
+    .setTitle('✅ Payment Confirmed')
+    .setDescription(`${user.tag} confirmed for: ${tournament.title}`)
+    .addFields(
+      { name: 'Tournament ID', value: tournament.id, inline: true },
+      { name: 'Confirmed By', value: interaction.user.tag, inline: true }
+    )
+    .setTimestamp();
+  
+  await logToChannel(interaction.guild, CONFIG.CHANNELS.TICKET_LOG, confirmLogEmbed);
+  
   await interaction.reply({ content: '✅ Payment confirmed! User added to tournament.', ephemeral: true });
   
-  // Close ticket after 10 seconds
   setTimeout(async () => {
     await interaction.channel.delete();
     delete tickets[ticketId];
@@ -1650,7 +1898,6 @@ async function handlePaymentConfirmation(interaction) {
   }, 10000);
 }
 
-// Update tournament message
 async function updateTournamentMessage(tournament) {
   try {
     const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
@@ -1681,11 +1928,7 @@ async function updateTournamentMessage(tournament) {
           .map(([place, amount]) => `${place === '1st' ? '🥇' : place === '2nd' ? '🥈' : place === '3rd' ? '🥉' : '🏅'} ${place}: ₹${amount}`)
           .join('\n')
       })
-      .addFields({
-        name: '🆔 Tournament ID',
-        value: `\`${tournament.id}\``,
-        inline: false
-      })
+      .addFields({ name: '🆔 Tournament ID', value: `\`${tournament.id}\``, inline: false })
       .setFooter({ text: 'Click JOIN NOW to participate!' })
       .setTimestamp();
     
@@ -1704,11 +1947,9 @@ async function updateTournamentMessage(tournament) {
   }
 }
 
-// Handle ticket close
 async function handleTicketClose(interaction) {
   const ticketId = interaction.customId.replace('close_ticket_', '');
   
-  // Verify staff permission
   const member = interaction.member;
   const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
                   member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
@@ -1721,6 +1962,15 @@ async function handleTicketClose(interaction) {
   
   await interaction.reply({ content: '🔄 Closing ticket in 5 seconds...', ephemeral: false });
   
+  // Log ticket close
+  const closeLogEmbed = new EmbedBuilder()
+    .setColor('#FF0000')
+    .setTitle('🎫 Ticket Closed')
+    .setDescription(`Ticket <#${ticketId}> closed by ${interaction.user.tag}`)
+    .setTimestamp();
+  
+  await logToChannel(interaction.guild, CONFIG.CHANNELS.TICKET_LOG, closeLogEmbed);
+  
   setTimeout(async () => {
     const tickets = loadData('tickets.json');
     delete tickets[ticketId];
@@ -1729,7 +1979,6 @@ async function handleTicketClose(interaction) {
   }, 5000);
 }
 
-// Handle free match request
 async function handleFreeMatchRequest(interaction) {
   const guild = interaction.guild || await client.guilds.fetch(CONFIG.GUILD_ID);
   const ticketCategory = guild.channels.cache.get(CONFIG.CHANNELS.TICKET_CATEGORY);
@@ -1739,18 +1988,9 @@ async function handleFreeMatchRequest(interaction) {
     type: ChannelType.GuildText,
     parent: ticketCategory,
     permissionOverwrites: [
-      {
-        id: guild.id,
-        deny: [PermissionFlagsBits.ViewChannel]
-      },
-      {
-        id: interaction.user.id,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-      },
-      {
-        id: CONFIG.ROLES.STAFF,
-        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
-      }
+      { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+      { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+      { id: CONFIG.ROLES.STAFF, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
     ]
   });
   
@@ -1777,16 +2017,9 @@ async function handleFreeMatchRequest(interaction) {
         .setStyle(ButtonStyle.Danger)
     );
   
-  await ticketChannel.send({ 
-    content: `${interaction.user} <@&${CONFIG.ROLES.STAFF}>`, 
-    embeds: [freeMatchEmbed],
-    components: [closeButton]
-  });
+  await ticketChannel.send({ content: `${interaction.user} <@&${CONFIG.ROLES.STAFF}>`, embeds: [freeMatchEmbed], components: [closeButton] });
   
-  await interaction.reply({ 
-    content: `✅ Free match request created! Check ${ticketChannel}`, 
-    ephemeral: true 
-  });
+  await interaction.reply({ content: `✅ Free match request created! Check ${ticketChannel}`, ephemeral: true });
 }
 
 // ============================================
@@ -1798,29 +2031,23 @@ async function updateLeaderboards(guild) {
   
   const profiles = loadData('profiles.json');
   const invitesData = loadData('invites.json');
-  const badges = loadData('badges.json');
   
-  // Most Active Players (by games played)
   const mostActive = Object.entries(profiles)
     .sort((a, b) => b[1].stats.played - a[1].stats.played)
     .slice(0, 10);
   
-  // Most Wins
   const mostWins = Object.entries(profiles)
     .sort((a, b) => b[1].stats.wins - a[1].stats.wins)
     .slice(0, 10);
   
-  // Most Earnings
   const mostEarnings = Object.entries(profiles)
     .sort((a, b) => b[1].stats.earned - a[1].stats.earned)
     .slice(0, 10);
   
-  // Most Invites
   const mostInvites = Object.entries(invitesData)
     .sort((a, b) => b[1].total - a[1].total)
     .slice(0, 10);
   
-  // Create embeds
   const activeEmbed = new EmbedBuilder()
     .setColor('#4CAF50')
     .setTitle('🎮 MOST ACTIVE PLAYERS')
@@ -1873,9 +2100,8 @@ async function updateLeaderboards(guild) {
     )
     .setTimestamp();
   
-  // Clear channel and post new leaderboards
   const messages = await leaderboardChannel.messages.fetch({ limit: 100 });
-  await leaderboardChannel.bulkDelete(messages);
+  await leaderboardChannel.bulkDelete(messages.filter(m => m.author.id === client.user.id && (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24) < 14), true);
   
   await leaderboardChannel.send({ embeds: [activeEmbed] });
   await leaderboardChannel.send({ embeds: [winsEmbed] });
@@ -1883,13 +2109,11 @@ async function updateLeaderboards(guild) {
   await leaderboardChannel.send({ embeds: [invitesEmbed] });
 }
 
-// Update invite tracker
 async function updateInviteTracker(guild) {
   const inviteChannel = guild.channels.cache.get(CONFIG.CHANNELS.INVITE_TRACKER);
   if (!inviteChannel) return;
   
   const invitesData = loadData('invites.json');
-  
   const topInvites = Object.entries(invitesData)
     .sort((a, b) => b[1].total - a[1].total)
     .slice(0, 10);
@@ -1927,7 +2151,6 @@ async function updateInviteTracker(guild) {
   }
 }
 
-// Auto-update leaderboards every hour
 setInterval(async () => {
   try {
     const guild = await client.guilds.fetch(CONFIG.GUILD_ID);
@@ -1936,10 +2159,10 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error updating leaderboards:', error);
   }
-}, 3600000); // 1 hour
+}, 3600000);
 
 // ============================================
-// STAFF TOOLS
+// STAFF TOOLS PANEL
 // ============================================
 async function pinStaffToolsGuide(guild) {
   const staffChannel = guild.channels.cache.get(CONFIG.CHANNELS.STAFF_TOOLS);
@@ -1996,21 +2219,20 @@ async function pinStaffToolsGuide(guild) {
         .setStyle(ButtonStyle.Secondary)
     );
   
-  // Clear all bot messages
- const deletable = messages.filter(m => {
+  const messages = await staffChannel.messages.fetch({ limit: 100 });
+  const deletable = messages.filter(m => {
     if (m.author.id !== client.user.id) return false;
     const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
     return daysDiff < 14;
-});
-await staffChannel.bulkDelete(deletable, true);
-
+  });
+  await staffChannel.bulkDelete(deletable, true);
   
   const msg = await staffChannel.send({ embeds: [guideEmbed], components: [staffPanel] });
   await msg.pin();
 }
 
 // ============================================
-// OWNER TOOLS
+// OWNER TOOLS PANEL
 // ============================================
 async function pinOwnerToolsGuide(guild) {
   const ownerChannel = guild.channels.cache.get(CONFIG.CHANNELS.OWNER_TOOLS);
@@ -2055,38 +2277,93 @@ async function pinOwnerToolsGuide(guild) {
         .setLabel('📊 Stats')
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
-        .setCustomId('owner_manage_staff')
-        .setLabel('👥 Staff')
+        .setCustomId('owner_view_players')
+        .setLabel('👥 Players')
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
-        .setCustomId('owner_broadcast')
-        .setLabel('📢 Broadcast')
-        .setStyle(ButtonStyle.Danger)
+        .setCustomId('owner_manage_staff')
+        .setLabel('⚙️ Staff')
+        .setStyle(ButtonStyle.Secondary)
     );
   
   const ownerPanel2 = new ActionRowBuilder()
     .addComponents(
       new ButtonBuilder()
+        .setCustomId('owner_broadcast')
+        .setLabel('📢 Broadcast')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('owner_staff_applications')
+        .setLabel('📝 Staff Apps')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
         .setCustomId('owner_clear_support')
         .setLabel('🧹 Clear Support')
-        .setStyle(ButtonStyle.Secondary),
+        .setStyle(ButtonStyle.Secondary)
+    );
+  
+  const ownerPanel3 = new ActionRowBuilder()
+    .addComponents(
       new ButtonBuilder()
         .setCustomId('owner_maintenance')
         .setLabel('🛠️ Maintenance')
         .setStyle(ButtonStyle.Danger)
     );
   
-  // Clear all bot messages
   const messages = await ownerChannel.messages.fetch({ limit: 100 });
   const deletable = messages.filter(m => {
     if (m.author.id !== client.user.id) return false;
     const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
     return daysDiff < 14;
-});
-await ownerChannel.bulkDelete(deletable, true);
-
-  const msg = await ownerChannel.send({ embeds: [guideEmbed], components: [ownerPanel, ownerPanel2] });
+  });
+  await ownerChannel.bulkDelete(deletable, true);
+  
+  const msg = await ownerChannel.send({ embeds: [guideEmbed], components: [ownerPanel, ownerPanel2, ownerPanel3] });
   await msg.pin();
+}
+
+// ============================================
+// STAFF APPLICATIONS SETUP
+// ============================================
+async function setupStaffApplications(guild) {
+  const playerFormChannel = guild.channels.cache.get(CONFIG.CHANNELS.PLAYER_FORM);
+  if (!playerFormChannel) return;
+  
+  const appEmbed = new EmbedBuilder()
+    .setColor('#4CAF50')
+    .setTitle('📝 STAFF APPLICATIONS NOW OPEN!')
+    .setDescription(
+      '**Want to join the OTO Staff Team?**\n\n' +
+      '🛠️ Help manage tournaments\n' +
+      '✅ Verify players and payments\n' +
+      '👥 Support the community\n' +
+      '🏆 Get special perks and recognition\n\n' +
+      '**Requirements:**\n' +
+      '• Active in server\n' +
+      '• Responsible and mature\n' +
+      '• Available 2+ hours daily\n' +
+      '• Good communication skills\n\n' +
+      'Click the button below to apply!'
+    )
+    .setFooter({ text: 'Applications reviewed by owner' })
+    .setTimestamp();
+  
+  const applyButton = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('apply_staff')
+        .setLabel('📝 APPLY FOR STAFF')
+        .setStyle(ButtonStyle.Success)
+    );
+  
+  const messages = await playerFormChannel.messages.fetch({ limit: 10 });
+  const existingApp = messages.find(m => m.author.id === client.user.id && m.embeds[0]?.title?.includes('STAFF APPLICATIONS'));
+  
+  if (existingApp) {
+    await existingApp.edit({ embeds: [appEmbed], components: [applyButton] });
+  } else {
+    await playerFormChannel.send({ embeds: [appEmbed], components: [applyButton] });
+  }
 }
 
 // ============================================
@@ -2094,114 +2371,55 @@ await ownerChannel.bulkDelete(deletable, true);
 // ============================================
 client.on('ready', async () => {
   const commands = [
-    // User Commands
-    {
-      name: 'profile',
-      description: 'View your profile',
-    },
-    {
-      name: 'invites',
-      description: 'Check your invite statistics',
-    },
-    {
-      name: 'help',
-      description: 'Get help guide',
-    },
-    
-    // Staff Commands
+    { name: 'profile', description: 'View your profile' },
+    { name: 'invites', description: 'Check your invite statistics' },
+    { name: 'help', description: 'Get help guide' },
     {
       name: 'tournament-create',
       description: 'Create a new tournament (Staff only)',
-      options: [
-        {
-          name: 'type',
-          description: 'Tournament creation type',
-          type: 3,
-          required: true,
-          choices: [
-            { name: 'Quick Create (Templates)', value: 'quick' },
-            { name: 'Custom Create', value: 'custom' }
-          ]
-        }
-      ]
+      options: [{
+        name: 'type',
+        description: 'Tournament creation type',
+        type: 3,
+        required: true,
+        choices: [
+          { name: 'Quick Create (Templates)', value: 'quick' },
+          { name: 'Custom Create', value: 'custom' }
+        ]
+      }]
     },
-    {
-      name: 'tournament-list',
-      description: 'View all tournaments (Staff only)',
-    },
+    { name: 'tournament-list', description: 'View all tournaments (Staff only)' },
     {
       name: 'user-warn',
       description: 'Warn a user (Staff only)',
       options: [
-        {
-          name: 'user',
-          description: 'User to warn',
-          type: 6,
-          required: true
-        },
-        {
-          name: 'reason',
-          description: 'Warning reason',
-          type: 3,
-          required: true
-        }
+        { name: 'user', description: 'User to warn', type: 6, required: true },
+        { name: 'reason', description: 'Warning reason', type: 3, required: true }
       ]
     },
     {
       name: 'user-timeout',
       description: 'Timeout a user (Staff only)',
       options: [
-        {
-          name: 'user',
-          description: 'User to timeout',
-          type: 6,
-          required: true
-        },
-        {
-          name: 'minutes',
-          description: 'Timeout duration in minutes',
-          type: 4,
-          required: true
-        },
-        {
-          name: 'reason',
-          description: 'Timeout reason',
-          type: 3,
-          required: false
-        }
+        { name: 'user', description: 'User to timeout', type: 6, required: true },
+        { name: 'minutes', description: 'Timeout duration in minutes', type: 4, required: true },
+        { name: 'reason', description: 'Timeout reason', type: 3, required: false }
       ]
     },
     {
       name: 'user-untimeout',
       description: 'Remove timeout from user (Staff only)',
-      options: [
-        {
-          name: 'user',
-          description: 'User to untimeout',
-          type: 6,
-          required: true
-        }
-      ]
+      options: [{ name: 'user', description: 'User to untimeout', type: 6, required: true }]
     },
     {
       name: 'winner-declare',
       description: 'Declare tournament winner (Staff only)',
       options: [
-        {
-          name: 'tournament',
-          description: 'Tournament ID',
-          type: 3,
-          required: true
-        },
-        {
-          name: 'user',
-          description: 'Winner',
-          type: 6,
-          required: true
-        },
+        { name: 'tournament', description: 'Tournament ID', type: 3, required: true },
+        { name: 'user', description: 'Winner', type: 6, required: true },
         {
           name: 'position',
-          description: 'Position (1st, 2nd, 3rd, 4th)',
+          description: 'Position',
           type: 3,
           required: true,
           choices: [
@@ -2213,90 +2431,45 @@ client.on('ready', async () => {
         }
       ]
     },
-    
-    // Owner Commands
     {
       name: 'owner-staff-add',
       description: 'Add a staff member (Owner only)',
-      options: [
-        {
-          name: 'user',
-          description: 'User to add as staff',
-          type: 6,
-          required: true
-        }
-      ]
+      options: [{ name: 'user', description: 'User to add as staff', type: 6, required: true }]
     },
     {
       name: 'owner-staff-remove',
       description: 'Remove a staff member (Owner only)',
-      options: [
-        {
-          name: 'user',
-          description: 'Staff member to remove',
-          type: 6,
-          required: true
-        }
-      ]
+      options: [{ name: 'user', description: 'Staff member to remove', type: 6, required: true }]
     },
     {
       name: 'owner-broadcast',
       description: 'Broadcast message to all channels (Owner only)',
-      options: [
-        {
-          name: 'message',
-          description: 'Message to broadcast',
-          type: 3,
-          required: true
-        }
-      ]
+      options: [{ name: 'message', description: 'Message to broadcast', type: 3, required: true }]
     },
-    {
-      name: 'owner-stats',
-      description: 'View detailed server statistics (Owner only)',
-    },
-    {
-      name: 'owner-lockdown',
-      description: 'Emergency server lockdown (Owner only)',
-    },
+    { name: 'owner-stats', description: 'View detailed server statistics (Owner only)' },
+    { name: 'owner-lockdown', description: 'Emergency server lockdown (Owner only)' },
     {
       name: 'owner-maintenance',
       description: 'Toggle bot maintenance mode (Owner only)',
-      options: [
-        {
-          name: 'status',
-          description: 'Maintenance status',
-          type: 3,
-          required: true,
-          choices: [
-            { name: 'ON', value: 'on' },
-            { name: 'OFF', value: 'off' }
-          ]
-        }
-      ]
+      options: [{
+        name: 'status',
+        description: 'Maintenance status',
+        type: 3,
+        required: true,
+        choices: [{ name: 'ON', value: 'on' }, { name: 'OFF', value: 'off' }]
+      }]
     },
     {
       name: 'owner-clear-chat',
       description: 'Clear messages from a channel (Owner only)',
       options: [
-        {
-          name: 'channel',
-          description: 'Channel to clear',
-          type: 7,
-          required: true
-        },
-        {
-          name: 'amount',
-          description: 'Number of messages to delete (default: 100)',
-          type: 4,
-          required: false
-        }
+        { name: 'channel', description: 'Channel to clear', type: 7, required: true },
+        { name: 'amount', description: 'Number of messages (default: 100)', type: 4, required: false }
       ]
     }
   ];
   
   try {
-    // Get the target guild
     let guild;
     if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
       guild = client.guilds.cache.first();
@@ -2324,16 +2497,15 @@ client.on('interactionCreate', async (interaction) => {
   
   const { commandName } = interaction;
   
-  // User Commands
   if (commandName === 'profile') {
     const profile = getUserProfile(interaction.user.id);
     if (!profile) {
-      await interaction.reply({ content: '❌ You don\'t have a profile yet! Complete profile creation first.', flags: 64 });
+      await interaction.reply({ content: '❌ You don\'t have a profile yet! Complete profile creation first.', ephemeral: true });
       return;
     }
     
     const profileEmbed = createProfileEmbed(interaction.user, profile);
-    await interaction.reply({ embeds: [profileEmbed], flags: 64 });
+    await interaction.reply({ embeds: [profileEmbed], ephemeral: true });
     return;
   }
   
@@ -2365,11 +2537,11 @@ client.on('interactionCreate', async (interaction) => {
     const helpEmbed = new EmbedBuilder()
       .setColor('#4CAF50')
       .setTitle('📚 OTO TOURNAMENTS - HELP GUIDE')
-      .setDescription('Everything you need to know about OTO Tournaments!')
+      .setDescription('Everything you need to know!')
       .addFields(
         {
           name: '🎮 How to Join Tournaments',
-          value: '1. Complete your profile\n2. Check <#' + CONFIG.CHANNELS.TOURNAMENT_SCHEDULE + '>\n3. Click "JOIN NOW"\n4. Provide IGN and payment\n5. Win prizes!'
+          value: '1. Complete profile\n2. Check <#' + CONFIG.CHANNELS.TOURNAMENT_SCHEDULE + '>\n3. Click JOIN NOW\n4. Provide IGN and payment\n5. Win prizes!'
         },
         {
           name: '🎁 Invite Rewards',
@@ -2377,21 +2549,16 @@ client.on('interactionCreate', async (interaction) => {
         },
         {
           name: '📊 Commands',
-          value: '`/profile` - View your profile\n`/invites` - Check invite stats\n`/help` - This message'
-        },
-        {
-          name: '❓ Need Support?',
-          value: 'Ask in support channel or DM staff members!'
+          value: '`/profile` - View profile\n`/invites` - Check invites\n`/help` - This message'
         }
       )
-      .setFooter({ text: 'OTO Tournaments - Win Big, Play Fair!' })
+      .setFooter({ text: 'OTO Tournaments' })
       .setTimestamp();
     
     await interaction.reply({ embeds: [helpEmbed], ephemeral: true });
     return;
   }
   
-  // Staff Commands
   const member = interaction.member;
   const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
                   member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
@@ -2399,7 +2566,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'tournament-create') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
@@ -2410,7 +2577,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'tournament-list') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
@@ -2420,7 +2587,7 @@ client.on('interactionCreate', async (interaction) => {
     );
     
     if (activeTournaments.length === 0) {
-      await interaction.reply({ content: '📋 No active tournaments at the moment.', ephemeral: true });
+      await interaction.reply({ content: '📋 No active tournaments.', ephemeral: true });
       return;
     }
     
@@ -2429,7 +2596,7 @@ client.on('interactionCreate', async (interaction) => {
       .setTitle('📋 ACTIVE TOURNAMENTS')
       .setDescription(
         activeTournaments.map(([id, t]) => 
-          `**${t.title}**\nID: \`${id}\`\nSlots: ${t.currentSlots}/${t.maxSlots} | Status: ${t.status.toUpperCase()}`
+          `**${t.title}**\nID: \`${id}\`\nSlots: ${t.currentSlots}/${t.maxSlots}`
         ).join('\n\n')
       )
       .setTimestamp();
@@ -2440,21 +2607,18 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'user-warn') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
     const user = interaction.options.getUser('user');
     const reason = interaction.options.getString('reason');
     
-    // Check if target is staff/owner
     const targetMember = await interaction.guild.members.fetch(user.id);
-    const isTargetProtected = targetMember.roles.cache.has(CONFIG.ROLES.STAFF) || 
-                              targetMember.roles.cache.has(CONFIG.ROLES.ADMIN) ||
-                              user.id === CONFIG.OWNER_ID;
+    const isTargetProtected = targetMember.roles.cache.has(CONFIG.ROLES.STAFF) || user.id === CONFIG.OWNER_ID;
     
     if (isTargetProtected) {
-      await interaction.reply({ content: '❌ You cannot warn staff members or the owner!', ephemeral: true });
+      await interaction.reply({ content: '❌ Cannot warn staff/owner!', ephemeral: true });
       return;
     }
     
@@ -2466,21 +2630,33 @@ client.on('interactionCreate', async (interaction) => {
     warningsData[user.id].warnings++;
     warningsData[user.id].history.push({
       type: 'manual',
-      reason: reason,
+      reason,
       issuedBy: interaction.user.id,
       timestamp: Date.now()
     });
     
     saveData('warnings.json', warningsData);
     
+    const warnLogEmbed = new EmbedBuilder()
+      .setColor('#FFA500')
+      .setTitle('⚠️ User Warned')
+      .setDescription(`${user.tag} warned by ${interaction.user.tag}`)
+      .addFields(
+        { name: 'Reason', value: reason },
+        { name: 'Total Warnings', value: `${warningsData[user.id].warnings}` }
+      )
+      .setTimestamp();
+    
+    await logToChannel(interaction.guild, CONFIG.CHANNELS.MOD_LOG, warnLogEmbed);
+    
     await user.send(`⚠️ **WARNING** from ${interaction.guild.name}\n**Reason:** ${reason}\n**Total Warnings:** ${warningsData[user.id].warnings}`);
-    await interaction.reply({ content: `✅ ${user} has been warned. Total warnings: ${warningsData[user.id].warnings}`, ephemeral: true });
+    await interaction.reply({ content: `✅ ${user} warned. Total: ${warningsData[user.id].warnings}`, ephemeral: true });
     return;
   }
   
   if (commandName === 'user-timeout') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
@@ -2489,23 +2665,34 @@ client.on('interactionCreate', async (interaction) => {
     const reason = interaction.options.getString('reason') || 'No reason provided';
     
     const targetMember = await interaction.guild.members.fetch(user.id);
-    const isTargetProtected = targetMember.roles.cache.has(CONFIG.ROLES.STAFF) || 
-                              targetMember.roles.cache.has(CONFIG.ROLES.ADMIN) ||
-                              user.id === CONFIG.OWNER_ID;
+    const isTargetProtected = targetMember.roles.cache.has(CONFIG.ROLES.STAFF) || user.id === CONFIG.OWNER_ID;
     
     if (isTargetProtected) {
-      await interaction.reply({ content: '❌ You cannot timeout staff members or the owner!', ephemeral: true });
+      await interaction.reply({ content: '❌ Cannot timeout staff/owner!', ephemeral: true });
       return;
     }
     
     await targetMember.timeout(minutes * 60 * 1000, reason);
-    await interaction.reply({ content: `✅ ${user} has been timed out for ${minutes} minutes.\nReason: ${reason}`, ephemeral: true });
+    
+    const timeoutLogEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('🔇 User Timed Out')
+      .setDescription(`${user.tag} timed out by ${interaction.user.tag}`)
+      .addFields(
+        { name: 'Duration', value: `${minutes} minutes` },
+        { name: 'Reason', value: reason }
+      )
+      .setTimestamp();
+    
+    await logToChannel(interaction.guild, CONFIG.CHANNELS.MOD_LOG, timeoutLogEmbed);
+    
+    await interaction.reply({ content: `✅ ${user} timed out for ${minutes} minutes.`, ephemeral: true });
     return;
   }
   
   if (commandName === 'user-untimeout') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
@@ -2519,7 +2706,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'winner-declare') {
     if (!isStaff) {
-      await interaction.reply({ content: '❌ You do not have permission to use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Staff only!', ephemeral: true });
       return;
     }
     
@@ -2537,13 +2724,11 @@ client.on('interactionCreate', async (interaction) => {
     
     const prizeAmount = tournament.prizeDistribution[position];
     
-    // Update user profile
     const profile = getUserProfile(winner.id);
     if (profile) {
       profile.stats.wins++;
       profile.stats.earned += prizeAmount;
       
-      // Add badge
       const badgeEmoji = position === '1st' ? '🥇' : position === '2nd' ? '🥈' : position === '3rd' ? '🥉' : '🏅';
       if (!profile.badges.includes(badgeEmoji)) {
         profile.badges.push(badgeEmoji);
@@ -2552,7 +2737,6 @@ client.on('interactionCreate', async (interaction) => {
       saveUserProfile(winner.id, profile);
     }
     
-    // Winner announcement
     const winnerEmbed = new EmbedBuilder()
       .setColor('#FFD700')
       .setTitle(`${position === '1st' ? '🥇' : position === '2nd' ? '🥈' : position === '3rd' ? '🥉' : '🏅'} TOURNAMENT WINNER!`)
@@ -2572,10 +2756,8 @@ client.on('interactionCreate', async (interaction) => {
       await generalChannel.send({ content: `🎉 ${winner}`, embeds: [winnerEmbed] });
     }
     
-    // DM winner
     await winner.send({ embeds: [winnerEmbed] });
     
-    // DM all lobby participants with follow/subscribe reminder
     const settings = loadData('settings.json');
     if (settings.followSubscribeEnabled) {
       for (const participantId of tournament.participants) {
@@ -2588,24 +2770,20 @@ client.on('interactionCreate', async (interaction) => {
               .setDescription(
                 `Thanks for participating in **${tournament.title}**! 🎮\n\n` +
                 `**Please support us by:**\n` +
-                `📺 Subscribe to our YouTube channel\n` +
+                `📺 Subscribe to our YouTube\n` +
                 `👥 Follow us on social media\n\n` +
                 `More tournaments coming soon! 🔥`
               )
-              .setFooter({ text: 'OTO Tournaments' })
               .setTimestamp();
             
             await participant.send({ embeds: [reminderEmbed] });
-          } catch (error) {
-            console.log(`Could not DM participant ${participantId}`);
-          }
+          } catch (error) {}
         }
       }
     }
     
-    await interaction.reply({ content: `✅ Winner declared successfully! ${winner} won ${position} place and ₹${prizeAmount}`, ephemeral: true });
+    await interaction.reply({ content: `✅ Winner declared! ${winner} won ${position} - ₹${prizeAmount}`, ephemeral: true });
     
-    // Update leaderboards
     await updateLeaderboards(interaction.guild);
     return;
   }
@@ -2615,7 +2793,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'owner-staff-add') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2643,13 +2821,22 @@ client.on('interactionCreate', async (interaction) => {
       .setTimestamp();
     
     await user.send({ embeds: [welcomeEmbed] });
-    await interaction.reply({ content: `✅ ${user} has been added to the staff team!`, ephemeral: true });
+    
+    const promoteLogEmbed = new EmbedBuilder()
+      .setColor('#00FF00')
+      .setTitle('⬆️ Staff Promoted')
+      .setDescription(`${user.tag} promoted to staff by ${interaction.user.tag}`)
+      .setTimestamp();
+    
+    await logToChannel(interaction.guild, CONFIG.CHANNELS.MOD_LOG, promoteLogEmbed);
+    
+    await interaction.reply({ content: `✅ ${user} added to staff team!`, ephemeral: true });
     return;
   }
   
   if (commandName === 'owner-staff-remove') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2658,13 +2845,22 @@ client.on('interactionCreate', async (interaction) => {
     const staffRole = interaction.guild.roles.cache.get(CONFIG.ROLES.STAFF);
     
     await targetMember.roles.remove(staffRole);
-    await interaction.reply({ content: `✅ ${user} has been removed from the staff team.`, ephemeral: true });
+    
+    const demoteLogEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('⬇️ Staff Demoted')
+      .setDescription(`${user.tag} removed from staff by ${interaction.user.tag}`)
+      .setTimestamp();
+    
+    await logToChannel(interaction.guild, CONFIG.CHANNELS.MOD_LOG, demoteLogEmbed);
+    
+    await interaction.reply({ content: `✅ ${user} removed from staff team.`, ephemeral: true });
     return;
   }
   
   if (commandName === 'owner-broadcast') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2678,11 +2874,7 @@ client.on('interactionCreate', async (interaction) => {
       .setFooter({ text: 'Official OTO Announcement' })
       .setTimestamp();
     
-    const channels = [
-      CONFIG.CHANNELS.GENERAL,
-      CONFIG.CHANNELS.ANNOUNCEMENT,
-      CONFIG.CHANNELS.TOURNAMENT_SCHEDULE
-    ];
+    const channels = [CONFIG.CHANNELS.GENERAL, CONFIG.CHANNELS.ANNOUNCEMENT, CONFIG.CHANNELS.TOURNAMENT_SCHEDULE];
     
     let sent = 0;
     for (const channelId of channels) {
@@ -2703,7 +2895,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'owner-stats') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2716,14 +2908,8 @@ client.on('interactionCreate', async (interaction) => {
     const activeTournaments = Object.values(tournaments).filter(t => t.status === 'open' || t.status === 'filling').length;
     const completedTournaments = Object.values(tournaments).filter(t => t.status === 'completed').length;
     
-    const totalRevenue = Object.values(tournaments).reduce((sum, t) => {
-      return sum + (t.entryFee * t.currentSlots);
-    }, 0);
-    
-    const totalPrizesGiven = Object.values(profiles).reduce((sum, p) => {
-      return sum + p.stats.earned;
-    }, 0);
-    
+    const totalRevenue = Object.values(tournaments).reduce((sum, t) => sum + (t.entryFee * t.currentSlots), 0);
+    const totalPrizesGiven = Object.values(profiles).reduce((sum, p) => sum + p.stats.earned, 0);
     const totalInvites = Object.values(invitesData).reduce((sum, i) => sum + i.total, 0);
     
     const statsEmbed = new EmbedBuilder()
@@ -2769,7 +2955,7 @@ client.on('interactionCreate', async (interaction) => {
   
   if (commandName === 'owner-lockdown') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2802,13 +2988,13 @@ client.on('interactionCreate', async (interaction) => {
       await generalChannel.send({ embeds: [lockdownEmbed] });
     }
     
-    await interaction.reply({ content: '✅ Server lockdown activated! All channels locked.', ephemeral: true });
+    await interaction.reply({ content: '✅ Server lockdown activated!', ephemeral: true });
     return;
   }
   
   if (commandName === 'owner-maintenance') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2831,20 +3017,18 @@ client.on('interactionCreate', async (interaction) => {
         .setTimestamp();
       
       const generalChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
-      if (generalChannel) {
-        await generalChannel.send({ embeds: [maintenanceEmbed] });
-      }
+      if (generalChannel) await generalChannel.send({ embeds: [maintenanceEmbed] });
       
       await interaction.reply({ content: '✅ Maintenance mode activated!', ephemeral: true });
     } else {
-      await interaction.reply({ content: '✅ Maintenance mode deactivated! Bot is now operational.', ephemeral: true });
+      await interaction.reply({ content: '✅ Maintenance mode deactivated!', ephemeral: true });
     }
     return;
   }
   
   if (commandName === 'owner-clear-chat') {
     if (!isOwner) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
+      await interaction.reply({ content: '❌ Owner only!', ephemeral: true });
       return;
     }
     
@@ -2856,84 +3040,28 @@ client.on('interactionCreate', async (interaction) => {
       
       const messages = await channel.messages.fetch({ limit: Math.min(amount, 100) });
       const deletableMessages = messages.filter(m => {
-        const now = Date.now();
-        const messageTime = m.createdTimestamp;
-        const daysDiff = (now - messageTime) / (1000 * 60 * 60 * 24);
-        return daysDiff < 14; // Discord only allows deleting messages less than 14 days old
+        const daysDiff = (Date.now() - m.createdTimestamp) / (1000 * 60 * 60 * 24);
+        return daysDiff < 14;
       });
       
       if (deletableMessages.size === 0) {
-        await interaction.editReply({ content: '❌ No messages to delete (messages must be less than 14 days old).' });
+        await interaction.editReply({ content: '❌ No messages to delete (must be <14 days old).' });
         return;
       }
       
       await channel.bulkDelete(deletableMessages, true);
       
-      await interaction.editReply({ 
-        content: `✅ Successfully deleted ${deletableMessages.size} messages from ${channel}!` 
-      });
+      await interaction.editReply({ content: `✅ Deleted ${deletableMessages.size} messages from ${channel}!` });
       
-      // Send confirmation in the cleared channel
       const confirmMsg = await channel.send('🧹 **Channel cleared by owner!**');
       setTimeout(() => confirmMsg.delete(), 5000);
       
     } catch (error) {
-      await interaction.editReply({ 
-        content: `❌ Error clearing chat: ${error.message}` 
-      });
+      await interaction.editReply({ content: `❌ Error: ${error.message}` });
     }
     return;
   }
 });
-
-// ============================================
-// ADDITIONAL OWNER FEATURES
-// ============================================
-
-// Enable/Disable Follow & Subscribe Feature
-client.on('interactionCreate', async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  
-  if (interaction.commandName === 'owner-tournament-followsubscribe') {
-    if (interaction.user.id !== CONFIG.OWNER_ID) {
-      await interaction.reply({ content: '❌ Only the owner can use this command!', ephemeral: true });
-      return;
-    }
-    
-    const settings = loadData('settings.json');
-    settings.followSubscribeEnabled = !settings.followSubscribeEnabled;
-    saveData('settings.json', settings);
-    
-    await interaction.reply({ 
-      content: `✅ Follow/Subscribe reminder is now **${settings.followSubscribeEnabled ? 'ENABLED' : 'DISABLED'}**!`, 
-      ephemeral: true 
-    });
-  }
-});
-
-// ============================================
-// ERROR HANDLING
-// ============================================
-client.on('error', error => {
-  console.error('Discord client error:', error);
-});
-
-process.on('unhandledRejection', error => {
-  console.error('Unhandled promise rejection:', error);
-});
-
-process.on('uncaughtException', error => {
-  console.error('Uncaught exception:', error);
-});
-
-// ============================================
-// AUTO-SAVE SYSTEM
-// ============================================
-setInterval(() => {
-  console.log('💾 Auto-saving data...');
-  // Data is already saved on each operation
-  // This is just a heartbeat log
-}, 300000); // Every 5 minutes
 
 // ============================================
 // MAINTENANCE MODE CHECK
@@ -2949,7 +3077,7 @@ client.on('messageCreate', async (message) => {
     
     if (!isOwner && !isStaff) {
       await message.delete();
-      const maintenanceMsg = await message.channel.send('🛠️ Bot is currently in maintenance mode. Please try again later!');
+      const maintenanceMsg = await message.channel.send('🛠️ Bot is in maintenance mode. Please try again later!');
       setTimeout(() => maintenanceMsg.delete(), 5000);
     }
   }
@@ -2961,7 +3089,6 @@ client.on('messageCreate', async (message) => {
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
   const staffRole = newMember.guild.roles.cache.get(CONFIG.ROLES.STAFF);
   
-  // Check if staff role was added
   if (!oldMember.roles.cache.has(staffRole?.id) && newMember.roles.cache.has(staffRole?.id)) {
     const staffChannel = newMember.guild.channels.cache.get(CONFIG.CHANNELS.STAFF_TOOLS);
     if (staffChannel) {
@@ -3001,7 +3128,6 @@ setInterval(async () => {
                m.author.id === CONFIG.OWNER_ID;
       });
       
-      // If no staff reply in last 10 messages
       if (!lastStaffMessage) {
         const staffChannel = guild.channels.cache.get(CONFIG.CHANNELS.STAFF_TOOLS);
         if (staffChannel) {
@@ -3014,7 +3140,29 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error in ticket monitoring:', error);
   }
-}, 600000); // Check every 10 minutes
+}, 600000);
+
+// ============================================
+// AUTO-BACKUP SYSTEM
+// ============================================
+setInterval(() => {
+  console.log('💾 Auto-saving data...');
+}, 300000);
+
+// ============================================
+// ERROR HANDLING
+// ============================================
+client.on('error', error => {
+  console.error('Discord client error:', error);
+});
+
+process.on('unhandledRejection', error => {
+  console.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+  console.error('Uncaught exception:', error);
+});
 
 // ============================================
 // BOT LOGIN
