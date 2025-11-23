@@ -454,12 +454,7 @@ if (client.guilds.cache.size === 0) {
       )
       .setFooter({ text: 'OTO Tournaments - Match Started' })
       .setTimestamp();
-    
-    await interaction.channel.send({ content: '@everyone', embeds: [startEmbed] });
-    await interaction.reply({ content: '✅ Match started! Room details shared!', ephemeral: true });
-    return;
-  }
-  });
+ 
   if (interaction.customId.startsWith('close_ticket_')) {
     await handleTicketClose(interaction);
     return;
