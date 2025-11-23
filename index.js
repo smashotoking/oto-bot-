@@ -413,33 +413,47 @@ if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
   targetGuild = client.guilds.cache.get(CONFIG.GUILD_ID);
 }
 
-if (!targetGuild) {
-  console.error(`\n❌ ERROR: Cannot find guild with ID: ${CONFIG.GUILD_ID}`);
-  return;
-}
+if (client.guilds.cache.size === 0) {
+    console.error('\n❌ ERROR: Bot is not in any servers!');
+    return;
+  }
+  
+  let targetGuild;
+  if (!CONFIG.GUILD_ID || CONFIG.GUILD_ID === 'YOUR_GUILD_ID_HERE') {
+    targetGuild = client.guilds.cache.first();
+    console.log(`\n⚠️  GUILD_ID not set. Using: ${targetGuild.name} (${targetGuild.id})`);
+  } else {
+    targetGuild = client.guilds.cache.get(CONFIG.GUILD_ID);
+  }
 
-const guild = targetGuild;
-console.log(`\n🎯 Working with server: ${guild.name}`);
+  if (!targetGuild) {
+    console.error(`\n❌ ERROR: Cannot find guild with ID: ${CONFIG.GUILD_ID}`);
+    return;
+  }
 
-try {
-  // Setup announcement message
-  await setupAnnouncementMessage(guild);
-  
-  // Setup panels
-  await pinStaffToolsGuide(guild);
-  await pinOwnerToolsGuide(guild);
-  
-  // Setup bot commands channel
-  await setupBotCommandsChannel(guild);
-  
-  // Update leaderboards
-  await updateLeaderboards(guild);
-  
-  console.log('\n🚀 Bot is fully operational!\n');
-  
-} catch (error) {
-  console.error('❌ Error in ready event:', error.message);
-}
+  const guild = targetGuild;
+  console.log(`\n🎯 Working with server: ${guild.name}`);
+
+  try {
+    // Setup announcement message
+    await setupAnnouncementMessage(guild);
+    
+    // Setup panels
+    await pinStaffToolsGuide(guild);
+    await pinOwnerToolsGuide(guild);
+    
+    // Setup bot commands channel
+    await setupBotCommandsChannel(guild);
+    
+    // Update leaderboards
+    await updateLeaderboards(guild);
+    
+    console.log('\n🚀 Bot is fully operational!\n');
+    
+  } catch (error) {
+    console.error('❌ Error in ready event:', error.message);
+  }
+});
     const startEmbed = new EmbedBuilder()
       .setColor('#00FF00')
       .setTitle('🎮 MATCH STARTING!')
