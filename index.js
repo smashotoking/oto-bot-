@@ -455,10 +455,7 @@ if (client.guilds.cache.size === 0) {
       .setFooter({ text: 'OTO Tournaments - Match Started' })
       .setTimestamp();
  
-  if (interaction.customId.startsWith('close_ticket_')) {
-    await handleTicketClose(interaction);
-    return;
-  }
+  
   
   // Staff Panel Buttons
   if (interaction.customId === 'staff_create_tournament') {
