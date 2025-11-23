@@ -406,6 +406,9 @@ async function setupAnnouncementMessage(guild) {
   } catch (error) {
     console.log('⚠️  Could not setup announcement');
   }
+  
+  // Setup support ticket channel
+  await setupSupportTickets(guild);
 }
 
 // ============================================
@@ -509,11 +512,41 @@ client.on('guildMemberAdd', async (member) => {
   const generalChannel = guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
   if (generalChannel) {
     const welcomeMessages = [
-      `🎉 Welcome ${member} to OTO Family! Complete your profile to unlock tournaments! 🏆`,
-      `🔥 ${member} aa gaya! Machayenge ab! Check DMs for profile setup! 🎮`,
-      `👋 Hello ${member}! Ready to win big? Tournaments waiting for you! 💰`
+      `🎊 **${member.user.username} bhai aa gaya!** Welcome to OTO Family! 🔥`,
+      `🚀 Boss arrived! ${member.user.username} just landed in OTO! 🎮`,
+      `⚡ ${member.user.username} has entered the arena! Let's go! 💪`,
+      `🎯 New champion alert! ${member.user.username} joined OTO! 🏆`,
+      `🔥 ${member.user.username} is here! Tournament warrior incoming! ⚔️`
     ];
     await generalChannel.send(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
+  }
+  
+  // Beautiful welcome card in welcome channel
+  const welcomeChannel = guild.channels.cache.get(CONFIG.CHANNELS.WELCOME_CHANNEL);
+  if (welcomeChannel) {
+    const welcomeEmbed = new EmbedBuilder()
+      .setColor('#FF6B6B')
+      .setTitle('🎮 WELCOME TO OTO FAMILY!')
+      .setDescription(
+        `╔═══════════════════════╗\n` +
+        `    **${member.user.username}**\n` +
+        `╚═══════════════════════╝\n\n` +
+        `🎊 ${member.user.username} bhai aa gaya! 🎊\n\n` +
+        `✨ Check your DMs to create your profile\n` +
+        `🏆 Join tournaments and win big prizes\n` +
+        `👥 Invite friends for exclusive rewards\n` +
+        `🎮 Let's play and dominate together!\n\n` +
+        `**Welcome to the OTO Family!** 💙`
+      )
+      .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setImage(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
+      .setFooter({ text: `Member #${guild.memberCount} • OTO Tournaments` })
+      .setTimestamp();
+    
+    const welcomeMsg = await welcomeChannel.send({ content: `${member}`, embeds: [welcomeEmbed] });
+    await welcomeMsg.react('❤️');
+    await welcomeMsg.react('🎮');
+    await welcomeMsg.react('🔥');
   }
   
   // Send profile DM
@@ -860,7 +893,88 @@ client.on('interactionCreate', async (interaction) => {
   }
   
   if (interaction.customId.startsWith('confirm_payment_')) {
-    await handlePaymentConfirmation(interaction);
+    const ticketId = interaction.customId.replace('confirm_payment_', '');
+    await handlePaymentConfirmation(interaction, ticketId);
+    return;
+  }
+  
+  if (interaction.customId.startsWith('set_room_')) {
+    const tournamentId = interaction.customId.replace('set_room_', '');
+    
+    const member = interaction.member;
+    const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
+                    member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
+                    member.id === CONFIG.OWNER_ID;
+    
+    if (!isStaff) {
+      await interaction.reply({ content: '❌ Only staff can set room details!', ephemeral: true });
+      return;
+    }
+    
+    const modal = new ModalBuilder()
+      .setCustomId(`room_modal_${tournamentId}`)
+      .setTitle('Set Room Details');
+    
+    const roomIdInput = new TextInputBuilder()
+      .setCustomId('room_id')
+      .setLabel('Room ID')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('Enter Room ID')
+      .setRequired(true);
+    
+    const passwordInput = new TextInputBuilder()
+      .setCustomId('room_password')
+      .setLabel('Room Password')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('Enter Password')
+      .setRequired(true);
+    
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(roomIdInput),
+      new ActionRowBuilder().addComponents(passwordInput)
+    );
+    
+    await interaction.showModal(modal);
+    return;
+  }
+  
+  if (interaction.customId.startsWith('start_match_')) {
+    const tournamentId = interaction.customId.replace('start_match_', '');
+    
+    const member = interaction.member;
+    const isStaff = member.roles.cache.has(CONFIG.ROLES.STAFF) || 
+                    member.roles.cache.has(CONFIG.ROLES.ADMIN) ||
+                    member.id === CONFIG.OWNER_ID;
+    
+    if (!isStaff) {
+      await interaction.reply({ content: '❌ Only staff can start match!', ephemeral: true });
+      return;
+    }
+    
+    const lobbies = loadData('lobbies.json');
+    const lobby = lobbies[tournamentId];
+    
+    if (!lobby || !lobby.roomId || !lobby.password) {
+      await interaction.reply({ content: '❌ Please set room details first!', ephemeral: true });
+      return;
+    }
+    
+    const startEmbed = new EmbedBuilder()
+      .setColor('#00FF00')
+      .setTitle('🎮 MATCH STARTING!')
+      .setDescription(
+        `**All players, join the room NOW!**\n\n` +
+        `🔑 **Room ID:** \`${lobby.roomId}\`\n` +
+        `🔐 **Password:** \`${lobby.password}\`\n\n` +
+        `⏰ **Join within 5 minutes or you'll be disqualified!**\n` +
+        `📱 **Make sure you're ready!**\n\n` +
+        `**Good luck to all players!** 🏆`
+      )
+      .setFooter({ text: 'OTO Tournaments - Match Started' })
+      .setTimestamp();
+    
+    await interaction.channel.send({ content: '@everyone', embeds: [startEmbed] });
+    await interaction.reply({ content: '✅ Match started! Room details shared!', ephemeral: true });
     return;
   }
   
@@ -1033,19 +1147,32 @@ client.on('interactionCreate', async (interaction) => {
       return;
     }
     
-    const modal = new ModalBuilder()
-      .setCustomId('broadcast_modal')
-      .setTitle('Broadcast Message');
+    const guild = interaction.guild;
+    const textChannels = guild.channels.cache.filter(c => c.type === ChannelType.GuildText);
     
-    const messageInput = new TextInputBuilder()
-      .setCustomId('broadcast_message')
-      .setLabel('Message to broadcast')
-      .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder('Enter your announcement...')
-      .setRequired(true);
+    const channelOptions = textChannels.map(ch => ({
+      label: ch.name,
+      value: ch.id,
+      description: `Broadcast to #${ch.name}`
+    })).slice(0, 25);
     
-    modal.addComponents(new ActionRowBuilder().addComponents(messageInput));
-    await interaction.showModal(modal);
+    const channelSelect = new ActionRowBuilder()
+      .addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId('broadcast_channel_select')
+          .setPlaceholder('Select channels to broadcast')
+          .setMinValues(1)
+          .setMaxValues(Math.min(channelOptions.length, 25))
+          .addOptions(channelOptions)
+      );
+    
+    const broadcastEmbed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('📢 BROADCAST MESSAGE')
+      .setDescription('Select the channels where you want to broadcast your message:')
+      .setFooter({ text: 'Select channels and then type your message' });
+    
+    await interaction.reply({ embeds: [broadcastEmbed], components: [channelSelect], ephemeral: true });
     return;
   }
   
@@ -1215,6 +1342,28 @@ client.on('interactionCreate', async (interaction) => {
       );
     
     await interaction.channel.send({ embeds: [stateEmbed], components: [stateSelect] });
+    return;
+  }
+  
+  if (interaction.customId === 'broadcast_channel_select') {
+    const selectedChannels = interaction.values;
+    
+    client.broadcastChannels = client.broadcastChannels || new Map();
+    client.broadcastChannels.set(interaction.user.id, selectedChannels);
+    
+    const modal = new ModalBuilder()
+      .setCustomId('broadcast_modal')
+      .setTitle('Broadcast Message');
+    
+    const messageInput = new TextInputBuilder()
+      .setCustomId('broadcast_message')
+      .setLabel('Message to broadcast')
+      .setStyle(TextInputStyle.Paragraph)
+      .setPlaceholder('Enter your announcement...')
+      .setRequired(true);
+    
+    modal.addComponents(new ActionRowBuilder().addComponents(messageInput));
+    await interaction.showModal(modal);
     return;
   }
   
@@ -1410,6 +1559,13 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.customId === 'broadcast_modal') {
     const message = interaction.fields.getTextInputValue('broadcast_message');
     
+    const selectedChannels = client.broadcastChannels?.get(interaction.user.id) || [];
+    
+    if (selectedChannels.length === 0) {
+      await interaction.reply({ content: '❌ No channels selected!', ephemeral: true });
+      return;
+    }
+    
     const broadcastEmbed = new EmbedBuilder()
       .setColor('#FF0000')
       .setTitle('📢 ANNOUNCEMENT FROM OTO TOURNAMENTS')
@@ -1418,10 +1574,8 @@ client.on('interactionCreate', async (interaction) => {
       .setFooter({ text: 'Official OTO Announcement' })
       .setTimestamp();
     
-    const channels = [CONFIG.CHANNELS.GENERAL, CONFIG.CHANNELS.ANNOUNCEMENT, CONFIG.CHANNELS.TOURNAMENT_SCHEDULE];
-    
     let sent = 0;
-    for (const channelId of channels) {
+    for (const channelId of selectedChannels) {
       try {
         const channel = interaction.guild.channels.cache.get(channelId);
         if (channel) {
@@ -1432,6 +1586,8 @@ client.on('interactionCreate', async (interaction) => {
         console.error(`Could not send to channel ${channelId}`);
       }
     }
+    
+    client.broadcastChannels.delete(interaction.user.id);
     
     await interaction.reply({ content: `✅ Broadcast sent to ${sent} channels!`, ephemeral: true });
     return;
@@ -1521,6 +1677,135 @@ client.on('interactionCreate', async (interaction) => {
     };
     
     await postTournament(interaction, tournamentData);
+  }
+  
+  if (interaction.customId.startsWith('room_modal_')) {
+    const tournamentId = interaction.customId.replace('room_modal_', '');
+    const roomId = interaction.fields.getTextInputValue('room_id');
+    const password = interaction.fields.getTextInputValue('room_password');
+    
+    const lobbies = loadData('lobbies.json');
+    const lobby = lobbies[tournamentId];
+    
+    lobby.roomId = roomId;
+    lobby.password = password;
+    saveData('lobbies.json', lobbies);
+    
+    const roomEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('🔑 ROOM DETAILS SET!')
+      .setDescription(
+        `Room details have been set!\n\n` +
+        `🔑 **Room ID:** \`${roomId}\`\n` +
+        `🔐 **Password:** \`${password}\`\n\n` +
+        `Click **START MATCH** when ready!`
+      )
+      .setFooter({ text: 'Only visible to staff' })
+      .setTimestamp();
+    
+    await interaction.reply({ embeds: [roomEmbed], ephemeral: true });
+    return;
+  }
+    const tournamentId = interaction.customId.replace('confirm_join_', '');
+    const ign = interaction.fields.getTextInputValue('ign_input');
+    const confirm = interaction.fields.getTextInputValue('confirm_input');
+    
+    if (confirm.toUpperCase() !== 'CONFIRM') {
+      await interaction.reply({ content: '❌ You must type "CONFIRM" to proceed!', ephemeral: true });
+      return;
+    }
+    
+    const tournaments = loadData('tournaments.json');
+    const tournament = tournaments[tournamentId];
+    
+    const guild = interaction.guild;
+    const ticketCategory = guild.channels.cache.get(CONFIG.CHANNELS.TICKET_CATEGORY);
+    
+    const ticketChannel = await guild.channels.create({
+      name: `reg-${interaction.user.username}`,
+      type: ChannelType.GuildText,
+      parent: ticketCategory,
+      permissionOverwrites: [
+        { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+        { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: CONFIG.ROLES.STAFF, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: tournament.createdBy, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: CONFIG.OWNER_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
+      ]
+    });
+    
+    const tickets = loadData('tickets.json');
+    tickets[ticketChannel.id] = {
+      userId: interaction.user.id,
+      tournamentId: tournamentId,
+      ign: ign,
+      type: 'registration',
+      createdAt: Date.now()
+    };
+    saveData('tickets.json', tickets);
+    
+    const ticketLogEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('🎫 Registration Ticket Created')
+      .setDescription(`${interaction.user.tag} joined: ${tournament.title}`)
+      .addFields(
+        { name: 'Tournament ID', value: tournamentId, inline: true },
+        { name: 'IGN', value: ign, inline: true },
+        { name: 'Ticket', value: `<#${ticketChannel.id}>`, inline: true }
+      )
+      .setTimestamp();
+    
+    await logToChannel(guild, CONFIG.CHANNELS.TICKET_LOG, ticketLogEmbed);
+    
+    const ticketEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('🎫 TOURNAMENT REGISTRATION')
+      .setDescription(
+        `Welcome ${interaction.user}! 👋\n\n` +
+        `**Tournament:** ${tournament.title}\n` +
+        `**Your IGN:** ${ign}\n` +
+        `**Entry Fee:** ₹${tournament.entryFee}\n\n` +
+        `${tournament.entryFee > 0 ? '💳 **Please provide payment screenshot below**\n' : '✅ **Free Entry - No payment required**\n'}` +
+        `Staff will verify and confirm your entry! ⏳`
+      )
+      .setFooter({ text: `Tournament ID: ${tournamentId}` })
+      .setTimestamp();
+    
+    await ticketChannel.send({ content: `${interaction.user} <@&${CONFIG.ROLES.STAFF}>`, embeds: [ticketEmbed] });
+    
+    if (tournament.entryFee > 0) {
+      const paymentEmbed = new EmbedBuilder()
+        .setColor('#FFD700')
+        .setTitle('💳 PAYMENT INFORMATION')
+        .setDescription(
+          `**Amount to Pay:** ₹${tournament.entryFee}\n\n` +
+          `**Payment Methods:**\n` +
+          `• UPI ID: \`oto@upi\`\n` +
+          `• Phone Pay / Google Pay / Paytm\n\n` +
+          `📸 **After payment, upload screenshot here!**\n` +
+          `⏰ **Payment must be done within 10 minutes**`
+        )
+        .setFooter({ text: 'Payment verification required' })
+        .setTimestamp();
+      
+      await ticketChannel.send({ embeds: [paymentEmbed] });
+    }
+    
+    const actionButtons = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`confirm_entry_${ticketChannel.id}`)
+          .setLabel('✅ Confirm Entry')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId(`close_ticket_${ticketChannel.id}`)
+          .setLabel('❌ Close Ticket')
+          .setStyle(ButtonStyle.Danger)
+      );
+    
+    await ticketChannel.send({ content: '**Staff Actions:**', components: [actionButtons] });
+    
+    await interaction.reply({ content: `✅ Registration ticket created! Check ${ticketChannel}`, ephemeral: true });
   }
 });
 
@@ -1627,24 +1912,38 @@ async function postTournament(interaction, tournamentData) {
     .setTitle(`${gameEmojis[tournamentData.game] || '🎮'} ${tournamentData.title.toUpperCase()}`)
     .setDescription(
       `${tournamentData.description}\n\n` +
-      `${statusEmojis[tournamentData.status]} Registration is now **OPEN!**`
+      `${statusEmojis[tournamentData.status]} **Registration is now OPEN!**`
     )
     .addFields(
       { name: '💰 Prize Pool', value: `₹${tournamentData.prizePool}`, inline: true },
       { name: '🎫 Entry Fee', value: `₹${tournamentData.entryFee}`, inline: true },
-      { name: '📊 Slots', value: `${tournamentData.currentSlots}/${tournamentData.maxSlots}`, inline: true },
+      { name: '📊 Slots', value: `**${tournamentData.currentSlots}/${tournamentData.maxSlots}**`, inline: true }
+    )
+    .addFields(
       { name: '⏰ Time', value: tournamentData.time, inline: true },
       { name: '🗺️ Map', value: tournamentData.map.toUpperCase(), inline: true },
       { name: '🎯 Mode', value: tournamentData.mode.toUpperCase(), inline: true }
     )
     .addFields({
+      name: '\u200B',
+      value: '━━━━━━━━━━━━━━━━━━━━━━'
+    })
+    .addFields({
       name: '🏆 Prize Distribution',
       value: Object.entries(tournamentData.prizeDistribution)
-        .map(([place, amount]) => `${place === '1st' ? '🥇' : place === '2nd' ? '🥈' : place === '3rd' ? '🥉' : '🏅'} ${place}: ₹${amount}`)
+        .map(([place, amount]) => `${place === '1st' ? '🥇' : place === '2nd' ? '🥈' : place === '3rd' ? '🥉' : '🏅'} **${place}**: ₹${amount}`)
         .join('\n')
     })
-    .addFields({ name: '🆔 Tournament ID', value: `\`${tournamentId}\``, inline: false })
-    .setFooter({ text: 'Click JOIN NOW to participate!' })
+    .addFields({
+      name: '\u200B',
+      value: '━━━━━━━━━━━━━━━━━━━━━━'
+    })
+    .addFields({
+      name: '🆔 Tournament ID',
+      value: `\`${tournamentId}\``,
+      inline: false
+    })
+    .setFooter({ text: 'Click JOIN NOW to participate! • OTO Tournaments' })
     .setTimestamp();
   
   const joinButton = new ActionRowBuilder()
@@ -1708,7 +2007,7 @@ async function handleTournamentJoin(interaction, tournamentId) {
     return;
   }
   
-  if (tournament.status !== 'open') {
+  if (tournament.status !== 'open' && tournament.status !== 'filling' && tournament.status !== 'almost_full') {
     await interaction.reply({ content: '❌ Registration is closed for this tournament!', ephemeral: true });
     return;
   }
@@ -1723,8 +2022,32 @@ async function handleTournamentJoin(interaction, tournamentId) {
     return;
   }
   
-  const guild = interaction.guild;
-  const ticketCategory = guild.channels.cache.get(CONFIG.CHANNELS.TICKET_CATEGORY);
+  // Create confirmation modal
+  const modal = new ModalBuilder()
+    .setCustomId(`confirm_join_${tournamentId}`)
+    .setTitle('Confirm Tournament Entry');
+  
+  const ignInput = new TextInputBuilder()
+    .setCustomId('ign_input')
+    .setLabel('Your In-Game Name (IGN)')
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder('Enter your IGN')
+    .setRequired(true);
+  
+  const confirmInput = new TextInputBuilder()
+    .setCustomId('confirm_input')
+    .setLabel('Type "CONFIRM" to proceed')
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder('CONFIRM')
+    .setRequired(true);
+  
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(ignInput),
+    new ActionRowBuilder().addComponents(confirmInput)
+  );
+  
+  await interaction.showModal(modal);
+}
   
   const ticketChannel = await guild.channels.create({
     name: `ticket-${interaction.user.username}`,
@@ -2325,7 +2648,136 @@ async function pinOwnerToolsGuide(guild) {
 // ============================================
 // STAFF APPLICATIONS SETUP
 // ============================================
-async function setupStaffApplications(guild) {
+async function setupSupportTickets(guild) {
+  const supportChannel = guild.channels.cache.get('1438485759891079180');
+  if (!supportChannel) return;
+  
+  const supportEmbed = new EmbedBuilder()
+    .setColor('#4CAF50')
+    .setTitle('🎫 SUPPORT TICKETS')
+    .setDescription(
+      '**Need help? Create a support ticket!**\n\n' +
+      '✅ **What we can help with:**\n' +
+      '• Tournament questions\n' +
+      '• Payment issues\n' +
+      '• Profile problems\n' +
+      '• General inquiries\n' +
+      '• Report issues\n\n' +
+      '⏰ **Response time:** Usually within 10-30 minutes\n\n' +
+      'Click the button below to create a ticket!'
+    )
+    .setThumbnail(guild.iconURL({ dynamic: true }))
+    .setFooter({ text: 'OTO Support Team' })
+    .setTimestamp();
+  
+  const ticketButton = new ActionRowBuilder()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('create_support_ticket')
+        .setLabel('📩 Create Support Ticket')
+        .setStyle(ButtonStyle.Success)
+    );
+  
+  try {
+    const messages = await supportChannel.messages.fetch({ limit: 10 });
+    const existingMsg = messages.find(m => m.author.id === client.user.id && m.embeds[0]?.title?.includes('SUPPORT'));
+    
+    if (existingMsg) {
+      await existingMsg.edit({ embeds: [supportEmbed], components: [ticketButton] });
+    } else {
+      await supportChannel.send({ embeds: [supportEmbed], components: [ticketButton] });
+    }
+    console.log('✅ Support ticket system setup');
+  } catch (error) {
+    console.log('⚠️  Could not setup support tickets');
+  }
+}
+
+// Handle support ticket creation
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isButton()) return;
+  
+  if (interaction.customId === 'create_support_ticket') {
+    const guild = interaction.guild;
+    const existingTickets = loadData('tickets.json');
+    
+    // Check if user already has open ticket
+    const userTicket = Object.entries(existingTickets).find(([id, t]) => 
+      t.userId === interaction.user.id && t.type === 'support'
+    );
+    
+    if (userTicket) {
+      await interaction.reply({ 
+        content: `❌ You already have an open support ticket! <#${userTicket[0]}>`, 
+        ephemeral: true 
+      });
+      return;
+    }
+    
+    const ticketCategory = guild.channels.cache.get(CONFIG.CHANNELS.TICKET_CATEGORY);
+    
+    const ticketChannel = await guild.channels.create({
+      name: `support-${interaction.user.username}`,
+      type: ChannelType.GuildText,
+      parent: ticketCategory,
+      permissionOverwrites: [
+        { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+        { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: CONFIG.ROLES.STAFF, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: CONFIG.OWNER_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] }
+      ]
+    });
+    
+    const tickets = loadData('tickets.json');
+    tickets[ticketChannel.id] = {
+      userId: interaction.user.id,
+      type: 'support',
+      createdAt: Date.now()
+    };
+    saveData('tickets.json', tickets);
+    
+    const ticketEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('🎫 SUPPORT TICKET')
+      .setDescription(
+        `Hey ${interaction.user}! 👋\n\n` +
+        `**Welcome to OTO Support!**\n\n` +
+        `Please describe your issue or question below.\n` +
+        `Our staff team will assist you shortly! ⏰\n\n` +
+        `**Average response time:** 10-30 minutes`
+      )
+      .setFooter({ text: 'OTO Support Team' })
+      .setTimestamp();
+    
+    const closeButton = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId(`close_ticket_${ticketChannel.id}`)
+          .setLabel('🔒 Close Ticket')
+          .setStyle(ButtonStyle.Danger)
+      );
+    
+    await ticketChannel.send({ 
+      content: `${interaction.user} <@&${CONFIG.ROLES.STAFF}>`, 
+      embeds: [ticketEmbed], 
+      components: [closeButton] 
+    });
+    
+    const logEmbed = new EmbedBuilder()
+      .setColor('#4CAF50')
+      .setTitle('🎫 Support Ticket Created')
+      .setDescription(`${interaction.user.tag} created a support ticket`)
+      .addFields({ name: 'Ticket', value: `<#${ticketChannel.id}>` })
+      .setTimestamp();
+    
+    await logToChannel(guild, CONFIG.CHANNELS.TICKET_LOG, logEmbed);
+    
+    await interaction.reply({ 
+      content: `✅ Support ticket created! Check ${ticketChannel}`, 
+      ephemeral: true 
+    });
+  }
+});
   const playerFormChannel = guild.channels.cache.get(CONFIG.CHANNELS.PLAYER_FORM);
   if (!playerFormChannel) return;
   
@@ -2741,22 +3193,53 @@ client.on('interactionCreate', async (interaction) => {
       .setColor('#FFD700')
       .setTitle(`${position === '1st' ? '🥇' : position === '2nd' ? '🥈' : position === '3rd' ? '🥉' : '🏅'} TOURNAMENT WINNER!`)
       .setDescription(
-        `**Tournament:** ${tournament.title}\n` +
-        `**Winner:** ${winner}\n` +
-        `**Position:** ${position}\n` +
-        `**Prize:** ₹${prizeAmount}\n\n` +
-        `Congratulations! 🎉🎊`
+        `╔═══════════════════════╗\n` +
+        `    **CONGRATULATIONS!**\n` +
+        `╚═══════════════════════╝\n\n` +
+        `🏆 **Winner:** ${winner}\n` +
+        `🎮 **Tournament:** ${tournament.title}\n` +
+        `🥇 **Position:** ${position}\n` +
+        `💰 **Prize:** ₹${prizeAmount}\n` +
+        `📅 **Date:** ${new Date().toLocaleDateString()}\n` +
+        `⏰ **Time:** ${new Date().toLocaleTimeString()}\n\n` +
+        `${position === '1st' ? '👑 **CHAMPION!**' : position === '2nd' ? '🥈 **RUNNER-UP!**' : position === '3rd' ? '🥉 **THIRD PLACE!**' : '🏅 **TOP PERFORMER!**'}\n\n` +
+        `Congratulations on your victory! 🎉🎊`
       )
       .setThumbnail(winner.displayAvatarURL({ dynamic: true, size: 256 }))
-      .setFooter({ text: `Tournament ID: ${tournamentId}` })
+      .setImage('https://media.tenor.com/images/c6d3c7f3f4e4e4e4/tenor.gif')
+      .setFooter({ text: `Tournament ID: ${tournamentId} • OTO Tournaments` })
       .setTimestamp();
     
     const generalChannel = interaction.guild.channels.cache.get(CONFIG.CHANNELS.GENERAL);
     if (generalChannel) {
-      await generalChannel.send({ content: `🎉 ${winner}`, embeds: [winnerEmbed] });
+      const msg = await generalChannel.send({ content: `🎉 ${winner} 🎉`, embeds: [winnerEmbed] });
+      await msg.react('🏆');
+      await msg.react('🎉');
+      await msg.react('👏');
     }
     
     await winner.send({ embeds: [winnerEmbed] });
+    
+    // Post in winner history channel (1438486113047150714)
+    const winnerHistoryChannel = interaction.guild.channels.cache.get('1438486113047150714');
+    if (winnerHistoryChannel) {
+      const historyEmbed = new EmbedBuilder()
+        .setColor('#FFD700')
+        .setTitle(`${position} - ${tournament.title}`)
+        .setDescription(
+          `**Winner:** ${winner.tag}\n` +
+          `**Tournament Type:** ${tournament.game.toUpperCase()} ${tournament.mode.toUpperCase()}\n` +
+          `**Prize Won:** ₹${prizeAmount}\n` +
+          `**Date:** ${new Date().toLocaleDateString('en-IN')}\n` +
+          `**Time:** ${new Date().toLocaleTimeString('en-IN')}\n` +
+          `**Tournament ID:** \`${tournamentId}\``
+        )
+        .setThumbnail(winner.displayAvatarURL({ dynamic: true }))
+        .setFooter({ text: 'OTO Winner History' })
+        .setTimestamp();
+      
+      await winnerHistoryChannel.send({ embeds: [historyEmbed] });
+    }
     
     const settings = loadData('settings.json');
     if (settings.followSubscribeEnabled) {
